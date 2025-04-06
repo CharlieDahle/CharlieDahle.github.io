@@ -3,9 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Page</title>
+    <title>Terminal Simulator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: white;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .terminal {
+            width: 500px;
+            height: 400px;
+            background-color: black;
+            color: #0f0;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .terminal-output {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .terminal-input {
+            display: flex;
+            align-items: center;
+        }
+
+        .terminal-input::before {
+            content: '> ';
+            color: #0f0;
+            margin-right: 5px;
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            width: 100%;
+            outline: none;
+        }
+    </style>
 </head>
 <body>
-    <p>Hi</p>
+    <div class="terminal">
+        <div class="terminal-output" id="output"></div>
+        <div class="terminal-input">
+            <input type="text" id="command-input" autofocus>
+        </div>
+    </div>
+
+    <script>
+        const outputElement = document.getElementById('output');
+        const inputElement = document.getElementById('command-input');
+
+        // Function to add a new line to the output
+        function addOutputLine(text) {
+            const lineElement = document.createElement('div');
+            lineElement.textContent = text;
+            outputElement.appendChild(lineElement);
+            
+            // Scroll to the bottom
+            outputElement.scrollTop = outputElement.scrollHeight;
+        }
+
+        // Handle command input
+        inputElement.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                const command = inputElement.value.trim().toLowerCase();
+                
+                // Add the input to the output
+                addOutputLine(`> ${command}`);
+
+                // Process the command
+                if (command === 'hello') {
+                    addOutputLine('bonjour');
+                } else if (command !== '') {
+                    addOutputLine('Command not recognized.');
+                }
+
+                // Clear the input
+                inputElement.value = '';
+            }
+        });
+
+        // Initial welcome message
+        addOutputLine('Welcome to the Terminal Simulator!');
+        addOutputLine('Type "hello" and press Enter.');
+    </script>
 </body>
 </html>
