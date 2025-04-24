@@ -1,6 +1,9 @@
 // Command implementations
 const Commands = {
     help() {
+
+        TerminalOutput.addLine('This site is a project of me, Charlie! I\'m junior dev who likes music, sandwiches, and cute software.');
+        TerminalOutput.addLine(' ');
         TerminalOutput.addLine('Available Commands:');
         TerminalOutput.addLine('- help: Show this help menu');
         TerminalOutput.addLine('- clear: Clear the terminal screen');
@@ -8,8 +11,6 @@ const Commands = {
         TerminalOutput.addLine('- lang: Change or check language');
         TerminalOutput.addLine('- playground: List available games/activities');
         TerminalOutput.addLine('');
-        TerminalOutput.addLine('About Me:');
-        TerminalOutput.addLine('This site is a project of me, Charlie! I\'m junior dev who likes cute websites, music, and sandwiches');
     },
     
     resume(args) {
@@ -33,6 +34,10 @@ const Commands = {
     lang(args) {
         if (args.length === 0) {
             TerminalOutput.addLine(`Current language: ${LanguageManager.currentLanguage}`);
+            TerminalOutput.addLine('Available Langugages:');
+            TerminalOutput.addLine('- French');
+            TerminalOutput.addLine('- English');
+            TerminalOutput.addLine('Use "lang <language>" to switch');
             return;
         }
         
@@ -52,8 +57,12 @@ const Commands = {
     
     playground(args) {
         if (args.length === 0) {
+          TerminalOutput.addLine('================================');
+          TerminalOutput.addLine('');
           TerminalOutput.addLine('Available Playground Activities:');
           TerminalOutput.addLine('- drums');
+          TerminalOutput.addLine('');
+          TerminalOutput.addLine('================================');
           TerminalOutput.addLine('');
           TerminalOutput.addLine('Use "playground <activity>" to start');
           return;
