@@ -66,7 +66,7 @@ const Commands = {
           // Load the drum machine in one of two ways:
           
           // Option 1: Load in a new window/tab
-          window.open('/drums.html', '_blank');
+          window.open('/drums/drums.html', '_blank');
           
           // Option 2: Load in the current window
           // window.location.href = '/drums.html';
