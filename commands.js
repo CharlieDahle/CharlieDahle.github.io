@@ -2,7 +2,7 @@
 const Commands = {
     help() {
 
-        TerminalOutput.addLine('This site is a project of me, Charlie! I\'m junior dev who likes music, sandwiches, and cute software.');
+        TerminalOutput.addLine('This site is the project of me, Charlie! I\'m junior dev who likes music, sandwiches, and cute software.');
         TerminalOutput.addLine(' ');
         TerminalOutput.addLine('Available Commands:');
         TerminalOutput.addLine('- help: Show this help menu');
