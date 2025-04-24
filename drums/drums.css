@@ -12,7 +12,11 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 20px;
+  /* padding: 20px; */
+}
+
+.header {
+  margin-bottom: 7%;
 }
 
 .container {
@@ -20,6 +24,16 @@ body {
   width: 90%;
   max-width: 1200px;
   position: relative;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+}
+
+.logo {
+  max-width: 250px;
+  height: auto;
 }
 
 .nav-bar {
