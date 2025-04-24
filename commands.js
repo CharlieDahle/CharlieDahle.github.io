@@ -9,7 +9,7 @@ const Commands = {
         TerminalOutput.addLine('- playground: List available games/activities');
         TerminalOutput.addLine('');
         TerminalOutput.addLine('About Me:');
-        TerminalOutput.addLine('This site is a project of me, Charlie! I\'m junior dev who enjoys Stan Getz and eating a Bánh mì');
+        TerminalOutput.addLine('This site is a project of me, Charlie! I\'m junior dev who likes cute websites, music, and sandwiches');
     },
     
     resume(args) {
