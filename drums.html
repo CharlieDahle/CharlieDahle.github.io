@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Drum Machine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .drum-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .track {
+            display: grid;
+            grid-template-columns: 100px repeat(8, 1fr);
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .track-label {
+            text-align: right;
+            padding-right: 10px;
+        }
+        .step {
+            width: 30px;
+            height: 30px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .step.active {
+            background-color: #4CAF50;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        #bpm-display {
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Drum Machine</h1>
+    
+    <div class="controls">
+        <button id="play-btn">Play</button>
+        <button id="pause-btn">Pause</button>
+        <label for="bpm">BPM:</label>
+        <input type="number" id="bpm-input" value="120" min="60" max="240">
+    </div>
+
+    <div id="tracks-container">
+        <div class="track" data-instrument="kick">
+            <div class="track-label">Kick</div>
+            <!-- 8 steps will be dynamically generated here -->
+        </div>
+        <div class="track" data-instrument="snare">
+            <div class="track-label">Snare</div>
+            <!-- 8 steps will be dynamically generated here -->
+        </div>
+        <div class="track" data-instrument="hihat">
+            <div class="track-label">Hi-Hat</div>
+            <!-- 8 steps will be dynamically generated here -->
+        </div>
+        <div class="track" data-instrument="openhihat">
+            <div class="track-label">Open Hi-Hat</div>
+            <!-- 8 steps will be dynamically generated here -->
+        </div>
+    </div>
+
+    <script>
+        class DrumMachine {
+            constructor() {
+                this.tracks = {
+                    kick: [],
+                    snare: [],
+                    hihat: [],
+                    openhihat: []
+                };
+                this.sounds = {
+                    kick: null,
+                    snare: null,
+                    hihat: null,
+                    openhihat: null
+                };
+                this.currentStep = 0;
+                this.isPlaying = false;
+                this.bpm = 120;
+                this.intervalId = null;
+
+                this.initUI();
+                this.setupEventListeners();
+                
+                // Load the sounds when the drum machine is initialized
+                this.loadSounds({
+                    kick: 'kick.wav',
+                    snare: 'snare.wav',
+                    hihat: 'hihat.wav',
+                    openhihat: 'openhihat.wav'
+                });
+            }
+
+            initUI() {
+                const tracksContainer = document.getElementById('tracks-container');
+                const tracks = tracksContainer.querySelectorAll('.track');
+
+                tracks.forEach(track => {
+                    const instrument = track.dataset.instrument;
+                    for (let i = 0; i < 8; i++) {
+                        const step = document.createElement('div');
+                        step.classList.add('step');
+                        step.dataset.step = i;
+                        step.addEventListener('click', () => this.toggleStep(instrument, i));
+                        track.appendChild(step);
+                        this.tracks[instrument].push(false);
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                document.getElementById('play-btn').addEventListener('click', () => this.play());
+                document.getElementById('pause-btn').addEventListener('click', () => this.pause());
+                document.getElementById('bpm-input').addEventListener('change', (e) => {
+                    this.setBPM(parseInt(e.target.value, 10));
+                });
+            }
+
+            toggleStep(instrument, stepIndex) {
+                const stepElement = document.querySelector(`.track[data-instrument="${instrument}"] .step[data-step="${stepIndex}"]`);
+                this.tracks[instrument][stepIndex] = !this.tracks[instrument][stepIndex];
+                stepElement.classList.toggle('active');
+            }
+
+            play() {
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+                this.currentStep = 0;
+                this.intervalId = setInterval(() => this.playStep(), 60000 / (this.bpm * 2));
+            }
+
+            pause() {
+                if (!this.isPlaying) return;
+                this.isPlaying = false;
+                clearInterval(this.intervalId);
+                this.resetStepHighlight();
+            }
+
+            playStep() {
+                // Reset previous step highlight
+                this.resetStepHighlight();
+
+                // Highlight current step
+                const steps = document.querySelectorAll('.step');
+                steps.forEach(step => {
+                    if (parseInt(step.dataset.step, 10) === this.currentStep) {
+                        step.style.backgroundColor = '#FF5722';
+                    }
+                });
+
+                // Play sounds for active steps
+                Object.keys(this.tracks).forEach(instrument => {
+                    if (this.tracks[instrument][this.currentStep]) {
+                        this.playSound(instrument);
+                    }
+                });
+
+                // Move to next step
+                this.currentStep = (this.currentStep + 1) % 8;
+            }
+
+            resetStepHighlight() {
+                const steps = document.querySelectorAll('.step');
+                steps.forEach(step => {
+                    step.style.backgroundColor = step.classList.contains('active') ? '#4CAF50' : '#f0f0f0';
+                });
+            }
+
+            playSound(instrument) {
+                // Play the sound for the given instrument
+                if (this.sounds[instrument]) {
+                    // Reset the audio to the beginning if it's already playing
+                    this.sounds[instrument].currentTime = 0;
+                    
+                    // Play the sound
+                    this.sounds[instrument].play().catch(error => {
+                        console.error(`Error playing ${instrument} sound:`, error);
+                    });
+                } else {
+                    console.warn(`Sound for ${instrument} not loaded`);
+                }
+            }
+
+            loadSounds(soundFiles) {
+                console.log("Loading sound files:", soundFiles);
+                
+                Object.keys(soundFiles).forEach(instrument => {
+                    if (soundFiles[instrument]) {
+                        try {
+                            // Create a new Audio object for each instrument
+                            this.sounds[instrument] = new Audio(soundFiles[instrument]);
+                            
+                            // Preload the audio
+                            this.sounds[instrument].load();
+                            
+                            console.log(`Loaded sound for ${instrument}: ${soundFiles[instrument]}`);
+                        } catch (error) {
+                            console.error(`Error loading sound for ${instrument}:`, error);
+                        }
+                    }
+                });
+            }
+
+            setBPM(bpm) {
+                this.bpm = Math.max(60, Math.min(240, bpm));
+                document.getElementById('bpm-input').value = this.bpm;
+                
+                // Restart playback with new BPM if currently playing
+                if (this.isPlaying) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = setInterval(() => this.playStep(), 60000 / (this.bpm * 2));
+                }
+            }
+        }
+
+        // Initialize the drum machine
+        document.addEventListener('DOMContentLoaded', () => {
+            const drumMachine = new DrumMachine();
+        });
+    </script>
+</body>
+</html>
