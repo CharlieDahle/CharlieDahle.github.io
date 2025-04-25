@@ -16,16 +16,18 @@
       <img src="drum-machine.png" alt="Drum Machine" class="logo">
     </div>
   </div>
+
   <div class="container">
     <div class="controls">
-      <button id="play-pause">Play</button>
+      <button id="play-pause" class="btn">Play</button>
       <div class="bpm-control">
         <label for="bpm-slider">BPM: </label>
-        <input type="range" id="bpm-slider" min="60" max="200" value="120" class="slider">
+        <input type="range" id="bpm-slider" min="60" max="200" value="120">
         <span id="bpm-value">120</span>
       </div>
-      <button id="clear-button">Clear</button>
+      <button id="clear-button" class="btn">Clear</button>
     </div>
+
     <div class="sound-selection">
       <div class="sound-row">
         <div class="sound-select" data-instrument="kick">
@@ -45,6 +47,7 @@
         </div>
       </div>
     </div>
+
     <div class="sequencer">
       <div class="track">
         <div class="track-label">Kick</div>
@@ -60,6 +63,7 @@
       </div>
     </div>
   </div>
+
   <script src="drums.js"></script>
 </body>
 </html>

@@ -1,35 +1,55 @@
+/* Base styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+:root {
+  --color-primary: #ff9800;
+  --color-primary-light: #ffb74d;
+  --color-danger: #f44336;
+  --color-danger-light: #e57373;
+  --color-bg: #fffaf0;
+  --color-text: #333;
+  --color-text-light: #777;
+  --color-border: #ddd;
+  --color-step-bg: #f9f9f9;
+  --color-kick: #f44336;
+  --color-kick-light: #ff8a80;
+  --color-snare: #2196f3;
+  --color-snare-light: #64b5f6;
+  --color-hihat: #4caf50;
+  --color-hihat-light: #81c784;
+  --border-radius: 4px;
+}
+
 body {
   font-family: Arial, sans-serif;
-  background-color: #fffaf0; /* Eggshell white */
-  color: #333;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   display: flex;
-  flex-direction: column; /* Change to column layout */
-  justify-content: flex-start; /* Start from the top */
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
   padding: 20px;
 }
 
-.container-heading {
+.container-heading,
+.container {
   width: 90%;
   max-width: 1200px;
+}
+
+.container-heading {
   margin-bottom: 40px;
-  position: relative;
 }
 
 .container {
   text-align: center;
-  width: 90%;
-  max-width: 1200px;
-  position: relative;
 }
 
+/* Navigation */
 .nav-bar {
   text-align: left;
   padding: 10px 0;
@@ -45,13 +65,14 @@ body {
 }
 
 .home-link:hover {
-  color: #ff9800;
+  color: var(--color-primary);
 }
 
 .home-link i {
   margin-right: 6px;
 }
 
+/* Logo */
 .logo-container {
   margin-bottom: 5%;
   display: flex;
@@ -63,6 +84,7 @@ body {
   height: auto;
 }
 
+/* Controls */
 .controls {
   display: flex;
   justify-content: center;
@@ -72,32 +94,31 @@ body {
   flex-wrap: wrap;
 }
 
-#play-pause,
-#clear-button {
+.btn {
   padding: 8px 16px;
   font-size: 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 #play-pause {
-  background-color: #ff9800;
+  background-color: var(--color-primary);
   color: #000;
 }
 
+#play-pause:hover {
+  background-color: var(--color-primary-light);
+}
+
 #clear-button {
-  background-color: #f44336;
+  background-color: var(--color-danger);
   color: #fff;
 }
 
-#play-pause:hover {
-  background-color: #ffb74d;
-}
-
 #clear-button:hover {
-  background-color: #e57373;
+  background-color: var(--color-danger-light);
 }
 
 .bpm-control {
@@ -106,100 +127,17 @@ body {
   gap: 8px;
   background-color: #e0e0e0;
   padding: 8px 12px;
-  border-radius: 4px;
-  color: #333;
+  border-radius: var(--border-radius);
 }
 
-#bpm-slider {
-  width: 120px;
-  cursor: pointer;
-}
-
-#bpm-value {
-  min-width: 30px;
-  text-align: center;
-}
-
-.sequencer {
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.track {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.track-label {
-  width: 60px;
-  text-align: right;
-  padding-right: 10px;
-  font-weight: bold;
-  color: #555;
-}
-
-.sound-name {
-  font-size: 0.8rem;
-  font-weight: normal;
-  color: #777;
-  margin-left: 6px;
-}
-
-.track-steps {
-  display: flex;
-  gap: 4px;
-}
-
-.step {
-  width: 30px;
-  height: 30px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-}
-
-/* Different colors for each track */
-#kick-track .step.active {
-  background-color: #f44336; /* Red for kick */
-}
-
-#snare-track .step.active {
-  background-color: #2196f3; /* Blue for snare */
-}
-
-#hihat-track .step.active {
-  background-color: #4caf50; /* Green for hi-hat */
-}
-
-.step.current {
-  border: 2px solid #555;
-}
-
-/* Current step colors */
-#kick-track .step.active.current {
-  background-color: #ff8a80; /* Lighter red */
-}
-
-#snare-track .step.active.current {
-  background-color: #64b5f6; /* Lighter blue */
-}
-
-#hihat-track .step.active.current {
-  background-color: #81c784; /* Lighter green */
-}
-
-/* Style the slider */
+/* Range input styling */
 input[type="range"] {
   -webkit-appearance: none;
   height: 8px;
   background: #ccc;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
+  width: 120px;
+  cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -207,7 +145,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ff9800;
+  background: var(--color-primary);
   cursor: pointer;
 }
 
@@ -215,16 +153,21 @@ input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ff9800;
+  background: var(--color-primary);
   cursor: pointer;
   border: none;
 }
 
-/* Sound selection styling */
+#bpm-value {
+  min-width: 30px;
+  text-align: center;
+}
+
+/* Sound selection */
 .sound-selection {
   margin-bottom: 1.5rem;
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   padding: 12px;
 }
@@ -237,9 +180,9 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .sound-select {
-  position: relative; /* Important for dropdown positioning */
+  position: relative;
   background-color: #f5f5f5;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   padding: 8px 12px;
   cursor: pointer;
   display: flex;
@@ -261,16 +204,11 @@ input[type="range"]::-moz-range-thumb {
 
 .sound-name {
   font-size: 0.9rem;
-  color: #777;
+  color: var(--color-text-light);
   flex: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-}
-
-.sound-select i {
-  color: #999;
-  font-size: 0.8rem;
 }
 
 /* Dropdown styling */
@@ -280,8 +218,8 @@ input[type="range"]::-moz-range-thumb {
   left: 0;
   width: 100%;
   background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   max-height: 200px;
@@ -300,6 +238,78 @@ input[type="range"]::-moz-range-thumb {
 
 .sound-option:hover {
   background-color: #f5f5f5;
+}
+
+/* Sequencer */
+.sequencer {
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.track:last-child {
+  margin-bottom: 0;
+}
+
+.track-label {
+  width: 60px;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: bold;
+  color: #555;
+}
+
+.track-steps {
+  display: flex;
+  gap: 4px;
+}
+
+.step {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background-color: var(--color-step-bg);
+  cursor: pointer;
+}
+
+/* Step colors by instrument */
+.step[data-instrument="kick"].active {
+  background-color: var(--color-kick);
+}
+
+.step[data-instrument="snare"].active {
+  background-color: var(--color-snare);
+}
+
+.step[data-instrument="hihat"].active {
+  background-color: var(--color-hihat);
+}
+
+.step.current {
+  border: 2px solid #555;
+}
+
+/* Current step colors */
+.step[data-instrument="kick"].active.current {
+  background-color: var(--color-kick-light);
+}
+
+.step[data-instrument="snare"].active.current {
+  background-color: var(--color-snare-light);
+}
+
+.step[data-instrument="hihat"].active.current {
+  background-color: var(--color-hihat-light);
 }
 
 /* Responsive adjustments */

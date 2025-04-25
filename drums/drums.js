@@ -131,32 +131,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Function to create step buttons for a track
-  function createStepButtons(trackElement, instrument) {
-    for (let i = 0; i < STEPS; i++) {
-      const step = document.createElement('button');
-      step.className = 'step';
-      step.dataset.step = i;
-      
-      // Every 4 steps (quarter note), add visual indicator
-      if (i % 4 === 0) {
-        step.style.borderLeftWidth = '3px';
+  // Function to create step buttons for all tracks
+  function createSequencerSteps() {
+    const tracks = [
+      { element: kickTrack, instrument: 'kick' },
+      { element: snareTrack, instrument: 'snare' },
+      { element: hihatTrack, instrument: 'hihat' }
+    ];
+    
+    tracks.forEach(track => {
+      for (let i = 0; i < STEPS; i++) {
+        const step = document.createElement('button');
+        step.className = 'step';
+        step.dataset.step = i;
+        step.dataset.instrument = track.instrument;
+        
+        // Every 4 steps (quarter note), add visual indicator
+        if (i % 4 === 0) {
+          step.style.borderLeftWidth = '3px';
+        }
+        
+        // Toggle step active state on click
+        step.addEventListener('click', () => {
+          patterns[track.instrument][i] = !patterns[track.instrument][i];
+          step.classList.toggle('active', patterns[track.instrument][i]);
+        });
+        
+        track.element.appendChild(step);
       }
-      
-      // Toggle step active state on click
-      step.addEventListener('click', () => {
-        patterns[instrument][i] = !patterns[instrument][i];
-        step.classList.toggle('active', patterns[instrument][i]);
-      });
-      
-      trackElement.appendChild(step);
-    }
+    });
   }
   
-  // Create step buttons for all tracks
-  createStepButtons(kickTrack, 'kick');
-  createStepButtons(snareTrack, 'snare');
-  createStepButtons(hihatTrack, 'hihat');
+  // Create all sequencer steps
+  createSequencerSteps();
   
   // Load audio samples
   async function loadSample(url, name) {
@@ -196,17 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Update the step visuals across all tracks
+  // Update the step visuals more efficiently
   function updateStepVisuals() {
-    // Remove current step indicator from all steps
-    document.querySelectorAll('.step').forEach(step => {
+    // Get current and next step elements
+    const currentSteps = document.querySelectorAll(`.step[data-step="${currentStep}"]`);
+    
+    // Update the step indicators
+    document.querySelectorAll('.step.current').forEach(step => {
       step.classList.remove('current');
     });
     
-    // Add current step indicator to each track
-    kickTrack.querySelector(`[data-step="${currentStep}"]`).classList.add('current');
-    snareTrack.querySelector(`[data-step="${currentStep}"]`).classList.add('current');
-    hihatTrack.querySelector(`[data-step="${currentStep}"]`).classList.add('current');
+    currentSteps.forEach(step => {
+      step.classList.add('current');
+    });
   }
   
   // Sequencer player function
@@ -214,29 +223,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the step visuals
     updateStepVisuals();
     
-    // Play the active sounds for this step for each instrument
-    if (patterns.kick[currentStep]) {
-      playSample('kick');
-    }
-    if (patterns.snare[currentStep]) {
-      playSample('snare');
-    }
-    if (patterns.hihat[currentStep]) {
-      playSample('hihat');
-    }
+    // Play the active sounds for this step more efficiently
+    const instruments = ['kick', 'snare', 'hihat'];
+    instruments.forEach(instrument => {
+      if (patterns[instrument][currentStep]) {
+        playSample(instrument);
+      }
+    });
     
     // Move to next step
     currentStep = (currentStep + 1) % STEPS;
   }
   
-  // Play/Pause functionality
+  // Play/Pause functionality with improved reset
   function togglePlay() {
+    // Make sure the audio context is running
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    
     if (!isPlaying) {
-      // Make sure the audio context is running
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      
       // Start playback
       isPlaying = true;
       playPauseBtn.textContent = 'Pause';
@@ -248,18 +254,23 @@ document.addEventListener('DOMContentLoaded', () => {
       intervalId = setInterval(step, SIXTEENTH_NOTE);
     } else {
       // Stop playback
-      isPlaying = false;
-      playPauseBtn.textContent = 'Play';
-      clearInterval(intervalId);
-      
-      // Clear current step indicator
-      document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('current');
-      });
-      
-      // Reset step counter
-      currentStep = 0;
+      stopSequencer();
     }
+  }
+  
+  // Function to stop the sequencer
+  function stopSequencer() {
+    isPlaying = false;
+    playPauseBtn.textContent = 'Play';
+    clearInterval(intervalId);
+    
+    // Clear current step indicator
+    document.querySelectorAll('.step.current').forEach(step => {
+      step.classList.remove('current');
+    });
+    
+    // Reset step counter
+    currentStep = 0;
   }
   
   // Update tempo based on slider
@@ -278,13 +289,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Clear all patterns
   function clearPatterns() {
     // Reset all patterns to false
-    for (const instrument in patterns) {
+    Object.keys(patterns).forEach(instrument => {
       patterns[instrument].fill(false);
-    }
+    });
     
     // Remove 'active' class from all steps
-    document.querySelectorAll('.step').forEach(step => {
+    document.querySelectorAll('.step.active').forEach(step => {
       step.classList.remove('active');
+    });
+  }
+  
+  // Set up event listeners
+  function setupEventListeners() {
+    // Transport controls
+    playPauseBtn.addEventListener('click', togglePlay);
+    bpmSlider.addEventListener('input', updateTempo);
+    clearButton.addEventListener('click', clearPatterns);
+    
+    // Keyboard controls
+    document.addEventListener('keydown', (event) => {
+      // Spacebar to toggle play/pause
+      if (event.code === 'Space') {
+        event.preventDefault();
+        togglePlay();
+      }
+      
+      // Escape key to stop playback
+      if (event.code === 'Escape' && isPlaying) {
+        event.preventDefault();
+        stopSequencer();
+      }
     });
   }
   
@@ -299,18 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load initial sounds
     loadInitialSounds();
     
-    // Set up event listeners
-    playPauseBtn.addEventListener('click', togglePlay);
-    bpmSlider.addEventListener('input', updateTempo);
-    clearButton.addEventListener('click', clearPatterns);
-    
-    // Spacebar to toggle play/pause
-    document.addEventListener('keydown', (event) => {
-      if (event.code === 'Space') {
-        event.preventDefault();
-        togglePlay();
-      }
-    });
+    // Set up all event listeners
+    setupEventListeners();
   }
   
   // Start initialization
