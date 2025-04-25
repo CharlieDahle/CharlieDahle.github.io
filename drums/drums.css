@@ -15,12 +15,19 @@
   --color-text-light: #777;
   --color-border: #ddd;
   --color-step-bg: #f9f9f9;
-  --color-kick: #f44336;
-  --color-kick-light: #ff8a80;
-  --color-snare: #2196f3;
-  --color-snare-light: #64b5f6;
-  --color-hihat: #4caf50;
-  --color-hihat-light: #81c784;
+
+  /* Track colors - extend color palette */
+  --color-track-1: #f44336;
+  --color-track-2: #2196f3;
+  --color-track-3: #4caf50;
+  --color-track-4: #ff9800;
+  --color-track-5: #9c27b0;
+  --color-track-6: #795548;
+  --color-track-7: #607d8b;
+  --color-track-8: #3f51b5;
+  --color-track-9: #009688;
+  --color-track-10: #ff5722;
+
   --border-radius: 4px;
 }
 
@@ -101,6 +108,9 @@ body {
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #play-pause {
@@ -119,6 +129,15 @@ body {
 
 #clear-button:hover {
   background-color: var(--color-danger-light);
+}
+
+#add-track-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+#add-track-button:hover {
+  background-color: #45a049;
 }
 
 .bpm-control {
@@ -211,6 +230,11 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
 }
 
+.sound-select i {
+  margin-left: auto;
+  color: #888;
+}
+
 /* Dropdown styling */
 .sound-dropdown {
   position: absolute;
@@ -256,8 +280,22 @@ input[type="range"]::-moz-range-thumb {
   margin-bottom: 10px;
 }
 
-.track:last-child {
-  margin-bottom: 0;
+.track-controls {
+  margin-right: 10px;
+}
+
+.btn-remove-track {
+  background-color: var(--color-danger);
+  color: white;
+  padding: 5px 8px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove-track:hover {
+  background-color: var(--color-danger-light);
 }
 
 .track-label {
@@ -282,41 +320,52 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Step colors by instrument */
-.step[data-instrument="kick"].active {
-  background-color: var(--color-kick);
+/* Track-specific step colors */
+.step[data-track-color="1"].active {
+  background-color: var(--color-track-1);
 }
-
-.step[data-instrument="snare"].active {
-  background-color: var(--color-snare);
+.step[data-track-color="2"].active {
+  background-color: var(--color-track-2);
 }
-
-.step[data-instrument="hihat"].active {
-  background-color: var(--color-hihat);
+.step[data-track-color="3"].active {
+  background-color: var(--color-track-3);
+}
+.step[data-track-color="4"].active {
+  background-color: var(--color-track-4);
+}
+.step[data-track-color="5"].active {
+  background-color: var(--color-track-5);
+}
+.step[data-track-color="6"].active {
+  background-color: var(--color-track-6);
+}
+.step[data-track-color="7"].active {
+  background-color: var(--color-track-7);
+}
+.step[data-track-color="8"].active {
+  background-color: var(--color-track-8);
+}
+.step[data-track-color="9"].active {
+  background-color: var(--color-track-9);
+}
+.step[data-track-color="10"].active {
+  background-color: var(--color-track-10);
 }
 
 .step.current {
   border: 2px solid #555;
 }
 
-/* Current step colors */
-.step[data-instrument="kick"].active.current {
-  background-color: var(--color-kick-light);
-}
-
-.step[data-instrument="snare"].active.current {
-  background-color: var(--color-snare-light);
-}
-
-.step[data-instrument="hihat"].active.current {
-  background-color: var(--color-hihat-light);
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .sound-row {
+  .controls {
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .bpm-control {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .sound-select {

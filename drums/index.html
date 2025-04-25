@@ -26,43 +26,38 @@
         <span id="bpm-value">120</span>
       </div>
       <button id="clear-button" class="btn">Clear</button>
+      <button id="add-track-button" class="btn btn-add-track">Add Track</button>
     </div>
 
-    <div class="sound-selection">
-      <div class="sound-row">
-        <div class="sound-select" data-instrument="kick">
-          <span class="instrument-name">Kick:</span>
-          <span class="sound-name">Acoustic Kick</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="sound-select" data-instrument="snare">
-          <span class="instrument-name">Snare:</span>
-          <span class="sound-name">Break Snare</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="sound-select" data-instrument="hihat">
-          <span class="instrument-name">Hi-Hat:</span>
-          <span class="sound-name">Jazz Hat</span>
-          <i class="fas fa-chevron-down"></i>
-        </div>
-      </div>
+    <div class="sound-selection" id="sound-selection-container">
+      <!-- Initial tracks will be dynamically added here -->
     </div>
 
-    <div class="sequencer">
-      <div class="track">
-        <div class="track-label">Kick</div>
-        <div class="track-steps" id="kick-track"></div>
-      </div>
-      <div class="track">
-        <div class="track-label">Snare</div>
-        <div class="track-steps" id="snare-track"></div>
-      </div>
-      <div class="track">
-        <div class="track-label">Hi-Hat</div>
-        <div class="track-steps" id="hihat-track"></div>
-      </div>
+    <div class="sequencer" id="sequencer-container">
+      <!-- Tracks will be dynamically added here -->
     </div>
   </div>
+
+  <!-- Track template for JavaScript to clone -->
+  <template id="track-template">
+    <div class="track" data-track-id="">
+      <div class="track-controls">
+        <button class="btn btn-remove-track"><i class="fas fa-trash"></i></button>
+      </div>
+      <div class="track-label">
+        <span class="track-name">Track</span>
+      </div>
+      <div class="track-steps"></div>
+    </div>
+  </template>
+
+  <template id="sound-select-template">
+    <div class="sound-select">
+      <span class="instrument-name">Instrument:</span>
+      <span class="sound-name">Select Sound</span>
+      <i class="fas fa-chevron-down"></i>
+    </div>
+  </template>
 
   <script src="drums.js"></script>
 </body>
