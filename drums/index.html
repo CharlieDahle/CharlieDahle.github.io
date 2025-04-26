@@ -28,14 +28,12 @@
         </div>
       </div>
     </header>
-
     <main class="sequencer-container">
       <div class="track-controls">
         <button id="add-track-button" class="btn btn-add-track">
           <i class="fas fa-plus"></i> Add Track
         </button>
       </div>
-
       <div class="sequencer">
         <div class="track-list" id="track-list">
           <!-- Tracks will be dynamically added here -->
@@ -43,12 +41,18 @@
       </div>
     </main>
   </div>
-
+  
   <!-- Track Template -->
   <template id="track-template">
     <div class="track">
       <div class="track-label">
-        <span class="track-name">Track</span>
+        <div class="track-name-container">
+          <span class="track-name">Track</span>
+          <div class="track-sound-indicator">
+            <div class="track-sound-icon"></div>
+            <div class="track-sound-tooltip">No Sound Selected</div>
+          </div>
+        </div>
         <div class="track-actions">
           <button class="btn btn-track-settings">
             <i class="fas fa-cog"></i>

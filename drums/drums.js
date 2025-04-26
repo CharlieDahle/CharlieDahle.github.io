@@ -92,12 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
-  // Create modal overlay
-  function createModalOverlay() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    document.body.appendChild(overlay);
-    return overlay;
+  // Update sound indicator
+  function updateSoundIndicator(trackElement, category, soundName) {
+    const soundIndicator = trackElement.querySelector('.track-sound-indicator');
+    const soundIcon = soundIndicator.querySelector('.track-sound-icon');
+    const soundTooltip = soundIndicator.querySelector('.track-sound-tooltip');
+    
+    // Set icon class based on category
+    soundIcon.className = `track-sound-icon icon-${category}`;
+    
+    // Update tooltip
+    soundTooltip.textContent = soundName || 'No Sound Selected';
   }
   
   // Create track settings modal
@@ -130,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryTrigger.querySelector('.selected-category').textContent = categoryItem.textContent;
         
         // Populate sound dropdown
-        populateSoundDropdown(track, modal, category);
+        populateSoundDropdown(track, modal, trackElement, category);
         
         // Close category dropdown
         categoryDropdown.classList.remove('active');
@@ -166,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Populate sound dropdown
-  function populateSoundDropdown(track, modal, category) {
+  function populateSoundDropdown(track, modal, trackElement, category) {
     const soundDropdown = modal.querySelector('.sound-dropdown');
     const soundTrigger = modal.querySelector('.sound-selector .dropdown-trigger');
     
@@ -185,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update sound display
         soundTrigger.querySelector('.selected-sound').textContent = sound.name;
         
+        // Update sound indicator
+        updateSoundIndicator(trackElement, category, sound.name);
+        
         // Load sound
         await track.loadSound();
         
@@ -199,6 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
     soundTrigger.addEventListener('click', () => {
       soundDropdown.classList.toggle('active');
     });
+  }
+  
+  // Create modal overlay
+  function createModalOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    document.body.appendChild(overlay);
+    return overlay;
   }
   
   // Create a new track
