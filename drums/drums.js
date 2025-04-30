@@ -349,11 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); // Prevent scrolling
         isPlaying ? stopPlayback() : startPlayback();
       }
-      
-      // Escape to stop
-      if (e.code === 'Escape') {
-        stopPlayback();
-      }
+
     });
     
     // BPM controls
