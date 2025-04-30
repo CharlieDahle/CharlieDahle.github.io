@@ -94,33 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Update sound indicator
   function updateSoundIndicator(trackElement, category, soundName) {
-    const soundIndicator = trackElement.querySelector('.track-sound-indicator');
-    const soundIcon = soundIndicator.querySelector('.track-sound-icon');
-    const soundTooltip = soundIndicator.querySelector('.track-sound-tooltip');
-    
-    // Set icon class based on category
-    soundIcon.className = `track-sound-icon icon-${category}`;
-    
-    // Update tooltip
-    soundTooltip.textContent = soundName || 'No Sound Selected';
+    const soundIndicator = trackElement.querySelector('.track-sound');
+    soundIndicator.textContent = soundName || 'No Sound Selected';
   }
   
   // Create track settings modal
   function createTrackSettingsModal(track, trackElement) {
     const modalTemplate = document.getElementById('track-settings-template');
-    const modal = modalTemplate.content.cloneNode(true).querySelector('.track-settings-modal');
-    const overlay = createModalOverlay();
+    const modal = modalTemplate.content.cloneNode(true).querySelector('.modal-overlay');
+    const modalBody = modal.querySelector('.track-settings-modal');
     
     // Close button functionality
-    const closeButton = modal.querySelector('.btn-close-settings');
+    const closeButton = modalBody.querySelector('.btn-close-settings');
     closeButton.addEventListener('click', () => {
       document.body.removeChild(modal);
-      document.body.removeChild(overlay);
     });
     
     // Category dropdown
-    const categoryDropdown = modal.querySelector('.category-dropdown');
-    const categoryTrigger = modal.querySelector('.sound-category-selector .dropdown-trigger');
+    const categoryDropdown = modalBody.querySelector('.category-dropdown');
+    const categoryTrigger = modalBody.querySelector('.sound-category-selector .dropdown-trigger');
     
     // Populate categories
     Object.keys(soundManifest).forEach(category => {
@@ -135,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryTrigger.querySelector('.selected-category').textContent = categoryItem.textContent;
         
         // Populate sound dropdown
-        populateSoundDropdown(track, modal, trackElement, category);
+        populateSoundDropdown(track, modalBody, trackElement, category);
         
         // Close category dropdown
         categoryDropdown.classList.remove('active');
@@ -150,22 +142,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Volume slider
-    const volumeSlider = modal.querySelector('.volume-slider');
+    const volumeSlider = modalBody.querySelector('.volume-slider');
     volumeSlider.value = track.volume * 100;
     volumeSlider.addEventListener('input', (e) => {
       track.volume = e.target.value / 100;
     });
     
     // Mute button
-    const muteButton = modal.querySelector('.btn-mute');
+    const muteButton = modalBody.querySelector('.btn-mute');
     muteButton.addEventListener('click', () => {
       track.isMuted = !track.isMuted;
-      muteButton.querySelector('i').classList.toggle('fa-volume-mute', track.isMuted);
-      muteButton.querySelector('i').classList.toggle('fa-volume-up', !track.isMuted);
+      if (track.isMuted) {
+        muteButton.querySelector('i').classList.remove('fa-volume-up');
+        muteButton.querySelector('i').classList.add('fa-volume-mute');
+        muteButton.classList.add('btn-danger');
+        muteButton.classList.remove('btn-secondary');
+      } else {
+        muteButton.querySelector('i').classList.add('fa-volume-up');
+        muteButton.querySelector('i').classList.remove('fa-volume-mute');
+        muteButton.classList.remove('btn-danger');
+        muteButton.classList.add('btn-secondary');
+      }
     });
     
     // Add modal to body
     document.body.appendChild(modal);
+    modal.classList.add('active');
     
     return modal;
   }
@@ -207,14 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
     soundTrigger.addEventListener('click', () => {
       soundDropdown.classList.toggle('active');
     });
-  }
-  
-  // Create modal overlay
-  function createModalOverlay() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    document.body.appendChild(overlay);
-    return overlay;
   }
   
   // Create a new track
@@ -302,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isPlaying = true;
     playPauseButton.querySelector('i').classList.remove('fa-play');
     playPauseButton.querySelector('i').classList.add('fa-pause');
+    playPauseButton.querySelector('span').textContent = 'Pause';
     
     // Ensure audio context is running
     if (audioContext.state === 'suspended') {
@@ -325,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset play/pause button
     playPauseButton.querySelector('i').classList.remove('fa-pause');
     playPauseButton.querySelector('i').classList.add('fa-play');
+    playPauseButton.querySelector('span').textContent = 'Play';
     
     // Clear current step indicators
     document.querySelectorAll('.step.current').forEach(step => {
@@ -349,7 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault(); // Prevent scrolling
         isPlaying ? stopPlayback() : startPlayback();
       }
-
     });
     
     // BPM controls

@@ -1,11 +1,6 @@
-/* Base Styles */
-:root {
-  /* Color Palette */
-  --color-bg-primary: #fffaf0;
-  --color-bg-secondary: #f9f9f9;
-  --color-text-primary: #333;
-  --color-text-secondary: #666;
+/* Custom CSS to complement Bootstrap 5 */
 
+:root {
   /* Track Colors */
   --color-track-1: #f44336;
   --color-track-2: #2196f3;
@@ -17,196 +12,27 @@
   --color-track-8: #3f51b5;
   --color-track-9: #009688;
   --color-track-10: #ff5722;
-
-  /* UI Colors */
-  --color-primary: #ff9800;
-  --color-primary-light: #ffb74d;
-  --color-accent: #2196f3;
-  --color-border: #e0e0e0;
-
-  /* Shadows and Elevations */
-  --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.08);
-  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.12);
-  --shadow-strong: 0 6px 12px rgba(0, 0, 0, 0.16);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 body {
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  line-height: 1.6;
 }
 
-.drum-machine-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
+.floral-bg {
+  background-color: #fffaf0;
 }
 
-/* App Header */
-.app-header {
-  background-color: var(--color-bg-secondary);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-subtle);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.app-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.transport-controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.btn-transport {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-transport:hover {
-  background-color: var(--color-primary-light);
-}
-
-.btn-add-track {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-.btn-add-track:hover {
-  opacity: 0.9;
-}
-
-.btn-clear {
-  background-color: #f44336;
-  color: white;
-}
-
-.bpm-section {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.bpm-section input[type="range"] {
-  width: 120px;
-}
-
-/* Sequencer Container */
-.sequencer-container {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: var(--shadow-medium);
-}
-
-.track-controls {
-  padding: 15px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.sequencer {
-  padding: 15px;
-}
-
-/* Tracks */
-.track {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  background-color: var(--color-bg-secondary);
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-}
-
-.track-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.track-name {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: 0.9rem;
-}
-
-.track-label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 150px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-right: 1px solid var(--color-border);
-}
-
-.track-actions {
-  display: flex;
-  align-items: center;
-}
-
-.btn-track-settings {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  padding: 5px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-track-settings:hover {
-  color: var(--color-primary);
-}
-
-.track-steps {
-  display: flex;
-  flex-grow: 1;
-  gap: 4px;
-  padding: 10px;
-}
-
+/* Step sequencer styles */
 .step {
   width: 30px;
   height: 30px;
   background-color: #e0e0e0;
-  border: 1px solid var(--color-border);
+  border: 1px solid #dee2e6;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
   position: relative;
+  padding: 0;
 }
 
 .step.whole-note {
@@ -214,11 +40,11 @@ body {
 }
 
 .step.active {
-  background-color: var(--color-primary);
+  background-color: var(--bs-warning);
 }
 
 .step.current {
-  box-shadow: 0 0 0 2px var(--color-accent);
+  box-shadow: 0 0 0 2px var(--bs-primary);
 }
 
 /* Track-specific step colors */
@@ -253,111 +79,26 @@ body {
   background-color: var(--color-track-10);
 }
 
-/* Track Settings Modal */
-.track-settings-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: var(--shadow-strong);
-  z-index: 1000;
-  padding: 20px;
-}
-
-.track-settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.track-settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-trigger {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: white;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  box-shadow: var(--shadow-subtle);
-  z-index: 10;
-  display: none;
-}
-
+/* Dropdown styles */
 .dropdown-menu.active {
-  display: block;
+  display: block !important;
 }
 
 .dropdown-menu-item {
-  padding: 10px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
 }
 
 .dropdown-menu-item:hover {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--bs-light);
 }
 
-/* Overlay for modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  display: none;
-}
-
+/* Modal overlay */
 .modal-overlay.active {
-  display: block;
+  display: block !important;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .transport-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .track-settings-modal {
-    width: 90%;
-    max-width: 400px;
-  }
-}
-
-.track-sound {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  opacity: 0.9;
+/* Custom styling for dropdown triggers */
+.dropdown-trigger {
+  cursor: pointer;
 }
