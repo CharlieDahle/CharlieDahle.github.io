@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+  
+
   // Audio Context
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   
@@ -397,4 +400,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Start initialization
   initialize();
+
+
+  const choose_sound = document.getElementById('choose-sound');
+  const hidden_menu = document.getElementById('hidden-menu');
+
+  choose_sound.addEventListener("click", () => {
+
+    print(choose_sound)
+    hidden_menu.classList.remove('hidden')
+  });
+
+
 });

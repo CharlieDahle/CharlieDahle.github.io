@@ -102,3 +102,7 @@ body {
 .dropdown-trigger {
   cursor: pointer;
 }
+
+.hidden {
+  display: none;
+}
