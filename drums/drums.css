@@ -1,325 +1,108 @@
-/* Base styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Custom CSS to complement Bootstrap 5 */
 
 :root {
-  --color-primary: #ff9800;
-  --color-primary-light: #ffb74d;
-  --color-danger: #f44336;
-  --color-danger-light: #e57373;
-  --color-bg: #fffaf0;
-  --color-text: #333;
-  --color-text-light: #777;
-  --color-border: #ddd;
-  --color-step-bg: #f9f9f9;
-  --color-kick: #f44336;
-  --color-kick-light: #ff8a80;
-  --color-snare: #2196f3;
-  --color-snare-light: #64b5f6;
-  --color-hihat: #4caf50;
-  --color-hihat-light: #81c784;
-  --border-radius: 4px;
+  /* Track Colors */
+  --color-track-1: #f44336;
+  --color-track-2: #2196f3;
+  --color-track-3: #4caf50;
+  --color-track-4: #ff9800;
+  --color-track-5: #9c27b0;
+  --color-track-6: #795548;
+  --color-track-7: #607d8b;
+  --color-track-8: #3f51b5;
+  --color-track-9: #009688;
+  --color-track-10: #ff5722;
 }
 
 body {
-  font-family: Arial, sans-serif;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 
-.container-heading,
-.container {
-  width: 90%;
-  max-width: 1200px;
+.floral-bg {
+  background-color: #fffaf0;
 }
 
-.container-heading {
-  margin-bottom: 40px;
-}
-
-.container {
-  text-align: center;
-}
-
-/* Navigation */
-.nav-bar {
-  text-align: left;
-  padding: 10px 0;
-}
-
-.home-link {
-  color: #555;
-  text-decoration: none;
-  font-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  transition: color 0.2s;
-}
-
-.home-link:hover {
-  color: var(--color-primary);
-}
-
-.home-link i {
-  margin-right: 6px;
-}
-
-/* Logo */
-.logo-container {
-  margin-bottom: 5%;
-  display: flex;
-  justify-content: center;
-}
-
-.logo {
-  max-width: 200px;
-  height: auto;
-}
-
-/* Controls */
-.controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 2rem;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: 8px 16px;
-  font-size: 1rem;
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-#play-pause {
-  background-color: var(--color-primary);
-  color: #000;
-}
-
-#play-pause:hover {
-  background-color: var(--color-primary-light);
-}
-
-#clear-button {
-  background-color: var(--color-danger);
-  color: #fff;
-}
-
-#clear-button:hover {
-  background-color: var(--color-danger-light);
-}
-
-.bpm-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #e0e0e0;
-  padding: 8px 12px;
-  border-radius: var(--border-radius);
-}
-
-/* Range input styling */
-input[type="range"] {
-  -webkit-appearance: none;
-  height: 8px;
-  background: #ccc;
-  border-radius: var(--border-radius);
-  width: 120px;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  cursor: pointer;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  cursor: pointer;
-  border: none;
-}
-
-#bpm-value {
-  min-width: 30px;
-  text-align: center;
-}
-
-/* Sound selection */
-.sound-selection {
-  margin-bottom: 1.5rem;
-  background-color: #fff;
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 12px;
-}
-
-.sound-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-.sound-select {
-  position: relative;
-  background-color: #f5f5f5;
-  border-radius: var(--border-radius);
-  padding: 8px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 180px;
-  transition: background-color 0.2s;
-}
-
-.sound-select:hover {
-  background-color: #e8e8e8;
-}
-
-.instrument-name {
-  font-weight: bold;
-  color: #555;
-}
-
-.sound-name {
-  font-size: 0.9rem;
-  color: var(--color-text-light);
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-/* Dropdown styling */
-.sound-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background-color: white;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.sound-option {
-  padding: 8px 12px;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
-}
-
-.sound-option:last-child {
-  border-bottom: none;
-}
-
-.sound-option:hover {
-  background-color: #f5f5f5;
-}
-
-/* Sequencer */
-.sequencer {
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.track {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.track:last-child {
-  margin-bottom: 0;
-}
-
-.track-label {
-  width: 60px;
-  text-align: right;
-  padding-right: 10px;
-  font-weight: bold;
-  color: #555;
-}
-
-.track-steps {
-  display: flex;
-  gap: 4px;
-}
-
+/* Step sequencer styles */
 .step {
   width: 30px;
   height: 30px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background-color: var(--color-step-bg);
+  background-color: #e0e0e0;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+  padding: 0;
 }
 
-/* Step colors by instrument */
-.step[data-instrument="kick"].active {
-  background-color: var(--color-kick);
+.step.whole-note {
+  border-left: 2px solid rgba(0, 0, 0, 0.2);
 }
 
-.step[data-instrument="snare"].active {
-  background-color: var(--color-snare);
-}
-
-.step[data-instrument="hihat"].active {
-  background-color: var(--color-hihat);
+.step.active {
+  background-color: var(--bs-warning);
 }
 
 .step.current {
-  border: 2px solid #555;
+  box-shadow: 0 0 0 2px var(--bs-primary);
 }
 
-/* Current step colors */
-.step[data-instrument="kick"].active.current {
-  background-color: var(--color-kick-light);
+/* Track-specific step colors */
+.track[data-track-color="1"] .step.active {
+  background-color: var(--color-track-1);
+}
+.track[data-track-color="2"] .step.active {
+  background-color: var(--color-track-2);
+}
+.track[data-track-color="3"] .step.active {
+  background-color: var(--color-track-3);
+}
+.track[data-track-color="4"] .step.active {
+  background-color: var(--color-track-4);
+}
+.track[data-track-color="5"] .step.active {
+  background-color: var(--color-track-5);
+}
+.track[data-track-color="6"] .step.active {
+  background-color: var(--color-track-6);
+}
+.track[data-track-color="7"] .step.active {
+  background-color: var(--color-track-7);
+}
+.track[data-track-color="8"] .step.active {
+  background-color: var(--color-track-8);
+}
+.track[data-track-color="9"] .step.active {
+  background-color: var(--color-track-9);
+}
+.track[data-track-color="10"] .step.active {
+  background-color: var(--color-track-10);
 }
 
-.step[data-instrument="snare"].active.current {
-  background-color: var(--color-snare-light);
+/* Dropdown styles */
+.dropdown-menu.active {
+  display: block !important;
 }
 
-.step[data-instrument="hihat"].active.current {
-  background-color: var(--color-hihat-light);
+.dropdown-menu-item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .sound-row {
-    flex-direction: column;
-    gap: 8px;
-  }
+.dropdown-menu-item:hover {
+  background-color: var(--bs-light);
+}
 
-  .sound-select {
-    width: 100%;
-  }
+/* Modal overlay */
+.modal-overlay.active {
+  display: block !important;
+}
+
+/* Custom styling for dropdown triggers */
+.dropdown-trigger {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
 }

@@ -1,53 +1,53 @@
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background-color: #FFFAF0; /* Eggshell cream */
-    font-family: 'Courier New', Courier, monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #fffaf0; /* Eggshell cream */
+  font-family: "Courier New", Courier, monospace;
 }
 
 .terminal {
-    width: 500px;
-    height: 400px;
-    background-color: #FFE4E1; /* Misty rose for terminal background */
-    color: #FF69B4; /* Hot pink text */
-    padding: 20px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: 2px solid #FFC0CB; /* Light pink border */
+  width: 500px;
+  height: 400px;
+  background-color: #ffe4e1; /* Misty rose for terminal background */
+  color: #ff69b4; /* Hot pink text */
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ffc0cb; /* Light pink border */
 }
 
 .terminal-output {
-    flex-grow: 1;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+  flex-grow: 1;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .terminal-input {
-    display: flex;
-    align-items: center;
-    border-top: 1px solid #FFC0CB; /* Light pink separator */
-    padding-top: 10px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #ffc0cb; /* Light pink separator */
+  padding-top: 10px;
 }
 
 .terminal-input::before {
-    content: '> ';
-    color: #FF69B4;
-    margin-right: 5px;
+  content: "> ";
+  color: #ff69b4;
+  margin-right: 5px;
 }
 
 input {
-    background: transparent;
-    border: none;
-    color: #FF69B4;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 16px;
-    width: 100%;
-    outline: none;
+  background: transparent;
+  border: none;
+  color: #ff69b4;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 16px;
+  width: 100%;
+  outline: none;
 }

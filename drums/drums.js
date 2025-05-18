@@ -1,48 +1,81 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+  
+
   // Audio Context
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   
   // Constants
-  let BPM = 120;
-  const STEPS = 32; // 16th notes for two measures (2 * 16)
-  const MINUTE = 60000; // ms
-  let SIXTEENTH_NOTE = MINUTE / BPM / 4; // Duration of a 16th note in ms
+  const STEPS = 32; // 16th notes for two measures
+  const MINUTE = 60000;
+  const MAX_TRACKS = 10;
   
   // State
+  let bpm = 120;
   let isPlaying = false;
   let currentStep = 0;
   let intervalId = null;
   let soundManifest = null;
   
-  // Current selected sounds
-  const currentSounds = {
-    kick: { name: 'Kick 1', file: 'kicks/kick1.wav' },
-    snare: { name: 'Snare 1', file: 'snares/snare1.wav' },
-    hihat: { name: 'Closed Hat', file: 'hihats/closed.wav' }
-  };
-  
-  // Buffers for our drum sounds
-  const buffers = {
-    kick: null,
-    snare: null,
-    hihat: null
-  };
-  
-  // Patterns - 32 steps (16th notes for 2 measures)
-  const patterns = {
-    kick: new Array(STEPS).fill(false),
-    snare: new Array(STEPS).fill(false),
-    hihat: new Array(STEPS).fill(false)
-  };
-  
-  // DOM elements
-  const playPauseBtn = document.getElementById('play-pause');
+  // DOM Elements
+  const trackList = document.getElementById('track-list');
+  const addTrackButton = document.getElementById('add-track-button');
+  const playPauseButton = document.getElementById('play-pause');
   const bpmSlider = document.getElementById('bpm-slider');
   const bpmValue = document.getElementById('bpm-value');
   const clearButton = document.getElementById('clear-button');
-  const kickTrack = document.getElementById('kick-track');
-  const snareTrack = document.getElementById('snare-track');
-  const hihatTrack = document.getElementById('hihat-track');
+  
+  // Track Class
+  class Track {
+    constructor(id) {
+      this.id = id;
+      this.category = null;
+      this.sound = null;
+      this.buffer = null;
+      this.volume = 1;
+      this.isMuted = false;
+      this.pattern = new Array(STEPS).fill(false);
+    }
+    
+    // Load sound for this track
+    async loadSound() {
+      if (!this.sound) return null;
+      
+      try {
+        const response = await fetch(this.sound.file);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          this.buffer = await audioContext.decodeAudioData(arrayBuffer);
+          return this.buffer;
+        } else {
+          console.error(`Failed to load sound for track ${this.id}`);
+          return null;
+        }
+      } catch (error) {
+        console.error(`Error loading sound for track ${this.id}:`, error);
+        return null;
+      }
+    }
+    
+    // Play sound for this track
+    play() {
+      if (!this.buffer || this.isMuted) return;
+      
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+      
+      source.buffer = this.buffer;
+      gainNode.gain.value = this.volume;
+      
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      source.start(0);
+    }
+  }
+  
+  // Tracks management
+  const tracks = [];
   
   // Fetch sound manifest
   async function fetchSoundManifest() {
@@ -50,184 +83,208 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('drum-sounds.json');
       soundManifest = response.ok ? await response.json() : null;
       
-      if (soundManifest) {
-        console.log('Loaded sound manifest:', soundManifest);
-      } else {
-        console.error('Failed to load sound manifest');
-        alert('Could not load sound library. Using default sounds.');
+      if (!soundManifest) {
+        throw new Error('Failed to load sound manifest');
       }
       
       return soundManifest;
     } catch (error) {
       console.error('Error loading sound manifest:', error);
-      alert('Could not load sound library. Using default sounds.');
+      alert('Could not load sound library.');
       return null;
     }
   }
   
-  // Create a simpler dropdown for each sound selector
-  function setupSoundDropdowns() {
-    const soundSelects = document.querySelectorAll('.sound-select');
-    const categoryMap = { kick: 'kicks', snare: 'snares', hihat: 'hihats' };
+  // Update sound indicator
+  function updateSoundIndicator(trackElement, category, soundName) {
+    const soundIndicator = trackElement.querySelector('.track-sound');
+    soundIndicator.textContent = soundName || 'No Sound Selected';
+  }
+  
+  // Create track settings modal
+  function createTrackSettingsModal(track, trackElement) {
+    const modalTemplate = document.getElementById('track-settings-template');
+    const modal = modalTemplate.content.cloneNode(true).querySelector('.modal-overlay');
+    const modalBody = modal.querySelector('.track-settings-modal');
     
-    soundSelects.forEach(select => {
-      const instrument = select.dataset.instrument;
-      const category = categoryMap[instrument];
-      
-      // Create dropdown element
-      const dropdown = document.createElement('div');
-      dropdown.className = 'sound-dropdown';
-      dropdown.style.display = 'none';
-      
-      // Populate dropdown with sounds from manifest
-      if (soundManifest && soundManifest[category]) {
-        soundManifest[category].forEach(sound => {
-          const option = document.createElement('div');
-          option.className = 'sound-option';
-          option.textContent = sound.name;
-          option.addEventListener('click', () => {
-            // Update the selected sound
-            currentSounds[instrument] = { name: sound.name, file: sound.file };
-            
-            // Update display text
-            select.querySelector('.sound-name').textContent = sound.name;
-            
-            // Load the sound
-            loadSample(sound.file, instrument);
-            
-            // Hide dropdown
-            dropdown.style.display = 'none';
-          });
-          
-          dropdown.appendChild(option);
-        });
-      }
-      
-      // Add dropdown to select element
-      select.appendChild(dropdown);
-      
-      // Toggle dropdown on click
-      select.addEventListener('click', (e) => {
-        // Skip if clicking on a dropdown option
-        if (e.target.classList.contains('sound-option')) return;
+    // Close button functionality
+    const closeButton = modalBody.querySelector('.btn-close-settings');
+    closeButton.addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+    
+    // Category dropdown
+    const categoryDropdown = modalBody.querySelector('.category-dropdown');
+    const categoryTrigger = modalBody.querySelector('.sound-category-selector .dropdown-trigger');
+    
+    // Populate categories
+    Object.keys(soundManifest).forEach(category => {
+      const categoryItem = document.createElement('div');
+      categoryItem.className = 'dropdown-menu-item';
+      categoryItem.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+      categoryItem.addEventListener('click', () => {
+        // Update track category
+        track.category = category;
         
-        // Hide all other dropdowns
-        document.querySelectorAll('.sound-dropdown').forEach(d => {
-          if (d !== dropdown) d.style.display = 'none';
-        });
+        // Update category display
+        categoryTrigger.querySelector('.selected-category').textContent = categoryItem.textContent;
         
-        // Toggle this dropdown
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        // Populate sound dropdown
+        populateSoundDropdown(track, modalBody, trackElement, category);
+        
+        // Close category dropdown
+        categoryDropdown.classList.remove('active');
       });
+      
+      categoryDropdown.appendChild(categoryItem);
     });
     
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.sound-select')) {
-        document.querySelectorAll('.sound-dropdown').forEach(d => {
-          d.style.display = 'none';
-        });
-      }
+    // Category dropdown toggle
+    categoryTrigger.addEventListener('click', () => {
+      categoryDropdown.classList.toggle('active');
     });
-  }
-  
-  // Function to create step buttons for all tracks
-  function createSequencerSteps() {
-    const tracks = [
-      { element: kickTrack, instrument: 'kick' },
-      { element: snareTrack, instrument: 'snare' },
-      { element: hihatTrack, instrument: 'hihat' }
-    ];
     
-    tracks.forEach(track => {
-      for (let i = 0; i < STEPS; i++) {
-        const step = document.createElement('button');
-        step.className = 'step';
-        step.dataset.step = i;
-        step.dataset.instrument = track.instrument;
-        
-        // Every 4 steps (quarter note), add visual indicator
-        if (i % 4 === 0) {
-          step.style.borderLeftWidth = '3px';
-        }
-        
-        // Toggle step active state on click
-        step.addEventListener('click', () => {
-          patterns[track.instrument][i] = !patterns[track.instrument][i];
-          step.classList.toggle('active', patterns[track.instrument][i]);
-        });
-        
-        track.element.appendChild(step);
-      }
+    // Volume slider
+    const volumeSlider = modalBody.querySelector('.volume-slider');
+    volumeSlider.value = track.volume * 100;
+    volumeSlider.addEventListener('input', (e) => {
+      track.volume = e.target.value / 100;
     });
-  }
-  
-  // Create all sequencer steps
-  createSequencerSteps();
-  
-  // Load audio samples
-  async function loadSample(url, name) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        buffers[name] = audioBuffer;
-        console.log(`Loaded ${name} sound: ${url}`);
+    
+    // Mute button
+    const muteButton = modalBody.querySelector('.btn-mute');
+    muteButton.addEventListener('click', () => {
+      track.isMuted = !track.isMuted;
+      if (track.isMuted) {
+        muteButton.querySelector('i').classList.remove('fa-volume-up');
+        muteButton.querySelector('i').classList.add('fa-volume-mute');
+        muteButton.classList.add('btn-danger');
+        muteButton.classList.remove('btn-secondary');
       } else {
-        console.error(`Failed to load ${name} sound: ${response.status}`);
+        muteButton.querySelector('i').classList.add('fa-volume-up');
+        muteButton.querySelector('i').classList.remove('fa-volume-mute');
+        muteButton.classList.remove('btn-danger');
+        muteButton.classList.add('btn-secondary');
       }
-    } catch (error) {
-      console.error(`Error loading ${name} sound:`, error);
-    }
-  }
-  
-  // Play a sample
-  function playSample(name) {
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
+    });
     
-    if (buffers[name]) {
-      const source = audioContext.createBufferSource();
-      source.buffer = buffers[name];
-      source.connect(audioContext.destination);
-      source.start(0);
-    }
+    // Add modal to body
+    document.body.appendChild(modal);
+    modal.classList.add('active');
+    
+    return modal;
   }
   
-  // Load initial drum sounds
-  function loadInitialSounds() {
-    Object.keys(currentSounds).forEach(instrument => {
-      loadSample(currentSounds[instrument].file, instrument);
+  // Populate sound dropdown
+  function populateSoundDropdown(track, modal, trackElement, category) {
+    const soundDropdown = modal.querySelector('.sound-dropdown');
+    const soundTrigger = modal.querySelector('.sound-selector .dropdown-trigger');
+    
+    // Clear existing sounds
+    soundDropdown.innerHTML = '';
+    
+    // Populate sounds for selected category
+    soundManifest[category].forEach(sound => {
+      const soundItem = document.createElement('div');
+      soundItem.className = 'dropdown-menu-item';
+      soundItem.textContent = sound.name;
+      soundItem.addEventListener('click', async () => {
+        // Update track sound
+        track.sound = sound;
+        
+        // Update sound display
+        soundTrigger.querySelector('.selected-sound').textContent = sound.name;
+        
+        // Update sound indicator
+        updateSoundIndicator(trackElement, category, sound.name);
+        
+        // Load sound
+        await track.loadSound();
+        
+        // Close sound dropdown
+        soundDropdown.classList.remove('active');
+      });
+      
+      soundDropdown.appendChild(soundItem);
+    });
+    
+    // Sound dropdown toggle
+    soundTrigger.addEventListener('click', () => {
+      soundDropdown.classList.toggle('active');
     });
   }
   
-  // Update the step visuals more efficiently
-  function updateStepVisuals() {
-    // Get current and next step elements
-    const currentSteps = document.querySelectorAll(`.step[data-step="${currentStep}"]`);
+  // Create a new track
+  function createTrack() {
+    // Check max tracks limit
+    if (tracks.length >= MAX_TRACKS) {
+      alert(`Maximum of ${MAX_TRACKS} tracks reached.`);
+      return;
+    }
     
-    // Update the step indicators
+    // Create track instance
+    const trackId = tracks.length + 1;
+    const newTrack = new Track(trackId);
+    tracks.push(newTrack);
+    
+    // Clone track template
+    const trackTemplate = document.getElementById('track-template');
+    const trackElement = trackTemplate.content.cloneNode(true).querySelector('.track');
+    trackElement.dataset.trackId = trackId;
+    trackElement.dataset.trackColor = trackId % 10 + 1;
+    
+    // Update track name
+    const trackNameEl = trackElement.querySelector('.track-name');
+    trackNameEl.textContent = `Track ${trackId}`;
+    
+    // Setup step sequencer
+    const trackSteps = trackElement.querySelector('.track-steps');
+    for (let i = 0; i < STEPS; i++) {
+      const step = document.createElement('button');
+      step.className = 'step';
+      step.dataset.step = i;
+      
+      // Mark whole notes (every 4th step)
+      if (i % 4 === 0) {
+        step.classList.add('whole-note');
+      }
+      
+      step.addEventListener('click', () => {
+        newTrack.pattern[i] = !newTrack.pattern[i];
+        step.classList.toggle('active', newTrack.pattern[i]);
+      });
+      
+      trackSteps.appendChild(step);
+    }
+    
+    // Track settings button
+    const settingsButton = trackElement.querySelector('.btn-track-settings');
+    settingsButton.addEventListener('click', () => {
+      createTrackSettingsModal(newTrack, trackElement);
+    });
+    
+    // Add track to DOM
+    trackList.appendChild(trackElement);
+    
+    return newTrack;
+  }
+  
+  // Sequencer step function
+  function step() {
+    // Update visual step indicator
     document.querySelectorAll('.step.current').forEach(step => {
       step.classList.remove('current');
     });
     
+    const currentSteps = document.querySelectorAll(`.step[data-step="${currentStep}"]`);
     currentSteps.forEach(step => {
       step.classList.add('current');
     });
-  }
-  
-  // Sequencer player function
-  function step() {
-    // Update the step visuals
-    updateStepVisuals();
     
-    // Play the active sounds for this step more efficiently
-    const instruments = ['kick', 'snare', 'hihat'];
-    instruments.forEach(instrument => {
-      if (patterns[instrument][currentStep]) {
-        playSample(instrument);
+    // Play active sounds
+    tracks.forEach(track => {
+      if (track.pattern[currentStep] && track.buffer) {
+        track.play();
       }
     });
     
@@ -235,108 +292,124 @@ document.addEventListener('DOMContentLoaded', () => {
     currentStep = (currentStep + 1) % STEPS;
   }
   
-  // Play/Pause functionality with improved reset
-  function togglePlay() {
-    // Make sure the audio context is running
+  // Playback controls
+  function startPlayback() {
+    if (isPlaying) return;
+    
+    isPlaying = true;
+    playPauseButton.querySelector('i').classList.remove('fa-play');
+    playPauseButton.querySelector('i').classList.add('fa-pause');
+    playPauseButton.querySelector('span').textContent = 'Pause';
+    
+    // Ensure audio context is running
     if (audioContext.state === 'suspended') {
       audioContext.resume();
     }
     
-    if (!isPlaying) {
-      // Start playback
-      isPlaying = true;
-      playPauseBtn.textContent = 'Pause';
-      
-      // Initial step (immediate)
-      step();
-      
-      // Continue with regular interval
-      intervalId = setInterval(step, SIXTEENTH_NOTE);
-    } else {
-      // Stop playback
-      stopSequencer();
-    }
+    // Initial step
+    step();
+    
+    // Set interval based on current BPM
+    const sixteenthNoteDuration = (MINUTE / bpm) / 4;
+    intervalId = setInterval(step, sixteenthNoteDuration);
   }
   
-  // Function to stop the sequencer
-  function stopSequencer() {
+  function stopPlayback() {
+    if (!isPlaying) return;
+    
     isPlaying = false;
-    playPauseBtn.textContent = 'Play';
     clearInterval(intervalId);
     
-    // Clear current step indicator
+    // Reset play/pause button
+    playPauseButton.querySelector('i').classList.remove('fa-pause');
+    playPauseButton.querySelector('i').classList.add('fa-play');
+    playPauseButton.querySelector('span').textContent = 'Play';
+    
+    // Clear current step indicators
     document.querySelectorAll('.step.current').forEach(step => {
       step.classList.remove('current');
     });
     
-    // Reset step counter
+    // Reset current step
     currentStep = 0;
   }
   
-  // Update tempo based on slider
-  function updateTempo() {
-    BPM = parseInt(bpmSlider.value);
-    bpmValue.textContent = BPM;
-    SIXTEENTH_NOTE = MINUTE / BPM / 4;
-    
-    // If playing, restart the interval with new timing
-    if (isPlaying) {
-      clearInterval(intervalId);
-      intervalId = setInterval(step, SIXTEENTH_NOTE);
-    }
-  }
-  
-  // Clear all patterns
-  function clearPatterns() {
-    // Reset all patterns to false
-    Object.keys(patterns).forEach(instrument => {
-      patterns[instrument].fill(false);
-    });
-    
-    // Remove 'active' class from all steps
-    document.querySelectorAll('.step.active').forEach(step => {
-      step.classList.remove('active');
-    });
-  }
-  
-  // Set up event listeners
+  // Event Listeners
   function setupEventListeners() {
     // Transport controls
-    playPauseBtn.addEventListener('click', togglePlay);
-    bpmSlider.addEventListener('input', updateTempo);
-    clearButton.addEventListener('click', clearPatterns);
+    playPauseButton.addEventListener('click', () => {
+      isPlaying ? stopPlayback() : startPlayback();
+    });
     
     // Keyboard controls
-    document.addEventListener('keydown', (event) => {
-      // Spacebar to toggle play/pause
-      if (event.code === 'Space') {
-        event.preventDefault();
-        togglePlay();
+    document.addEventListener('keydown', (e) => {
+      // Space bar to play/pause
+      if (e.code === 'Space') {
+        e.preventDefault(); // Prevent scrolling
+        isPlaying ? stopPlayback() : startPlayback();
       }
+    });
+    
+    // BPM controls
+    bpmSlider.addEventListener('input', (e) => {
+      bpm = parseInt(e.target.value);
+      bpmValue.textContent = bpm;
       
-      // Escape key to stop playback
-      if (event.code === 'Escape' && isPlaying) {
-        event.preventDefault();
-        stopSequencer();
+      // Restart playback with new tempo if already playing
+      if (isPlaying) {
+        stopPlayback();
+        startPlayback();
+      }
+    });
+    
+    // Add track button
+    addTrackButton.addEventListener('click', createTrack);
+    
+    // Clear all tracks
+    clearButton.addEventListener('click', () => {
+      tracks.forEach(track => {
+        track.pattern.fill(false);
+        const trackElement = document.querySelector(`.track[data-track-id="${track.id}"]`);
+        trackElement.querySelectorAll('.step').forEach(step => {
+          step.classList.remove('active');
+        });
+      });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+          menu.classList.remove('active');
+        });
       }
     });
   }
   
-  // Initialize the app
+  // Initialize application
   async function initialize() {
-    // First fetch the sound manifest
-    soundManifest = await fetchSoundManifest();
+    // Fetch sound manifest
+    await fetchSoundManifest();
     
-    // Set up sound dropdowns
-    setupSoundDropdowns();
-    
-    // Load initial sounds
-    loadInitialSounds();
-    
-    // Set up all event listeners
+    // Setup event listeners
     setupEventListeners();
+    
+    // Create initial track
+    createTrack();
   }
   
   // Start initialization
   initialize();
+
+
+  const choose_sound = document.getElementById('choose-sound');
+  const hidden_menu = document.getElementById('hidden-menu');
+
+  choose_sound.addEventListener("click", () => {
+
+    print(choose_sound)
+    hidden_menu.classList.remove('hidden')
+  });
+
+
 });

@@ -1,69 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drum Machine by Charlie</title>
-  <link rel="stylesheet" href="drums.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-</head>
-<body>
-  <div class="container-heading">
-    <div class="nav-bar">
-      <a href="/" class="home-link"><i class="fas fa-arrow-left"></i> Home</a>
-    </div>
-    <div class="logo-container">
-      <img src="drum-machine.png" alt="Drum Machine" class="logo">
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="controls">
-      <button id="play-pause" class="btn">Play</button>
-      <div class="bpm-control">
-        <label for="bpm-slider">BPM: </label>
-        <input type="range" id="bpm-slider" min="60" max="200" value="120">
-        <span id="bpm-value">120</span>
-      </div>
-      <button id="clear-button" class="btn">Clear</button>
-    </div>
-
-    <div class="sound-selection">
-      <div class="sound-row">
-        <div class="sound-select" data-instrument="kick">
-          <span class="instrument-name">Kick:</span>
-          <span class="sound-name">Acoustic Kick</span>
-          <i class="fas fa-chevron-down"></i>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Drum Machine</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="drums.css" />
+  </head>
+  <body class="floral-bg">
+    <div class="container py-4">
+      <header class="bg-white rounded shadow-sm p-3 mb-4">
+        <div
+          class="d-flex flex-column flex-md-row justify-content-between align-items-center"
+        >
+          <img
+            src="drum-machine.png"
+            alt="Studio Drum Machine"
+            class="img-fluid mb-3 mb-md-0"
+            style="max-width: 400px"
+          />
+          <div class="d-flex flex-wrap gap-3 align-items-center">
+            <button id="play-pause" class="btn btn-warning">
+              <i class="fas fa-play me-2"></i>
+              <span>Play</span>
+            </button>
+            <div class="d-flex align-items-center gap-2">
+              <label for="bpm-slider" class="form-label mb-0">BPM</label>
+              <input
+                type="range"
+                class="form-range mx-2"
+                id="bpm-slider"
+                style="width: 120px"
+                min="60"
+                max="200"
+                value="120"
+              />
+              <span id="bpm-value" class="text-secondary">120</span>
+            </div>
+            <button id="clear-button" class="btn btn-danger">
+              <i class="fas fa-eraser me-2"></i> Clear
+            </button>
+          </div>
         </div>
-        <div class="sound-select" data-instrument="snare">
-          <span class="instrument-name">Snare:</span>
-          <span class="sound-name">Break Snare</span>
-          <i class="fas fa-chevron-down"></i>
+      </header>
+      <main class="bg-white rounded shadow p-3">
+        <div class="border-bottom pb-3 mb-3">
+          <button id="add-track-button" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Add Track
+          </button>
         </div>
-        <div class="sound-select" data-instrument="hihat">
-          <span class="instrument-name">Hi-Hat:</span>
-          <span class="sound-name">Jazz Hat</span>
-          <i class="fas fa-chevron-down"></i>
+        <div class="sequencer">
+          <div class="track-list" id="track-list">
+            <!-- Tracks will be dynamically added here -->
+          </div>
         </div>
-      </div>
+      </main>
     </div>
 
-    <div class="sequencer">
-      <div class="track">
-        <div class="track-label">Kick</div>
-        <div class="track-steps" id="kick-track"></div>
+    <!-- Track Template -->
+    <template id="track-template">
+      <div
+        class="track bg-light border rounded mb-3 overflow-hidden"
+        data-track-color="1"
+      >
+        <div class="d-flex">
+          <div
+            class="track-label bg-light border-end p-2 d-flex justify-content-between"
+            style="width: 180px"
+          >
+            <div class="track-info">
+              <div class="track-name fw-bold text-dark small">Track 1</div>
+              <div class="track-sound text-secondary small" id="choose-sound">
+                Choose sound...
+                <div class="hidden" id="hidden-menu">
+                  <lu>
+                    <li>bruh bruh bruh</li>
+                  </lu>
+                </div>
+              </div>
+            </div>
+            <div class="track-actions">
+              <button class="btn btn-sm btn-track-settings text-secondary p-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="track-steps d-flex flex-grow-1 gap-1 p-2">
+            <!-- Steps will be dynamically generated here -->
+          </div>
+        </div>
       </div>
-      <div class="track">
-        <div class="track-label">Snare</div>
-        <div class="track-steps" id="snare-track"></div>
-      </div>
-      <div class="track">
-        <div class="track-label">Hi-Hat</div>
-        <div class="track-steps" id="hihat-track"></div>
-      </div>
-    </div>
-  </div>
+    </template>
 
-  <script src="drums.js"></script>
-</body>
+    <!-- Track Settings Modal Template -->
+    <template id="track-settings-template">
+      <div
+        class="modal-overlay position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+        style="z-index: 999"
+      >
+        <div
+          class="track-settings-modal position-fixed top-50 start-50 translate-middle bg-white rounded shadow-lg p-4"
+          style="width: 400px; max-width: 90%; z-index: 1000"
+        >
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Track Settings</h5>
+            <button class="btn-close btn-close-settings"></button>
+          </div>
+          <div class="d-flex flex-column gap-3">
+            <div class="sound-category-selector">
+              <label class="form-label">Instrument Category</label>
+              <div class="dropdown position-relative">
+                <div
+                  class="dropdown-trigger form-select d-flex justify-content-between align-items-center"
+                >
+                  <span class="selected-category">Select Category</span>
+                  <i class="fas fa-chevron-down"></i>
+                </div>
+                <div
+                  class="dropdown-menu category-dropdown position-absolute start-0 w-100 bg-white border shadow-sm overflow-auto"
+                  style="max-height: 200px; z-index: 10; display: none"
+                ></div>
+              </div>
+            </div>
+            <div class="sound-selector">
+              <label class="form-label">Sound</label>
+              <div class="dropdown position-relative">
+                <div
+                  class="dropdown-trigger form-select d-flex justify-content-between align-items-center"
+                >
+                  <span class="selected-sound">Select Sound</span>
+                  <i class="fas fa-chevron-down"></i>
+                </div>
+                <div
+                  class="dropdown-menu sound-dropdown position-absolute start-0 w-100 bg-white border shadow-sm overflow-auto"
+                  style="max-height: 200px; z-index: 10; display: none"
+                ></div>
+              </div>
+            </div>
+            <div class="volume-controls">
+              <label class="form-label">Volume</label>
+              <input
+                type="range"
+                class="form-range volume-slider"
+                min="0"
+                max="100"
+                value="100"
+              />
+            </div>
+            <div class="mute-solo-controls">
+              <button class="btn btn-secondary btn-mute">
+                <i class="fas fa-volume-up me-2"></i> Mute
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Bootstrap JS (Bundle with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Script -->
+    <script src="drums.js"></script>
+  </body>
 </html>
