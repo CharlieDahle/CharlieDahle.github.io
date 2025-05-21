@@ -6,7 +6,19 @@ function Drums() {
 
   return (
     <>
+      {/* This is the top parent of the drum machine. Componenet should be:
+        - Controls
+            - pause/play button
+            - bpm adjuster
+        - Tracks
+            - base body for all of the tracks
+            - measure counter at the top
+            - track elements
+                - sound selector
+                - clickable track to program beats
+                - 
       
+      */}
     </>
   )
 }
