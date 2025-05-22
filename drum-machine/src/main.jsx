@@ -1,23 +1,53 @@
+// main.jsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx';
-import Drums from './drums.jsx';
-import Home from './home.jsx'
-import AnimatedLayout from './AnimatedLayout.jsx'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import App from './App.jsx'
+import Drums from './drums.jsx'
+import Home from './home.jsx'
+import AnimatedPage from './AnimatedPage.jsx'
 
-const router = createBrowserRouter([
-  {path:'/', element: <AnimatedLayout key="app"><App/></AnimatedLayout>},
-  {path:'/drums', element: <AnimatedLayout key="drums"><Drums/></AnimatedLayout>},
-  {path:'/home', element: <AnimatedLayout key="home"><Home/></AnimatedLayout>}
-]);
+function AppRouter() {
+  const location = useLocation()
+  
+  return (
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" 
+          element={<AnimatedPage> 
+            <App />
+              </AnimatedPage>
+            } 
+            />
+          <Route 
+            path="/drums" 
+            element={
+              <AnimatedPage>
+                <Drums />
+              </AnimatedPage>
+            } 
+          />
+          <Route 
+            path="/home" 
+            element={
+              <AnimatedPage>
+                <Home />
+              </AnimatedPage>
+            } 
+          />
+        </Routes>
+      </AnimatePresence>
+    </div>
+  )
+}
 
 createRoot(document.getElementById('root')).render(
-<StrictMode>
-  <AnimatePresence mode="wait">
-    <RouterProvider router={router}/>
-  </AnimatePresence>
-</StrictMode>,
+  <StrictMode>
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  </StrictMode>
 )
