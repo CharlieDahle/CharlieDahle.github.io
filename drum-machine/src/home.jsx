@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './home.css'
+import { Link } from 'react-router-dom'
 
 function Home() {
   const [hoveredBlob, setHoveredBlob] = useState(null)
@@ -38,11 +39,14 @@ function Home() {
         onMouseEnter={() => setHoveredBlob(3)}
         onMouseLeave={() => setHoveredBlob(null)}
       ></div>
-      <div 
-        className="blob-shape shape-4 blob-4"
-        onMouseEnter={() => setHoveredBlob(4)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
+      <Link to="/drums">
+        <div
+          className="blob-shape shape-4 blob-4"
+          onMouseEnter={() => setHoveredBlob(4)}
+          onMouseLeave={() => setHoveredBlob(null)}
+        ></div>
+      </Link>
+
       <div 
         className="blob-shape shape-5 blob-5"
         onMouseEnter={() => setHoveredBlob(5)}
