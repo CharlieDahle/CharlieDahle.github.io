@@ -1,496 +1,405 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
 import io from 'socket.io-client';
-import drumSoundsData from './drum-sounds.json';
-import DrumGrid from './DrumGrid.jsx';
-import TransportControls from './TransportControls.jsx';
-import CollaborativePanel from './CollaborativePanel.jsx';
-import './DrumMachine.css'; 
-
-
-const TICKS_PER_BEAT = 480;
-const BEATS_PER_LOOP = 4;
-const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
-
-const SOUND_LIBRARY = drumSoundsData;
+import DrumGrid from './DrumGrid';
 
 function DrumMachine() {
-  // Mode and connection state
-  const [mode, setMode] = useState('solo');
+  // WebSocket connection
   const [socket, setSocket] = useState(null);
-  const [roomId, setRoomId] = useState('');
-  const [connectedUsers, setConnectedUsers] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
-
-  // Core drum state
-  const [bpm, setBpm] = useState(120);
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // Room state
+  const [roomId, setRoomId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [isInRoom, setIsInRoom] = useState(false);
+  
+  // Playback state (mirrors server state)
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTick, setCurrentTick] = useState(0);
+  const [bpm, setBpm] = useState(120);
   const [tracks, setTracks] = useState([]);
-  const [loadedSounds, setLoadedSounds] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
   
-  // Solo mode refs
-  const intervalRef = useRef(null);
-  const audioContextRef = useRef(null);
+  // UI state
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [joinRoomInput, setJoinRoomInput] = useState('');
+  
+  // Constants (must match server for ticks, but we can adjust visual sizing)
+  const TICKS_PER_BEAT = 480;
+  const BEATS_PER_LOOP = 16;
+  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
+  const PIXELS_PER_TICK = 0.1;
 
-  // Initialize audio and load sounds (both modes need this)
+  // Initialize WebSocket connection
   useEffect(() => {
-    initializeAudio();
+    const newSocket = io('ws://localhost:3001');
+    
+    newSocket.on('connect', () => {
+      console.log('Connected to server');
+      setIsConnected(true);
+    });
+    
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from server');
+      setIsConnected(false);
+      setIsInRoom(false);
+    });
+    
+    // Room events
+    newSocket.on('room-state', (state) => {
+      console.log('Received room state:', state);
+      setBpm(state.bpm);
+      setIsPlaying(state.isPlaying);
+      setCurrentTick(state.currentTick);
+      setTracks(state.tracks);
+      setUsers(state.users);
+    });
+    
+    newSocket.on('user-joined', ({ userId }) => {
+      console.log('User joined:', userId);
+      setUsers(prev => [...prev, userId]);
+    });
+    
+    newSocket.on('user-left', ({ userId }) => {
+      console.log('User left:', userId);
+      setUsers(prev => prev.filter(id => id !== userId));
+    });
+    
+    // Playback synchronization
+    newSocket.on('tick-sync', ({ tick, timestamp }) => {
+      setCurrentTick(tick);
+    });
+    
+    // Drum actions from server - mirror server's state changes
+    newSocket.on('drum-action', (action) => {
+      console.log('Received action:', action);
+      handleServerAction(action);
+    });
+    
+    setSocket(newSocket);
+    
     return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
+      newSocket.close();
     };
   }, []);
 
-  // Handle mode switching
-  useEffect(() => {
-    if (mode === 'collaborative') {
-      connectToServer();
-    } else {
-      disconnectFromServer();
-    }
-    
-    return () => {
-      disconnectFromServer();
-    };
-  }, [mode]);
-
-  // Solo mode playback loop
-  useEffect(() => {
-    if (mode === 'solo' && isPlaying) {
-      const tickInterval = (60 / bpm / TICKS_PER_BEAT) * 1000;
-      
-      intervalRef.current = setInterval(() => {
-        setCurrentTick(prevTick => {
-          const nextTick = (prevTick + 1) % TOTAL_TICKS;
-          playTickSounds(nextTick);
-          return nextTick;
-        });
-      }, tickInterval);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [mode, isPlaying, bpm, tracks]);
-
-  const initializeAudio = async () => {
-    try {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      await loadAudioFiles();
-    } catch (error) {
-      console.error('Failed to initialize audio:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const loadAudioFiles = async () => {
-    try {
-      const sounds = {};
-      
-      for (const [category, soundList] of Object.entries(SOUND_LIBRARY)) {
-        for (const sound of soundList) {
-          sounds[sound.file] = {
-            name: sound.name,
-            buffer: null,
-            category
-          };
-        }
-      }
-      
-      setLoadedSounds(sounds);
-      setIsLoading(false);
-      console.log('Loaded sounds:', Object.keys(sounds));
-    } catch (error) {
-      console.error('Failed to load audio files:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const connectToServer = () => {
-    try {
-      const newSocket = io('http://localhost:3001');
-      
-      newSocket.on('connect', () => {
-        console.log('Connected to server');
-        setConnectionStatus('connected');
-        setSocket(newSocket);
-      });
-
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from server');
-        setConnectionStatus('disconnected');
-        setSocket(null);
-        setRoomId('');
-        setConnectedUsers([]);
-      });
-
-      newSocket.on('room-state', (state) => {
-        console.log('Received room state:', state);
-        setBpm(state.bpm);
-        setIsPlaying(state.isPlaying);
-        setCurrentTick(state.currentTick);
-        setTracks(state.tracks);
-        setConnectedUsers(state.users || []);
-      });
-
-      newSocket.on('tick-sync', (data) => {
-        setCurrentTick(data.tick);
-        if (data.tick === 0 || data.tick % TICKS_PER_BEAT === 0) {
-          playTickSounds(data.tick);
-        }
-      });
-
-      newSocket.on('drum-action', (action) => {
-        console.log('Received action:', action);
-        handleServerAction(action);
-      });
-
-      newSocket.on('user-joined', (data) => {
-        console.log('User joined:', data.userId);
-        // Update the user list when someone joins
-        setConnectedUsers(prev => {
-          if (!prev.find(user => user.id === data.userId)) {
-            return [...prev, { id: data.userId, ...data }];
-          }
-          return prev;
-        });
-      });
-
-      newSocket.on('user-left', (data) => {
-        console.log('User left:', data.userId);
-        // Update the user list when someone leaves
-        setConnectedUsers(prev => prev.filter(user => user.id !== data.userId));
-      });
-
-      newSocket.on('users-updated', (users) => {
-        console.log('Users list updated:', users);
-        // Handle direct user list updates from server
-        setConnectedUsers(users || []);
-      });
-
-    } catch (error) {
-      console.error('Failed to connect to server:', error);
-      setConnectionStatus('error');
-    }
-  };
-
-  const disconnectFromServer = () => {
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
-      setConnectionStatus('disconnected');
-      setRoomId('');
-      setConnectedUsers([]);
-    }
-  };
-
+  // Handle actions received from server - simple mirroring
   const handleServerAction = (action) => {
     switch (action.type) {
-      case 'PLAY':
+      case 'play':
         setIsPlaying(true);
         break;
-      case 'PAUSE':
+        
+      case 'pause':
         setIsPlaying(false);
         break;
-      case 'STOP':
+        
+      case 'stop':
         setIsPlaying(false);
         setCurrentTick(0);
         break;
-      case 'SET_BPM':
-        setBpm(action.payload.bpm);
+        
+      case 'set-bpm':
+        setBpm(action.bpm);
         break;
+        
+      case 'toggle-note':
+        setTracks(prevTracks => {
+          return prevTracks.map(track => {
+            if (track.id === action.trackId) {
+              const existingBeatIndex = track.beats.findIndex(
+                beat => beat.tick === action.tick
+              );
+              
+              if (existingBeatIndex >= 0) {
+                // Remove existing beat
+                return {
+                  ...track,
+                  beats: track.beats.filter((_, index) => index !== existingBeatIndex)
+                };
+              } else {
+                // Add new beat
+                return {
+                  ...track,
+                  beats: [
+                    ...track.beats,
+                    {
+                      tick: action.tick,
+                      velocity: action.velocity || 127
+                    }
+                  ]
+                };
+              }
+            }
+            return track;
+          });
+        });
+        break;
+        
       default:
-        break;
+        console.log('Unknown action type:', action.type);
     }
   };
 
-  const playTickSounds = (tick) => {
-    tracks.forEach(track => {
-      const beat = track.beats.find(b => b.tick === tick);
-      if (beat) {
-        playSound(track.soundId, beat.velocity);
-      }
-    });
-  };
-
-  const playSound = (soundId, velocity = 127) => {
-    console.log(`Playing ${soundId} at velocity ${velocity}`);
-  };
-
-  // Action handlers
-  const handlePlay = () => {
-    if (mode === 'solo') {
-      if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
-      }
-      setIsPlaying(true);
-    } else if (socket && roomId) {
+  // Send action to server - dead simple
+  const sendDrumAction = (action) => {
+    if (socket && isInRoom) {
+      console.log('Sending action:', action);
       socket.emit('drum-action', {
         roomId,
-        action: { type: 'PLAY' }
+        action
       });
     }
   };
 
-  const handlePause = () => {
-    if (mode === 'solo') {
-      setIsPlaying(false);
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { type: 'PAUSE' }
-      });
-    }
-  };
+  // Periodic room state sync (safety net)
+  useEffect(() => {
+    if (!socket || !isInRoom) return;
 
-  const handleStop = () => {
-    if (mode === 'solo') {
-      setIsPlaying(false);
-      setCurrentTick(0);
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { type: 'STOP' }
-      });
-    }
-  };
+    const syncInterval = setInterval(() => {
+      console.log('Requesting room state sync...');
+      socket.emit('request-room-state', { roomId });
+    }, 30000); // Every 30 seconds
 
-  const handleBpmChange = (newBpm) => {
-    if (mode === 'solo') {
-      setBpm(newBpm);
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { type: 'SET_BPM', payload: { bpm: newBpm } }
-      });
-    }
-  };
+    return () => clearInterval(syncInterval);
+  }, [socket, isInRoom, roomId]);
 
-  const addTrack = (soundId) => {
-    if (mode === 'solo') {
-      const newTrack = {
-        id: `track-${Date.now()}`,
-        soundId,
-        beats: []
-      };
-      setTracks(prev => [...prev, newTrack]);
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { type: 'ADD_TRACK', payload: { soundId } }
-      });
-    }
-  };
-
-  const removeTrack = (trackId) => {
-    if (mode === 'solo') {
-      setTracks(prev => prev.filter(track => track.id !== trackId));
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { type: 'REMOVE_TRACK', payload: { trackId } }
-      });
-    }
-  };
-
-  const toggleBeat = (trackId, tick, velocity) => {
-    if (mode === 'solo') {
-      setTracks(prev => prev.map(track => {
-        if (track.id === trackId) {
-          const existingBeatIndex = track.beats.findIndex(beat => beat.tick === tick);
-          
-          if (existingBeatIndex >= 0) {
-            return {
-              ...track,
-              beats: track.beats.filter((_, index) => index !== existingBeatIndex)
-            };
-          } else {
-            return {
-              ...track,
-              beats: [...track.beats, { tick, velocity }]
-            };
-          }
-        }
-        return track;
-      }));
-    } else if (socket && roomId) {
-      socket.emit('drum-action', {
-        roomId,
-        action: { 
-          type: 'TOGGLE_BEAT', 
-          payload: { trackId, tick, velocity } 
-        }
-      });
-    }
-  };
-
-  // Add subdivision state and handler
-  // const [subdivision, setSubdivision] = useState('sixteenth');
-
-  // const handleSubdivisionChange = (newSubdivision) => {
-  //   console.log('Subdivision changed to:', newSubdivision);
-  //   setSubdivision(newSubdivision);
-  // };
-
-  // Room management
+  // Room management functions
   const createRoom = () => {
     if (socket) {
       socket.emit('create-room', (response) => {
         if (response.success) {
           setRoomId(response.roomId);
-          // Server now sends back the user list including the creator
-          setConnectedUsers(response.users || []);
-          console.log('Created room:', response.roomId, 'Users:', response.users);
-        } else {
-          console.error('Failed to create room:', response.error);
+          setUsers(response.users);
+          setIsInRoom(true);
+          console.log('Room created:', response.roomId);
         }
       });
     }
   };
 
-  const joinRoom = (roomIdToJoin) => {
-    if (socket && roomIdToJoin) {
-      socket.emit('join-room', { roomId: roomIdToJoin }, (response) => {
+  const joinRoom = () => {
+    if (socket && joinRoomInput.trim()) {
+      socket.emit('join-room', { roomId: joinRoomInput.trim() }, (response) => {
         if (response.success) {
-          setRoomId(roomIdToJoin);
-          // Server now sends back the user list including all users
-          setConnectedUsers(response.users || []);
-          console.log('Joined room:', roomIdToJoin, 'Users:', response.users);
+          setRoomId(joinRoomInput.trim());
+          setUsers(response.users);
+          setIsInRoom(true);
+          console.log('Joined room:', joinRoomInput.trim());
         } else {
-          console.error('Failed to join room:', response.error);
           alert('Failed to join room: ' + response.error);
         }
       });
     }
   };
 
-  if (isLoading) {
+  // Transport controls - simple actions
+  const handlePlay = () => {
+    sendDrumAction({ type: 'play' });
+  };
+
+  const handlePause = () => {
+    sendDrumAction({ type: 'pause' });
+  };
+
+  const handleStop = () => {
+    sendDrumAction({ type: 'stop' });
+  };
+
+  const handleBpmChange = (newBpm) => {
+    sendDrumAction({ type: 'set-bpm', bpm: parseInt(newBpm) });
+  };
+
+  // Note manipulation - wait for server response
+  const addNote = (trackId, tick, velocity = 127) => {
+    sendDrumAction({
+      type: 'toggle-note',
+      trackId,
+      tick,
+      velocity
+    });
+  };
+
+  const removeNote = (trackId, tick) => {
+    sendDrumAction({
+      type: 'toggle-note',
+      trackId,
+      tick
+    });
+  };
+
+  const moveNote = (trackId, fromTick, toTick) => {
+    // Remove from old position
+    sendDrumAction({
+      type: 'toggle-note',
+      trackId,
+      tick: fromTick
+    });
+    
+    // Add to new position (with small delay to ensure order)
+    setTimeout(() => {
+      sendDrumAction({
+        type: 'toggle-note',
+        trackId,
+        tick: toTick,
+        velocity: 127
+      });
+    }, 50);
+  };
+
+  // Connection status
+  if (!isConnected) {
     return (
-      <div className="drum-machine-container">
-        <div className="d-flex justify-content-center align-items-center" style={{minHeight: '50vh'}}>
-          <div className="text-center">
-            <div className="spinner-border text-primary mb-3" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <h4 className="text-secondary">Loading drum sounds...</h4>
-          </div>
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Connecting to server...</h2>
+      </div>
+    );
+  }
+
+  // Room selection
+  if (!isInRoom) {
+    return (
+      <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto' }}>
+        <h1>Collaborative Drum Machine</h1>
+        
+        <div style={{ marginBottom: '20px' }}>
+          <h3>Create New Room</h3>
+          <button 
+            onClick={createRoom}
+            style={{
+              background: '#27ae60',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            Create Room
+          </button>
+        </div>
+
+        <div>
+          <h3>Join Existing Room</h3>
+          <input
+            type="text"
+            value={joinRoomInput}
+            onChange={(e) => setJoinRoomInput(e.target.value)}
+            placeholder="Enter room ID"
+            style={{
+              padding: '8px',
+              marginRight: '10px',
+              border: '1px solid #ccc',
+              borderRadius: '4px'
+            }}
+            onKeyPress={(e) => e.key === 'Enter' && joinRoom()}
+          />
+          <button 
+            onClick={joinRoom}
+            style={{
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Join Room
+          </button>
         </div>
       </div>
     );
   }
 
+  // Main drum machine interface
   return (
-    <div className="drum-machine-container">
-      <h1 className="main-header">🥁 Drum Machine</h1>
-      
-      {/* Mode Selection Card */}
-      <div className="mode-selection-card">
-        <h5 className="mb-3">Choose Mode</h5>
+    <div style={{ padding: '20px' }}>
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Drum Machine - Room: {roomId}</h1>
         <div>
-          <button
-            onClick={() => setMode('solo')}
-            className={`btn mode-btn ${mode === 'solo' ? 'active' : ''}`}
-          >
-            Solo Mode
-          </button>
-          <button
-            onClick={() => setMode('collaborative')}
-            className={`btn mode-btn ${mode === 'collaborative' ? 'active' : ''}`}
-          >
-            Collaborative Mode
-          </button>
+          <strong>Users online: {users.length}</strong>
         </div>
       </div>
-
-      {/* Collaborative Mode */}
-      {mode === 'collaborative' && (
-        <CollaborativePanel
-          connectionStatus={connectionStatus}
-          roomId={roomId}
-          connectedUsers={connectedUsers}
-          onCreateRoom={createRoom}
-          onJoinRoom={joinRoom}
-        />
-      )}
 
       {/* Transport Controls */}
-      <TransportControls
-        isPlaying={isPlaying}
-        bpm={bpm}
+      <div style={{ 
+        margin: '20px 0', 
+        display: 'flex', 
+        gap: '10px', 
+        alignItems: 'center' 
+      }}>
+        <button 
+          onClick={isPlaying ? handlePause : handlePlay}
+          style={{
+            background: isPlaying ? '#e74c3c' : '#27ae60',
+            color: 'white',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          {isPlaying ? '⏸ Pause' : '▶ Play'}
+        </button>
+        
+        <button 
+          onClick={handleStop}
+          style={{
+            background: '#95a5a6',
+            color: 'white',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}
+        >
+          ⏹ Stop
+        </button>
+        
+        <label>
+          BPM: 
+          <input 
+            type="number" 
+            value={bpm} 
+            onChange={(e) => handleBpmChange(e.target.value)}
+            min="60" 
+            max="300"
+            style={{
+              marginLeft: '5px',
+              padding: '5px',
+              width: '60px'
+            }}
+          />
+        </label>
+      </div>
+
+      {/* Snap Toggle */}
+      <div style={{ marginBottom: '20px' }}>
+        <label>
+          <input 
+            type="checkbox" 
+            checked={snapToGrid} 
+            onChange={(e) => setSnapToGrid(e.target.checked)}
+          />
+          {' '}Snap to beat
+        </label>
+      </div>
+
+      {/* Main Drum Grid */}
+      <DrumGrid
+        tracks={tracks}
         currentTick={currentTick}
-        totalTicks={TOTAL_TICKS}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onStop={handleStop}
-        onBpmChange={handleBpmChange}
-        disabled={mode === 'collaborative' && !roomId}
+        isPlaying={isPlaying}
+        snapToGrid={snapToGrid}
+        onAddNote={addNote}
+        onRemoveNote={removeNote}
+        onMoveNote={moveNote}
+        TICKS_PER_BEAT={TICKS_PER_BEAT}
+        BEATS_PER_LOOP={BEATS_PER_LOOP}
+        PIXELS_PER_TICK={PIXELS_PER_TICK}
       />
-
-      {/* Add Track Card */}
-      <div className="add-track-card">
-        <h5 className="mb-3">Add Track</h5>
-        <div className="add-track-grid">
-          {Object.entries(loadedSounds).slice(0, 8).map(([soundId, sound]) => (
-            <button
-              key={soundId}
-              onClick={() => addTrack(soundId)}
-              disabled={mode === 'collaborative' && !roomId}
-              className="btn add-track-btn"
-            >
-              <Plus size={16} className="me-2" />
-              {sound.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tracks */}
-      <div className="tracks-container">
-        {tracks.map(track => (
-          <div key={track.id} className="track-card">
-            <div className="track-info">
-              <div className="track-name">{loadedSounds[track.soundId]?.name}</div>
-              <div className="track-beats">{track.beats.length} beats</div>
-            </div>
-            
-            <div className="track-grid-container">
-              <DrumGrid
-                track={track}
-                currentTick={currentTick}
-                onToggleBeat={(tick, velocity) => toggleBeat(track.id, tick, velocity)}
-                disabled={mode === 'collaborative' && !roomId}
-              />
-            </div>
-            
-            <div className="track-actions">
-              <button
-                onClick={() => removeTrack(track.id)}
-                disabled={mode === 'collaborative' && !roomId}
-                className="btn remove-track-btn"
-                title="Remove Track"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {tracks.length === 0 && (
-        <div className="empty-state">
-          <h4>🎵 Ready to Create</h4>
-          <p>Add some tracks above to start building your beat!</p>
-        </div>
-      )}
     </div>
   );
 }
