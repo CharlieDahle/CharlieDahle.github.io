@@ -62,7 +62,7 @@ function DrumMachine() {
   // Initialize WebSocket connection
   useEffect(() => {
     console.log('Connecting to server...');
-    const newSocket = io('ws://localhost:3001');
+    const newSocket = io('https://api.charliedahle.me');
     
     newSocket.on('connect', () => {
       console.log('Connected to server');
