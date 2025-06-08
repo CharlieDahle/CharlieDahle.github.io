@@ -21,11 +21,23 @@ class DrumScheduler {
     // Pattern data (will be set from React state)
     this.pattern = {};
     
+    // Audio buffers for loaded sounds
+    this.audioBuffers = {};
+    this.soundsLoaded = false;
+    
+    // Simple track to sound mapping
+    this.trackSounds = {
+      'kick': null,
+      'snare': null, 
+      'hihat': null,
+      'openhat': null
+    };
+    
     // RAF handle for cleanup
     this.schedulerRAF = null;
   }
 
-  // Initialize audio context (must be called after user interaction)
+  // Initialize audio context and load sounds
   async init() {
     if (!this.audioContext) {
       this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -36,9 +48,74 @@ class DrumScheduler {
       }
       
       console.log('DrumScheduler: Audio context initialized');
+      
+      // Load drum sounds
+      await this.loadSounds();
+      
       return true;
     }
     return true;
+  }
+
+  // Load drum sounds from JSON and audio files
+  async loadSounds() {
+    try {
+      // Import the JSON file
+      const soundLibrary = await import('./drum-sounds.json');
+      
+      console.log('DrumScheduler: Loading sounds...');
+      
+      // Pick default sounds for each track (first sound from each category)
+      const defaultSounds = {
+        'kick': soundLibrary.kicks?.[0]?.file,
+        'snare': soundLibrary.snares?.[0]?.file,
+        'hihat': soundLibrary.hihats?.[0]?.file,
+        'openhat': soundLibrary.cymbals?.[0]?.file
+      };
+      
+      // Load audio files for default sounds
+      for (const [trackId, soundFile] of Object.entries(defaultSounds)) {
+        if (soundFile) {
+          console.log(`Loading ${trackId}: ${soundFile}`);
+          const audioBuffer = await this.loadAudioFile(soundFile);
+          this.audioBuffers[soundFile] = audioBuffer;
+          this.trackSounds[trackId] = soundFile;
+        }
+      }
+      
+      this.soundsLoaded = true;
+      console.log('DrumScheduler: All sounds loaded successfully');
+      
+    } catch (error) {
+      console.error('DrumScheduler: Failed to load sounds:', error);
+      this.soundsLoaded = false;
+    }
+  }
+
+  // Load individual audio file into AudioBuffer
+  async loadAudioFile(filePath) {
+    try {
+      const response = await fetch(filePath);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.error(`Failed to load audio file: ${filePath}`, error);
+      return null;
+    }
+  }
+
+  // Play a sound at a specific time
+  playSound(soundFile, when) {
+    if (!this.audioContext || !this.audioBuffers[soundFile]) {
+      return;
+    }
+
+    const audioBuffer = this.audioBuffers[soundFile];
+    const source = this.audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(this.audioContext.destination);
+    source.start(when);
   }
 
   // Update BPM
@@ -126,28 +203,18 @@ class DrumScheduler {
 
   // Schedule any notes that should play at this tick
   scheduleNotesAtTick(tick, when) {
-    // For now, we're not playing actual audio
-    // But this is where we'd schedule drum samples to play
-    
-    // Example of what we'd do when we add audio:
-    // if (this.pattern.kick?.includes(tick)) {
-    //   this.playKick(when);
-    // }
-    // if (this.pattern.snare?.includes(tick)) {
-    //   this.playSnare(when);
-    // }
-    
-    // For debugging, we could log when notes should play
-    const notesToPlay = [];
+    if (!this.soundsLoaded) return;
+
+    // Check each track and play if there's a note at this tick
     Object.keys(this.pattern).forEach(trackId => {
       if (this.pattern[trackId]?.includes(tick)) {
-        notesToPlay.push(trackId);
+        const soundFile = this.trackSounds[trackId];
+        if (soundFile) {
+          this.playSound(soundFile, when);
+          console.log(`Playing ${trackId} at tick ${tick}`);
+        }
       }
     });
-    
-    if (notesToPlay.length > 0) {
-      console.log(`DrumScheduler: Should play at tick ${tick}:`, notesToPlay);
-    }
   }
 
   // Advance to next tick
