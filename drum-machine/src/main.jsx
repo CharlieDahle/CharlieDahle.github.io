@@ -38,6 +38,7 @@ function AppRouter() {
               </AnimatedPage>
             } 
           />
+          <Route path="*" element={<AnimatedPage><App /></AnimatedPage>} />
         </Routes>
       </AnimatePresence>
     </div>
@@ -51,3 +52,4 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>
 )
+

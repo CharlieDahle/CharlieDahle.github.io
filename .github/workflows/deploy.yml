@@ -52,6 +52,23 @@ jobs:
           # but let's make sure the directory exists
           mkdir -p dist/app
 
+          # Create 404.html for React app SPA routing
+          cat > dist/app/404.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Redirecting...</title>
+              <script type="text/javascript">
+                // Redirect to main app for SPA routing
+                window.location.replace('/app/');
+              </script>
+            </head>
+            <body>
+            </body>
+          </html>
+          EOF
+
           # Copy any additional assets if needed
           ls -la dist/
 
