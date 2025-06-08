@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Square, Plus, Trash2, Users, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import io from 'socket.io-client';
 import drumSoundsData from './drum-sounds.json';
 import DrumGrid from './DrumGrid.jsx';
+import TransportControls from './TransportControls.jsx';
+import CollaborativePanel from './CollaborativePanel.jsx';
 import './DrumMachine.css'; 
 
 
@@ -17,7 +19,6 @@ function DrumMachine() {
   const [mode, setMode] = useState('solo');
   const [socket, setSocket] = useState(null);
   const [roomId, setRoomId] = useState('');
-  const [joinRoomInput, setJoinRoomInput] = useState('');
   const [connectedUsers, setConnectedUsers] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
@@ -138,7 +139,7 @@ function DrumMachine() {
         setIsPlaying(state.isPlaying);
         setCurrentTick(state.currentTick);
         setTracks(state.tracks);
-        setConnectedUsers(state.users);
+        setConnectedUsers(state.users || []);
       });
 
       newSocket.on('tick-sync', (data) => {
@@ -155,10 +156,25 @@ function DrumMachine() {
 
       newSocket.on('user-joined', (data) => {
         console.log('User joined:', data.userId);
+        // Update the user list when someone joins
+        setConnectedUsers(prev => {
+          if (!prev.find(user => user.id === data.userId)) {
+            return [...prev, { id: data.userId, ...data }];
+          }
+          return prev;
+        });
       });
 
       newSocket.on('user-left', (data) => {
         console.log('User left:', data.userId);
+        // Update the user list when someone leaves
+        setConnectedUsers(prev => prev.filter(user => user.id !== data.userId));
+      });
+
+      newSocket.on('users-updated', (users) => {
+        console.log('Users list updated:', users);
+        // Handle direct user list updates from server
+        setConnectedUsers(users || []);
       });
 
     } catch (error) {
@@ -317,25 +333,40 @@ function DrumMachine() {
     }
   };
 
+  // Add subdivision state and handler
+  // const [subdivision, setSubdivision] = useState('sixteenth');
+
+  // const handleSubdivisionChange = (newSubdivision) => {
+  //   console.log('Subdivision changed to:', newSubdivision);
+  //   setSubdivision(newSubdivision);
+  // };
+
   // Room management
   const createRoom = () => {
     if (socket) {
       socket.emit('create-room', (response) => {
         if (response.success) {
           setRoomId(response.roomId);
-          console.log('Created room:', response.roomId);
+          // Server now sends back the user list including the creator
+          setConnectedUsers(response.users || []);
+          console.log('Created room:', response.roomId, 'Users:', response.users);
+        } else {
+          console.error('Failed to create room:', response.error);
         }
       });
     }
   };
 
-  const joinRoom = () => {
-    if (socket && joinRoomInput.trim()) {
-      socket.emit('join-room', { roomId: joinRoomInput.trim() }, (response) => {
+  const joinRoom = (roomIdToJoin) => {
+    if (socket && roomIdToJoin) {
+      socket.emit('join-room', { roomId: roomIdToJoin }, (response) => {
         if (response.success) {
-          setRoomId(joinRoomInput.trim());
-          console.log('Joined room:', joinRoomInput.trim());
+          setRoomId(roomIdToJoin);
+          // Server now sends back the user list including all users
+          setConnectedUsers(response.users || []);
+          console.log('Joined room:', roomIdToJoin, 'Users:', response.users);
         } else {
+          console.error('Failed to join room:', response.error);
           alert('Failed to join room: ' + response.error);
         }
       });
@@ -345,8 +376,13 @@ function DrumMachine() {
   if (isLoading) {
     return (
       <div className="drum-machine-container">
-        <div className="text-center">
-          <h2>Loading drum sounds...</h2>
+        <div className="d-flex justify-content-center align-items-center" style={{minHeight: '50vh'}}>
+          <div className="text-center">
+            <div className="spinner-border text-primary mb-3" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <h4 className="text-secondary">Loading drum sounds...</h4>
+          </div>
         </div>
       </div>
     );
@@ -354,122 +390,63 @@ function DrumMachine() {
 
   return (
     <div className="drum-machine-container">
-      <h1 className="mb-4">Drum Machine</h1>
+      <h1 className="main-header">🥁 Drum Machine</h1>
       
-      {/* Mode Selection */}
-      <div className="mb-4">
-        <button
-          onClick={() => setMode('solo')}
-          className={`btn mode-btn ${mode === 'solo' ? 'btn-primary active' : 'btn-outline-secondary'}`}
-        >
-          Solo Mode
-        </button>
-        <button
-          onClick={() => setMode('collaborative')}
-          className={`btn mode-btn ${mode === 'collaborative' ? 'btn-primary active' : 'btn-outline-secondary'}`}
-        >
-          Collaborative Mode
-        </button>
+      {/* Mode Selection Card */}
+      <div className="mode-selection-card">
+        <h5 className="mb-3">Choose Mode</h5>
+        <div>
+          <button
+            onClick={() => setMode('solo')}
+            className={`btn mode-btn ${mode === 'solo' ? 'active' : ''}`}
+          >
+            Solo Mode
+          </button>
+          <button
+            onClick={() => setMode('collaborative')}
+            className={`btn mode-btn ${mode === 'collaborative' ? 'active' : ''}`}
+          >
+            Collaborative Mode
+          </button>
+        </div>
       </div>
 
-      {/* Collaborative Mode UI */}
+      {/* Collaborative Mode */}
       {mode === 'collaborative' && (
-        <div className="collaborative-panel">
-          <div className="status-indicator">
-            {connectionStatus === 'connected' ? <Wifi size={20} /> : <WifiOff size={20} />}
-            <span>Status: {connectionStatus}</span>
-            {connectedUsers.length > 0 && (
-              <div className="d-flex align-items-center ms-4">
-                <Users size={16} className="me-2" />
-                <span>{connectedUsers.length} users</span>
-              </div>
-            )}
-          </div>
-
-          {connectionStatus === 'connected' && !roomId && (
-            <div className="room-controls">
-              <button
-                onClick={createRoom}
-                className="btn btn-success"
-              >
-                Create Room
-              </button>
-              <input
-                type="text"
-                value={joinRoomInput}
-                onChange={(e) => setJoinRoomInput(e.target.value)}
-                placeholder="Room ID"
-                className="form-control"
-                style={{width: '200px'}}
-              />
-              <button
-                onClick={joinRoom}
-                className="btn btn-primary"
-              >
-                Join Room
-              </button>
-            </div>
-          )}
-
-          {roomId && (
-            <div className="text-success">
-              Connected to room: <code>{roomId}</code>
-            </div>
-          )}
-        </div>
+        <CollaborativePanel
+          connectionStatus={connectionStatus}
+          roomId={roomId}
+          connectedUsers={connectedUsers}
+          onCreateRoom={createRoom}
+          onJoinRoom={joinRoom}
+        />
       )}
 
       {/* Transport Controls */}
-      <div className="transport-controls">
-        <button
-          onClick={isPlaying ? handlePause : handlePlay}
-          disabled={mode === 'collaborative' && !roomId}
-          className="btn btn-primary d-flex align-items-center"
-        >
-          {isPlaying ? <Pause size={20} className="me-2" /> : <Play size={20} className="me-2" />}
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
-        
-        <button
-          onClick={handleStop}
-          disabled={mode === 'collaborative' && !roomId}
-          className="btn btn-danger d-flex align-items-center"
-        >
-          <Square size={20} className="me-2" />
-          Stop
-        </button>
-        
-        <div className="d-flex align-items-center">
-          <label className="me-2">BPM:</label>
-          <input
-            type="number"
-            value={bpm}
-            onChange={(e) => handleBpmChange(Number(e.target.value))}
-            disabled={mode === 'collaborative' && !roomId}
-            className="form-control"
-            style={{width: '80px'}}
-            min="60"
-            max="200"
-          />
-        </div>
-        
-        <div className="small">
-          Tick: {currentTick} / {TOTAL_TICKS}
-        </div>
-      </div>
+      <TransportControls
+        isPlaying={isPlaying}
+        bpm={bpm}
+        currentTick={currentTick}
+        totalTicks={TOTAL_TICKS}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onStop={handleStop}
+        onBpmChange={handleBpmChange}
+        disabled={mode === 'collaborative' && !roomId}
+      />
 
-      {/* Add Track Section */}
-      <div className="mb-4">
-        <h3 className="mb-3">Add Track</h3>
+      {/* Add Track Card */}
+      <div className="add-track-card">
+        <h5 className="mb-3">Add Track</h5>
         <div className="add-track-grid">
           {Object.entries(loadedSounds).slice(0, 8).map(([soundId, sound]) => (
             <button
               key={soundId}
               onClick={() => addTrack(soundId)}
               disabled={mode === 'collaborative' && !roomId}
-              className="btn btn-success btn-sm"
+              className="btn add-track-btn"
             >
-              <Plus size={16} className="me-1" />
+              <Plus size={16} className="me-2" />
               {sound.name}
             </button>
           ))}
@@ -477,15 +454,15 @@ function DrumMachine() {
       </div>
 
       {/* Tracks */}
-      <div>
+      <div className="tracks-container">
         {tracks.map(track => (
-          <div key={track.id} className="track-row">
+          <div key={track.id} className="track-card">
             <div className="track-info">
               <div className="track-name">{loadedSounds[track.soundId]?.name}</div>
               <div className="track-beats">{track.beats.length} beats</div>
             </div>
             
-            <div className="drum-grid">
+            <div className="track-grid-container">
               <DrumGrid
                 track={track}
                 currentTick={currentTick}
@@ -494,20 +471,24 @@ function DrumMachine() {
               />
             </div>
             
-            <button
-              onClick={() => removeTrack(track.id)}
-              disabled={mode === 'collaborative' && !roomId}
-              className="btn btn-danger"
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="track-actions">
+              <button
+                onClick={() => removeTrack(track.id)}
+                disabled={mode === 'collaborative' && !roomId}
+                className="btn remove-track-btn"
+                title="Remove Track"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
       {tracks.length === 0 && (
         <div className="empty-state">
-          Add some tracks to get started!
+          <h4>🎵 Ready to Create</h4>
+          <p>Add some tracks above to start building your beat!</p>
         </div>
       )}
     </div>

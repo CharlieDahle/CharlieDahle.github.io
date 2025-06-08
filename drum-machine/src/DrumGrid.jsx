@@ -2,82 +2,50 @@ import React from 'react';
 import './DrumGrid.css';
 
 const TICKS_PER_BEAT = 480;
-const BEATS_PER_LOOP = 4;
-const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
+const BEATS_PER_BAR = 4;
+const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_BAR;
 
 function DrumGrid({ 
   track, 
   currentTick, 
   onToggleBeat, 
-  disabled = false,
-  subdivision = 'sixteenth' // quarter, eighth, sixteenth
+  disabled = false
 }) {
   
-  // Calculate grid positions based on subdivision
-  const getGridPositions = () => {
-    switch (subdivision) {
-      case 'quarter':
-        return Array.from({ length: 4 }, (_, i) => i * TICKS_PER_BEAT);
-      case 'eighth':
-        return Array.from({ length: 8 }, (_, i) => i * (TICKS_PER_BEAT / 2));
-      case 'sixteenth':
-        return Array.from({ length: 16 }, (_, i) => i * (TICKS_PER_BEAT / 4));
-      default:
-        return Array.from({ length: 16 }, (_, i) => i * (TICKS_PER_BEAT / 4));
-    }
-  };
-
-  const gridPositions = getGridPositions();
+  // Create 16 positions for now (1 bar, 16th note grid)
+  const gridPositions = Array.from({ length: 16 }, (_, i) => i * (TICKS_PER_BEAT / 4));
 
   // Check if a beat exists at a specific tick
   const hasBeat = (tick) => {
     return track.beats.some(beat => beat.tick === tick);
   };
 
-  // Get beat velocity at a specific tick
-  const getBeatVelocity = (tick) => {
-    const beat = track.beats.find(beat => beat.tick === tick);
-    return beat ? beat.velocity : 127;
-  };
-
-  // Check if current tick is at this position (for playback indicator)
+  // Check if current tick is at this position
   const isCurrentPosition = (tick) => {
-    return currentTick === tick;
+    // Since we only show 1 bar (16 positions), we need to wrap the currentTick
+    const wrappedCurrentTick = currentTick % TOTAL_TICKS;
+    return wrappedCurrentTick === tick;
   };
 
-  // Get velocity class for styling
-  const getVelocityClass = (tick) => {
-    if (!hasBeat(tick)) return '';
-    
-    const velocity = getBeatVelocity(tick);
-    const intensity = velocity / 127; // Normalize to 0-1
-    
-    if (intensity > 0.8) return 'velocity-high';
-    if (intensity > 0.6) return 'velocity-med';
-    return 'velocity-low';
-  };
-
-  // Handle beat toggle
+  // Simple click handler - just toggle on/off
   const handleCellClick = (tick) => {
     if (disabled) return;
     
-    const velocity = hasBeat(tick) ? 0 : 127; // Remove if exists, add if doesn't
+    const velocity = hasBeat(tick) ? 0 : 127; // Simple toggle
     onToggleBeat(tick, velocity);
   };
 
-  // Get cell classes
+  // Get cell classes - much simpler
   const getCellClasses = (tick, index) => {
     const classes = ['grid-cell'];
     
-    const isDownbeat = tick % TICKS_PER_BEAT === 0;
-    const isOffbeat = tick % (TICKS_PER_BEAT / 2) === 0;
-    
-    if (isDownbeat) classes.push('downbeat');
-    else if (isOffbeat) classes.push('offbeat');
+    // Mark downbeats (every 4th cell = beats 1,2,3,4)
+    if (index % 4 === 0) {
+      classes.push('downbeat');
+    }
     
     if (hasBeat(tick)) {
       classes.push('has-beat');
-      classes.push(getVelocityClass(tick));
     }
     
     if (isCurrentPosition(tick)) {
@@ -87,57 +55,33 @@ function DrumGrid({
     return classes.join(' ');
   };
 
+  // Get beat number for display
+  const getBeatNumber = (index) => {
+    return Math.floor(index / 4) + 1;
+  };
+
   return (
     <div className="drum-grid-container">
-      {/* Beat measure indicators */}
-      <div className="grid-measures">
+      {/* Beat markers */}
+      <div className="beat-markers">
         {[1, 2, 3, 4].map(beat => (
-          <div key={beat}>
+          <div key={beat} className="beat-marker">
             {beat}
           </div>
         ))}
       </div>
 
-      {/* Main grid */}
+      {/* Simple grid */}
       <div className="grid-cells">
         {gridPositions.map((tick, index) => (
-          <div key={tick} className="position-relative">
-            {/* Grid cell */}
-            <button
-              onClick={() => handleCellClick(tick)}
-              disabled={disabled}
-              className={getCellClasses(tick, index)}
-              title={`Tick: ${tick}${hasBeat(tick) ? ` (Velocity: ${getBeatVelocity(tick)})` : ''}`}
-            >
-              {/* Beat indicator */}
-              {hasBeat(tick) && (
-                <div className="beat-indicator" />
-              )}
-            </button>
-
-            {/* Playhead indicator */}
-            {isCurrentPosition(tick) && (
-              <div className="playhead" />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Subdivision selector */}
-      <div className="subdivision-controls">
-        <label>Grid:</label>
-        {[
-          { key: 'quarter', label: '1/4' },
-          { key: 'eighth', label: '1/8' },
-          { key: 'sixteenth', label: '1/16' }
-        ].map(sub => (
           <button
-            key={sub.key}
-            onClick={() => {/* We'll add this functionality later */}}
-            className={`subdivision-btn ${subdivision === sub.key ? 'active' : ''}`}
-            type="button"
+            key={tick}
+            onClick={() => handleCellClick(tick)}
+            disabled={disabled}
+            className={getCellClasses(tick, index)}
+            title={`Beat ${getBeatNumber(index)}, Position ${index + 1}`}
           >
-            {sub.label}
+            {hasBeat(tick) && <div className="beat-dot" />}
           </button>
         ))}
       </div>

@@ -1,38 +1,43 @@
-/* DrumGrid.css */
+/* DrumGrid.css - Simplified Timeline Style */
 .drum-grid-container {
-  background-color: #404040;
+  background-color: #f8f9fa;
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   width: 100%;
+  border: 1px solid #e9ecef;
 }
 
-.grid-measures {
+.beat-markers {
   display: flex;
   margin-bottom: 0.5rem;
+  padding: 0 2px;
 }
 
-.grid-measures div {
+.beat-marker {
   flex: 1;
   text-align: center;
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #495057;
+  padding: 0.25rem;
 }
 
 .grid-cells {
   display: flex;
-  gap: 2px;
-  position: relative;
+  gap: 1px;
+  background-color: #dee2e6;
+  padding: 1px;
+  border-radius: 4px;
 }
 
 .grid-cell {
   flex: 1;
-  height: 2rem;
-  border: 1px solid #666;
-  border-radius: 0.25rem;
-  background-color: #2d2d2d;
+  height: 3rem;
+  border: none;
+  background-color: white;
   cursor: pointer;
   position: relative;
-  transition: all 0.1s;
+  transition: all 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,7 +45,7 @@
 }
 
 .grid-cell:hover:not(:disabled) {
-  background-color: #555;
+  background-color: #e9ecef;
 }
 
 .grid-cell:disabled {
@@ -50,38 +55,45 @@
 
 .grid-cell:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
+  box-shadow: inset 0 0 0 2px #007bff;
 }
 
+/* Downbeats (1, 2, 3, 4) get a left border */
 .grid-cell.downbeat {
-  border: 2px solid white;
+  border-left: 3px solid #495057;
 }
 
-.grid-cell.offbeat {
-  border-color: #999;
+/* First cell gets no left border since it's the start */
+.grid-cell:first-child {
+  border-left: none;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
+.grid-cell:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Beat exists - simple blue background */
 .grid-cell.has-beat {
-  background-color: #dc3545;
+  background-color: #007bff;
+  color: white;
 }
 
-.grid-cell.has-beat.velocity-high {
-  background-color: #dc3545;
+.grid-cell.has-beat:hover:not(:disabled) {
+  background-color: #0056b3;
 }
 
-.grid-cell.has-beat.velocity-med {
-  background-color: #fd7e14;
-}
-
-.grid-cell.has-beat.velocity-low {
-  background-color: #ffc107;
-}
-
+/* Current position - green highlight */
 .grid-cell.current-position {
-  box-shadow: 0 0 0 2px #0d6efd;
+  background-color: #28a745 !important;
+  color: white;
+  box-shadow: inset 0 0 0 2px #ffffff;
 }
 
-.beat-indicator {
+/* Simple beat indicator */
+.beat-dot {
   width: 8px;
   height: 8px;
   background-color: white;
@@ -89,58 +101,13 @@
   pointer-events: none;
 }
 
-.playhead {
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-bottom: 8px solid #0d6efd;
-  pointer-events: none;
-}
+/* Responsive */
+@media (max-width: 768px) {
+  .grid-cell {
+    height: 3.5rem;
+  }
 
-.subdivision-controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  align-items: center;
-}
-
-.subdivision-controls label {
-  font-size: 0.75rem;
-  color: #888;
-  margin-right: 0.5rem;
-  margin-bottom: 0;
-}
-
-.subdivision-btn {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border: 1px solid #666;
-  background-color: #404040;
-  color: white;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.subdivision-btn:hover {
-  background-color: #555;
-}
-
-.subdivision-btn.active {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.subdivision-btn.active:hover {
-  background-color: #0b5ed7;
-}
-
-.subdivision-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+  .beat-marker {
+    font-size: 0.75rem;
+  }
 }
