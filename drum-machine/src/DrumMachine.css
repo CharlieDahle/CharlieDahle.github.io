@@ -1,0 +1,84 @@
+/* DrumMachine.css */
+.drum-machine-container {
+  background-color: #1a1a1a;
+  color: white;
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.mode-btn {
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mode-btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.transport-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.add-track-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.track-row {
+  background-color: #2d2d2d;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.track-info {
+  min-width: 150px;
+}
+
+.track-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.track-beats {
+  font-size: 0.875rem;
+  color: #888;
+}
+
+.collaborative-panel {
+  background-color: #2d2d2d;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.room-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: #888;
+  padding: 3rem;
+}

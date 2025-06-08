@@ -22,44 +22,47 @@ function ShapeStack() {
   const currentText = hoveredBlob ? blobTexts[hoveredBlob] : defaultText
   
   return (
-    <div className="shape-stack">
-      <div 
-        className="blob-shape shape-1 blob-1"
-        onMouseEnter={() => setHoveredBlob(1)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
-      <div 
-        className="blob-shape shape-2 blob-2"
-        onMouseEnter={() => setHoveredBlob(2)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
-      <div 
-        className="blob-shape shape-3 blob-3"
-        onMouseEnter={() => setHoveredBlob(3)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
-      <Link to="/drums">
-        <div
-          className="blob-shape shape-4 blob-4"
-          onMouseEnter={() => setHoveredBlob(4)}
+    <> 
+      <div className="site-title">charliedahle.me</div>
+      <div className="shape-stack">
+        <div 
+          className="blob-shape shape-1 blob-1"
+          onMouseEnter={() => setHoveredBlob(1)}
           onMouseLeave={() => setHoveredBlob(null)}
         ></div>
-      </Link>
+        <div 
+          className="blob-shape shape-2 blob-2"
+          onMouseEnter={() => setHoveredBlob(2)}
+          onMouseLeave={() => setHoveredBlob(null)}
+        ></div>
+        <div 
+          className="blob-shape shape-3 blob-3"
+          onMouseEnter={() => setHoveredBlob(3)}
+          onMouseLeave={() => setHoveredBlob(null)}
+        ></div>
+        <Link to="/DrumMachine">
+          <div
+            className="blob-shape shape-4 blob-4"
+            onMouseEnter={() => setHoveredBlob(4)}
+            onMouseLeave={() => setHoveredBlob(null)}
+          ></div>
+        </Link>
 
-      <div 
-        className="blob-shape shape-5 blob-5"
-        onMouseEnter={() => setHoveredBlob(5)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
-      <div 
-        className="blob-shape shape-6 blob-6"
-        onMouseEnter={() => setHoveredBlob(6)}
-        onMouseLeave={() => setHoveredBlob(null)}
-      ></div>
-      <div className="center-text">
-        {currentText}
+        <div 
+          className="blob-shape shape-5 blob-5"
+          onMouseEnter={() => setHoveredBlob(5)}
+          onMouseLeave={() => setHoveredBlob(null)}
+        ></div>
+        <div 
+          className="blob-shape shape-6 blob-6"
+          onMouseEnter={() => setHoveredBlob(6)}
+          onMouseLeave={() => setHoveredBlob(null)}
+        ></div>
+        <div className="center-text">
+          {currentText}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

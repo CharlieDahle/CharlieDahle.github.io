@@ -11,7 +11,7 @@ function App() {
         <div className="terminal-input">
             <input type="text" id="command-input" autofocus/>
         </div>
-    </div>
+      </div>
     </>
   )
 }

@@ -1,0 +1,146 @@
+/* DrumGrid.css */
+.drum-grid-container {
+  background-color: #404040;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  width: 100%;
+}
+
+.grid-measures {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.grid-measures div {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.grid-cells {
+  display: flex;
+  gap: 2px;
+  position: relative;
+}
+
+.grid-cell {
+  flex: 1;
+  height: 2rem;
+  border: 1px solid #666;
+  border-radius: 0.25rem;
+  background-color: #2d2d2d;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.grid-cell:hover:not(:disabled) {
+  background-color: #555;
+}
+
+.grid-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.grid-cell:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.5);
+}
+
+.grid-cell.downbeat {
+  border: 2px solid white;
+}
+
+.grid-cell.offbeat {
+  border-color: #999;
+}
+
+.grid-cell.has-beat {
+  background-color: #dc3545;
+}
+
+.grid-cell.has-beat.velocity-high {
+  background-color: #dc3545;
+}
+
+.grid-cell.has-beat.velocity-med {
+  background-color: #fd7e14;
+}
+
+.grid-cell.has-beat.velocity-low {
+  background-color: #ffc107;
+}
+
+.grid-cell.current-position {
+  box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.beat-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: white;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.playhead {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 8px solid #0d6efd;
+  pointer-events: none;
+}
+
+.subdivision-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+
+.subdivision-controls label {
+  font-size: 0.75rem;
+  color: #888;
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+}
+
+.subdivision-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid #666;
+  background-color: #404040;
+  color: white;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.subdivision-btn:hover {
+  background-color: #555;
+}
+
+.subdivision-btn.active {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.subdivision-btn.active:hover {
+  background-color: #0b5ed7;
+}
+
+.subdivision-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}

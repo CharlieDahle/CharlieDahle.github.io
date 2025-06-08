@@ -1,11 +1,16 @@
+/* index.css - keep your existing styles for other pages */
 body {
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+}
+
+/* Your existing terminal styles for App.jsx and Home.jsx */
+.page-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  margin: 0;
   background-color: #fffaf0; /* Eggshell cream */
-  font-family: "Courier New", Courier, monospace;
 }
 
 .terminal {
@@ -42,7 +47,7 @@ body {
   margin-right: 5px;
 }
 
-input {
+.terminal input {
   background: transparent;
   border: none;
   color: #ff69b4;
