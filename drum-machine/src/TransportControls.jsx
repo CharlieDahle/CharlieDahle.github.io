@@ -1,62 +1,65 @@
 import React from 'react';
-import { Play, Pause, Square } from 'lucide-react';
 
 function TransportControls({ 
   isPlaying, 
-  bpm, 
   currentTick, 
-  totalTicks,
+  bpm, 
   onPlay, 
   onPause, 
-  onStop, 
-  onBpmChange, 
-  disabled = false 
+  onStop,
+  TICKS_PER_BEAT = 480,
+  BEATS_PER_LOOP = 16 
 }) {
+  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
   
-  const handleBpmChange = (e) => {
-    const newBpm = Number(e.target.value);
-    // Allow any valid number, let the parent component handle validation
-    onBpmChange(newBpm);
-  };
+  // Calculate current position for display
+  const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
+  const progress = (currentTick / TOTAL_TICKS) * 100;
 
   return (
-    <div className="transport-controls-card">
-      <h5 className="mb-3">Transport Controls</h5>
-      <div className="transport-controls">
-        <button
-          onClick={isPlaying ? onPause : onPlay}
-          disabled={disabled}
-          className="btn transport-btn play-pause"
-        >
-          {isPlaying ? <Pause size={20} className="me-2" /> : <Play size={20} className="me-2" />}
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
-        
-        <button
-          onClick={onStop}
-          disabled={disabled}
-          className="btn transport-btn stop"
-        >
-          <Square size={20} className="me-2" />
-          Stop
-        </button>
-        
-        <div className="bpm-control">
-          <label className="me-2">BPM:</label>
-          <input
-            type="number"
-            value={bpm}
-            onChange={handleBpmChange}
-            disabled={disabled}
-            className="form-control"
-            min="60"
-            max="200"
-            step="1"
-          />
-        </div>
-        
-        <div className="tick-display">
-          <small>Tick: {currentTick} / {totalTicks}</small>
+    <div className="card mb-4">
+      <div className="card-body">
+        <div className="row align-items-center">
+          {/* Transport Buttons */}
+          <div className="col-auto">
+            <div className="btn-group" role="group">
+              <button 
+                className={`btn ${isPlaying ? 'btn-warning' : 'btn-success'}`}
+                onClick={isPlaying ? onPause : onPlay}
+              >
+                {isPlaying ? (
+                  <>⏸ Pause</>
+                ) : (
+                  <>▶ Play</>
+                )}
+              </button>
+              <button 
+                className="btn btn-secondary"
+                onClick={onStop}
+              >
+                ⏹ Stop
+              </button>
+            </div>
+          </div>
+
+          {/* Position Display */}
+          <div className="col-auto">
+            <div className="d-flex align-items-center">
+              <span className="badge bg-info me-2">
+                Beat: {currentBeat}/{BEATS_PER_LOOP}
+              </span>
+              <span className="badge bg-secondary">
+                Tick: {currentTick}
+              </span>
+            </div>
+          </div>
+
+          {/* BPM Display */}
+          <div className="col-auto ms-auto">
+            <span className="badge bg-primary fs-6">
+              {bpm} BPM
+            </span>
+          </div>
         </div>
       </div>
     </div>
