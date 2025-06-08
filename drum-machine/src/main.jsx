@@ -46,7 +46,7 @@ function AppRouter() {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/app">
       <AppRouter />
     </BrowserRouter>
   </StrictMode>
