@@ -1,9 +1,7 @@
-name: Deploy to GitHub Pages
+name: Deploy React App to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 permissions:
@@ -40,37 +38,32 @@ jobs:
           cd drum-machine
           npm run build
 
-      - name: Setup deployment directory
+      - name: Create 404.html for SPA routing
         run: |
-          # Create dist directory
-          mkdir -p dist
-
-          # Copy vanilla app files to root of dist
-          cp -r vanilla-app/* dist/
-
-          # React app is already built to dist/app by vite config
-          # but let's make sure the directory exists
-          mkdir -p dist/app
-
-          # Create 404.html for React app SPA routing
-          cat > dist/app/404.html << 'EOF'
+          cat > dist/404.html << 'EOF'
           <!DOCTYPE html>
           <html>
             <head>
               <meta charset="utf-8">
               <title>Redirecting...</title>
               <script type="text/javascript">
-                // Redirect to main app for SPA routing
-                window.location.replace('/app/');
+                // Simple SPA redirect
+                var pathSegmentsToKeep = 1;
+                var l = window.location;
+                l.replace(
+                  l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                  l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + 
+                  '/?' + 
+                  l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+                  (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                  l.hash
+                );
               </script>
             </head>
             <body>
             </body>
           </html>
           EOF
-
-          # Copy any additional assets if needed
-          ls -la dist/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

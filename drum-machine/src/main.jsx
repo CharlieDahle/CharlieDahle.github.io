@@ -18,7 +18,7 @@ function AppRouter() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" 
           element={<AnimatedPage> 
-            <App />
+            <Home />  {/* Blob stack homepage! */}
               </AnimatedPage>
             } 
             />
@@ -31,14 +31,22 @@ function AppRouter() {
             } 
           />
           <Route 
-            path="/home" 
+            path="/terminal" 
+            element={
+              <AnimatedPage>
+                <App />
+              </AnimatedPage>
+            } 
+          />
+          {/* Catch-all route */}
+          <Route 
+            path="*" 
             element={
               <AnimatedPage>
                 <Home />
               </AnimatedPage>
             } 
           />
-          <Route path="*" element={<AnimatedPage><App /></AnimatedPage>} />
         </Routes>
       </AnimatePresence>
     </div>
@@ -47,9 +55,21 @@ function AppRouter() {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename="/app">
+    <BrowserRouter>
       <AppRouter />
     </BrowserRouter>
   </StrictMode>
 )
 
+// GitHub Pages SPA redirect handler
+if (typeof window !== 'undefined') {
+  const l = window.location;
+  if (l.search[1] === '/') {
+    var decoded = l.search.slice(1).split('&').map(function(s) { 
+      return s.replace(/~and~/g, '&')
+    }).join('?');
+    window.history.replaceState(null, null,
+        l.pathname.slice(0, -1) + decoded + l.hash
+    );
+  }
+}

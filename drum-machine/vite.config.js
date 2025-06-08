@@ -4,8 +4,8 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "/app/", // This is crucial for GitHub Pages
+  base: "/", // Root of the site now!
   build: {
-    outDir: "../dist/app", // Build directly to dist/app
+    outDir: "../dist", // Build directly to dist (no /app subfolder)
   },
 });
