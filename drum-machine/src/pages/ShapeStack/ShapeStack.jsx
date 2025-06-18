@@ -11,7 +11,7 @@ function ShapeStack() {
     2: "Console", 
     3: "Github",
     4: "Drum Machine",
-    5: "Social Media",
+    5: "Photos",
     6: "About me + resume"
   }
   
@@ -23,23 +23,26 @@ function ShapeStack() {
   
   return (
     <> 
-      <div className="site-title">charliedahle.me</div>
       <div className="shape-stack">
-        <div 
-          className="blob-shape shape-1 blob-1"
-          onMouseEnter={() => setHoveredBlob(1)}
-          onMouseLeave={() => setHoveredBlob(null)}
-        ></div>
+        <Link to="https://open.spotify.com/user/charliedahle161">
+          <div 
+            className="blob-shape shape-1 blob-1"
+            onMouseEnter={() => setHoveredBlob(1)}
+            onMouseLeave={() => setHoveredBlob(null)}
+          ></div>
+        </Link>
         <div 
           className="blob-shape shape-2 blob-2"
           onMouseEnter={() => setHoveredBlob(2)}
           onMouseLeave={() => setHoveredBlob(null)}
         ></div>
-        <div 
-          className="blob-shape shape-3 blob-3"
-          onMouseEnter={() => setHoveredBlob(3)}
-          onMouseLeave={() => setHoveredBlob(null)}
-        ></div>
+        <Link to="https://github.com/CharlieDahle">
+          <div 
+            className="blob-shape shape-3 blob-3"
+            onMouseEnter={() => setHoveredBlob(3)}
+            onMouseLeave={() => setHoveredBlob(null)}
+          ></div>
+        </Link>
         <Link to="/DrumMachine">
           <div
             className="blob-shape shape-4 blob-4"
@@ -48,11 +51,13 @@ function ShapeStack() {
           ></div>
         </Link>
 
+      <Link to="/Photos">
         <div 
           className="blob-shape shape-5 blob-5"
           onMouseEnter={() => setHoveredBlob(5)}
           onMouseLeave={() => setHoveredBlob(null)}
         ></div>
+      </Link>
         <div 
           className="blob-shape shape-6 blob-6"
           onMouseEnter={() => setHoveredBlob(6)}
