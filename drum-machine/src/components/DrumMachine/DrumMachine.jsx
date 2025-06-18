@@ -1,19 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import io from 'socket.io-client';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import RoomInterface from '../RoomInterface/RoomInterface.jsx';
 import PatternTimeline from '../PatternTimeline/PatternTimeline';
 import TransportControls from '../TransportControls/TransportControls';
 import DrumScheduler from '../DrumScheduler/DrumScheduler';
 
 function DrumMachine() {
-  // Connection state
-  const [socket, setSocket] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  
-  // Room state
-  const [roomId, setRoomId] = useState(null);
-  const [isInRoom, setIsInRoom] = useState(false);
-  const [users, setUsers] = useState([]);
+  // Use the WebSocket hook
+  const {
+    isConnected,
+    isInRoom,
+    roomId,
+    users,
+    error,
+    createRoom,
+    joinRoom,
+    sendPatternChange,
+    setBpm: sendBpmChange,
+    sendTransportCommand,
+    subscribe,
+    unsubscribe
+  } = useWebSocket();
   
   // Pattern state (from server)
   const [pattern, setPattern] = useState({});
@@ -28,9 +35,6 @@ function DrumMachine() {
   
   // Scheduler instance
   const schedulerRef = useRef(null);
-  
-  // Error handling
-  const [error, setError] = useState(null);
 
   // Constants
   const TICKS_PER_BEAT = 480;
@@ -59,67 +63,34 @@ function DrumMachine() {
     }
   }, [pattern, bpm]);
 
-  // Initialize WebSocket connection
+  // Subscribe to WebSocket events
   useEffect(() => {
-    console.log('Connecting to server...');
-    const newSocket = io('https://api.charliedahle.me');
-    
-    newSocket.on('connect', () => {
-      console.log('Connected to server');
-      setIsConnected(true);
-      setError(null);
-    });
-    
-    newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
-      setIsConnected(false);
-      setIsInRoom(false);
-      setError('Disconnected from server');
-    });
-    
-    newSocket.on('connect_error', (err) => {
-      console.error('Connection error:', err);
-      setError('Failed to connect to server');
-    });
-    
-    // Room state updates
-    newSocket.on('user-joined', ({ userId, userCount }) => {
-      console.log('User joined:', userId, 'Total users:', userCount);
-      setUsers(prev => [...prev, userId]);
-    });
-    
-    newSocket.on('user-left', ({ userId, userCount }) => {
-      console.log('User left:', userId, 'Total users:', userCount);
-      setUsers(prev => prev.filter(id => id !== userId));
-    });
-    
     // Pattern updates from other users
-    newSocket.on('pattern-update', (change) => {
+    subscribe('onPatternUpdate', (change) => {
       console.log('Pattern update received:', change);
       applyPatternChange(change);
     });
-    
+
     // BPM changes
-    newSocket.on('bpm-change', ({ bpm: newBpm }) => {
+    subscribe('onBpmChange', (newBpm) => {
       console.log('BPM changed to:', newBpm);
       setBpm(newBpm);
     });
-    
-    // Simple transport sync (no complex timing)
-    newSocket.on('transport-sync', (command) => {
+
+    // Transport sync
+    subscribe('onTransportSync', (command) => {
       console.log('Transport command received:', command);
       handleTransportCommand(command);
     });
-    
-    setSocket(newSocket);
-    
+
     return () => {
-      console.log('Cleaning up socket connection');
-      newSocket.close();
+      unsubscribe('onPatternUpdate');
+      unsubscribe('onBpmChange');
+      unsubscribe('onTransportSync');
     };
   }, []);
 
-  // Handle transport commands from server (much simpler now)
+  // Handle transport commands from server
   const handleTransportCommand = (command) => {
     const scheduler = schedulerRef.current;
     if (!scheduler) return;
@@ -189,105 +160,51 @@ function DrumMachine() {
     });
   };
 
-  // Send pattern change to server
+  // Event handlers - much simpler now!
   const handlePatternChange = (change) => {
-    if (!socket || !isInRoom) return;
-    
-    console.log('Sending pattern change:', change);
-    socket.emit('pattern-change', {
-      roomId,
-      change
-    });
+    sendPatternChange(change);
   };
 
-  // BPM management
   const changeBpm = (newBpm) => {
-    if (!socket || !isInRoom) return;
-    
-    const clampedBpm = Math.max(60, Math.min(300, newBpm));
-    
-    console.log('Changing BPM to:', clampedBpm);
-    socket.emit('set-bpm', {
-      roomId,
-      bpm: clampedBpm
-    });
+    sendBpmChange(newBpm);
   };
 
-  // Transport control handlers (much simpler!)
   const handlePlay = async () => {
-    if (!socket || !isInRoom) return;
-    
-    // Initialize audio context on first play (requires user interaction)
+    // Initialize audio context on first play
     if (schedulerRef.current) {
       await schedulerRef.current.init();
     }
     
-    console.log('Sending play command');
-    socket.emit('transport-command', {
-      roomId,
-      command: { type: 'play' }
-    });
+    sendTransportCommand({ type: 'play' });
   };
 
   const handlePause = () => {
-    if (!socket || !isInRoom) return;
-    
-    console.log('Sending pause command');
-    socket.emit('transport-command', {
-      roomId,
-      command: { type: 'pause' }
-    });
+    sendTransportCommand({ type: 'pause' });
   };
 
   const handleStop = () => {
-    if (!socket || !isInRoom) return;
-    
-    console.log('Sending stop command');
-    socket.emit('transport-command', {
-      roomId,
-      command: { type: 'stop' }
-    });
+    sendTransportCommand({ type: 'stop' });
   };
 
-  // Room management functions
-  const createRoom = () => {
-    if (!socket || !isConnected) return;
-    
-    console.log('Creating room...');
-    socket.emit('create-room', (response) => {
-      if (response.success) {
-        console.log('Room created:', response.roomId);
-        setRoomId(response.roomId);
-        setIsInRoom(true);
-        setPattern(response.roomState.pattern);
-        setBpm(response.roomState.bpm);
-        setUsers(response.roomState.users);
-        setError(null);
-      } else {
-        console.error('Failed to create room:', response.error);
-        setError('Failed to create room');
-      }
-    });
+  // Room management - now just simple function calls
+  const handleCreateRoom = async () => {
+    try {
+      const roomState = await createRoom();
+      setPattern(roomState.pattern);
+      setBpm(roomState.bpm);
+    } catch (error) {
+      console.error('Failed to create room:', error);
+    }
   };
 
-  const joinRoom = (targetRoomId) => {
-    if (!socket || !isConnected || !targetRoomId.trim()) return;
-    
-    console.log('Joining room:', targetRoomId);
-    socket.emit('join-room', { roomId: targetRoomId.trim() }, (response) => {
-      if (response.success) {
-        console.log('Joined room:', targetRoomId);
-        setRoomId(targetRoomId.trim());
-        setIsInRoom(true);
-        setPattern(response.roomState.pattern);
-        setBpm(response.roomState.bpm);
-        setUsers(response.roomState.users);
-        setError(null);
-      } else {
-        console.error('Failed to join room:', response.error);
-        setError(`Failed to join room: ${response.error}`);
-      }
-    });
+  const handleJoinRoom = async (targetRoomId) => {
+    try {
+      const roomState = await joinRoom(targetRoomId);
+      setPattern(roomState.pattern);
+      setBpm(roomState.bpm);
+    } catch (error) {
+      console.error('Failed to join room:', error);
+    }
   };
 
   // If not connected or not in room, show connection interface
@@ -300,8 +217,8 @@ function DrumMachine() {
           </div>
         )}
         <RoomInterface 
-          onCreateRoom={createRoom}
-          onJoinRoom={joinRoom}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
           isConnected={isConnected}
         />
       </div>
