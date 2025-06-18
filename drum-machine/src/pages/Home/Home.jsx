@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './home.css'
+import './Home.css'
 import ShapeStack from '../ShapeStack/ShapeStack.jsx'
 
 function Home() {
