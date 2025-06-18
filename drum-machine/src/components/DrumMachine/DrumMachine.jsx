@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-import RoomInterface from './RoomInterface';
-import PatternTimeline from './PatternTimeline';
-import TransportControls from './TransportControls';
-import DrumScheduler from './DrumScheduler';
+import RoomInterface from '../RoomInterface/RoomInterface.jsx';
+import PatternTimeline from '../PatternTimeline/PatternTimeline';
+import TransportControls from '../TransportControls/TransportControls';
+import DrumScheduler from '../DrumScheduler/DrumScheduler';
 
 function DrumMachine() {
   // Connection state

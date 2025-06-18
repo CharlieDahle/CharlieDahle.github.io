@@ -1,14 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './styles/index.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import App from './App.jsx'
-import DrumMachine from './DrumMachine.jsx'
-import Home from './home.jsx'
+import DrumMachine from './components/DrumMachine/DrumMachine.jsx'
+import Home from './pages/home/home.jsx'
 import AnimatedPage from './AnimatedPage.jsx'
-import './index.css'
+import './styles/index.css'
 
 function AppRouter() {
   const location = useLocation()
