@@ -8,6 +8,7 @@ import App from './App.jsx'
 import DrumMachine from './DrumMachine.jsx'
 import Home from './home.jsx'
 import AnimatedPage from './AnimatedPage.jsx'
+import './index.css'
 
 function AppRouter() {
   const location = useLocation()

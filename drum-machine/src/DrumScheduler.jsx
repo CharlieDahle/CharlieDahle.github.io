@@ -65,7 +65,7 @@ class DrumScheduler {
       
       console.log('DrumScheduler: Loading sounds...');
       
-      // Pick default sounds for each track (first sound from each category)
+      // Pick default sounds for each track (first sound from each category for now)
       const defaultSounds = {
         'kick': soundLibrary.kicks?.[0]?.file,
         'snare': soundLibrary.snares?.[0]?.file,
