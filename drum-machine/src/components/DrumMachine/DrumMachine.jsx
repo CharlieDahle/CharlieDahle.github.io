@@ -1,32 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useWebSocket } from '../../hooks/useWebSocket';
-import RoomInterface from '../RoomInterface/RoomInterface.jsx';
 import PatternTimeline from '../PatternTimeline/PatternTimeline';
 import TransportControls from '../TransportControls/TransportControls';
 import DrumScheduler from '../DrumScheduler/DrumScheduler';
 
-function DrumMachine() {
-  // Use the WebSocket hook
-  const {
-    isConnected,
-    isInRoom,
-    roomId,
-    users,
-    error,
-    createRoom,
-    joinRoom,
-    sendPatternChange,
-    setBpm: sendBpmChange,
-    sendTransportCommand,
-    subscribe,
-    unsubscribe
-  } = useWebSocket();
+function DrumMachine({ 
+  roomId, 
+  userCount, 
+  initialPattern, 
+  initialBpm, 
+  onPatternChange, 
+  onBpmChange, 
+  onTransportCommand 
+}) {
+  // Local pattern state (synced with server via props)
+  const [pattern, setPattern] = useState(initialPattern);
+  const [bpm, setBpm] = useState(initialBpm);
   
-  // Pattern state (from server)
-  const [pattern, setPattern] = useState({});
-  const [bpm, setBpm] = useState(120);
-  
-  // Local playback state (from scheduler)
+  // Local playback state (managed by scheduler)
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTick, setCurrentTick] = useState(0);
   
@@ -39,6 +29,15 @@ function DrumMachine() {
   // Constants
   const TICKS_PER_BEAT = 480;
   const BEATS_PER_LOOP = 16;
+
+  // Sync props to local state when they change
+  useEffect(() => {
+    setPattern(initialPattern);
+  }, [initialPattern]);
+
+  useEffect(() => {
+    setBpm(initialBpm);
+  }, [initialBpm]);
 
   // Initialize scheduler
   useEffect(() => {
@@ -63,62 +62,9 @@ function DrumMachine() {
     }
   }, [pattern, bpm]);
 
-  // Subscribe to WebSocket events
-  useEffect(() => {
-    // Pattern updates from other users
-    subscribe('onPatternUpdate', (change) => {
-      console.log('Pattern update received:', change);
-      applyPatternChange(change);
-    });
-
-    // BPM changes
-    subscribe('onBpmChange', (newBpm) => {
-      console.log('BPM changed to:', newBpm);
-      setBpm(newBpm);
-    });
-
-    // Transport sync
-    subscribe('onTransportSync', (command) => {
-      console.log('Transport command received:', command);
-      handleTransportCommand(command);
-    });
-
-    return () => {
-      unsubscribe('onPatternUpdate');
-      unsubscribe('onBpmChange');
-      unsubscribe('onTransportSync');
-    };
-  }, []);
-
-  // Handle transport commands from server
-  const handleTransportCommand = (command) => {
-    const scheduler = schedulerRef.current;
-    if (!scheduler) return;
-
-    switch (command.type) {
-      case 'play':
-        scheduler.start(currentTick);
-        setIsPlaying(true);
-        break;
-        
-      case 'pause':
-        scheduler.pause();
-        setIsPlaying(false);
-        break;
-        
-      case 'stop':
-        scheduler.stop();
-        setIsPlaying(false);
-        setCurrentTick(0);
-        break;
-        
-      default:
-        console.warn('Unknown transport command:', command.type);
-    }
-  };
-
-  // Apply pattern changes from server
-  const applyPatternChange = (change) => {
+  // Handle pattern changes (update local state and notify parent)
+  const handlePatternChange = (change) => {
+    // Update local state immediately for responsive UI
     setPattern(prevPattern => {
       const newPattern = { ...prevPattern };
       
@@ -158,71 +104,62 @@ function DrumMachine() {
       
       return newPattern;
     });
+
+    // Notify parent
+    onPatternChange(change);
   };
 
-  const handlePatternChange = (change) => {
-    sendPatternChange(change);
-  };
-
+  // Handle BPM changes
   const changeBpm = (newBpm) => {
-    sendBpmChange(newBpm);
+    setBpm(newBpm);
+    onBpmChange(newBpm);
   };
 
+  // Transport control handlers
   const handlePlay = async () => {
     // Initialize audio context on first play
     if (schedulerRef.current) {
       await schedulerRef.current.init();
     }
     
-    sendTransportCommand({ type: 'play' });
+    // Update local state immediately
+    setIsPlaying(true);
+    
+    // Start local playback
+    if (schedulerRef.current) {
+      await schedulerRef.current.start(currentTick);
+    }
+    
+    // Notify server
+    onTransportCommand({ type: 'play' });
   };
 
   const handlePause = () => {
-    sendTransportCommand({ type: 'pause' });
+    // Update local state immediately
+    setIsPlaying(false);
+    
+    // Pause local playback
+    if (schedulerRef.current) {
+      schedulerRef.current.pause();
+    }
+    
+    // Notify server
+    onTransportCommand({ type: 'pause' });
   };
 
   const handleStop = () => {
-    sendTransportCommand({ type: 'stop' });
-  };
-
-  // Room management 
-  const handleCreateRoom = async () => {
-    try {
-      const roomState = await createRoom();
-      setPattern(roomState.pattern);
-      setBpm(roomState.bpm);
-    } catch (error) {
-      console.error('Failed to create room:', error);
+    // Update local state immediately
+    setIsPlaying(false);
+    setCurrentTick(0);
+    
+    // Stop local playback
+    if (schedulerRef.current) {
+      schedulerRef.current.stop();
     }
+    
+    // Notify server
+    onTransportCommand({ type: 'stop' });
   };
-
-  const handleJoinRoom = async (targetRoomId) => {
-    try {
-      const roomState = await joinRoom(targetRoomId);
-      setPattern(roomState.pattern);
-      setBpm(roomState.bpm);
-    } catch (error) {
-      console.error('Failed to join room:', error);
-    }
-  };
-
-  // If not connected or not in room, show connection interface
-  if (!isInRoom) {
-    return (
-      <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        {error && (
-          <div className="alert alert-danger text-center" role="alert">
-            {error}
-          </div>
-        )}
-        <RoomInterface 
-          onCreateRoom={handleCreateRoom}
-          onJoinRoom={handleJoinRoom}
-          isConnected={isConnected}
-        />
-      </div>
-    );
-  }
 
   // Main drum machine interface
   return (
@@ -239,10 +176,10 @@ function DrumMachine() {
                 </div>
                 <div className="col-auto">
                   <span className="badge bg-success me-2">
-                    {users.length} user{users.length !== 1 ? 's' : ''} online
+                    {userCount} user{userCount !== 1 ? 's' : ''} online
                   </span>
-                  <span className={`badge ${isConnected ? 'bg-success' : 'bg-danger'}`}>
-                    {isConnected ? 'Connected' : 'Disconnected'}
+                  <span className="badge bg-success">
+                    Connected
                   </span>
                 </div>
               </div>
