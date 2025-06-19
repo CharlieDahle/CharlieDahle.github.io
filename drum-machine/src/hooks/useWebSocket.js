@@ -17,8 +17,6 @@ export function useWebSocket() {
     onPatternUpdate: null,
     onBpmChange: null,
     onTransportSync: null,
-    onUserJoined: null,
-    onUserLeft: null,
   });
 
   // Initialize WebSocket connection
@@ -49,13 +47,11 @@ export function useWebSocket() {
     newSocket.on("user-joined", ({ userId, userCount }) => {
       console.log("User joined:", userId, "Total users:", userCount);
       setUsers((prev) => [...prev, userId]);
-      eventHandlers.current.onUserJoined?.(userId, userCount);
     });
 
     newSocket.on("user-left", ({ userId, userCount }) => {
       console.log("User left:", userId, "Total users:", userCount);
       setUsers((prev) => prev.filter((id) => id !== userId));
-      eventHandlers.current.onUserLeft?.(userId, userCount);
     });
 
     // Pattern and playback events
