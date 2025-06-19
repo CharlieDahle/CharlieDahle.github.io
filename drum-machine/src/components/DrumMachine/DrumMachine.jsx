@@ -160,7 +160,6 @@ function DrumMachine() {
     });
   };
 
-  // Event handlers - much simpler now!
   const handlePatternChange = (change) => {
     sendPatternChange(change);
   };
@@ -186,7 +185,7 @@ function DrumMachine() {
     sendTransportCommand({ type: 'stop' });
   };
 
-  // Room management - now just simple function calls
+  // Room management 
   const handleCreateRoom = async () => {
     try {
       const roomState = await createRoom();
