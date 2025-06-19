@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useWebSocket } from '../../hooks/useWebSocket'
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import RoomInterface from '../RoomInterface/RoomInterface.jsx';
 import DrumMachine from '../DrumMachine/DrumMachine.jsx';
 
@@ -23,6 +24,32 @@ function DrumMachineApp() {
   // Server state that gets synced
   const [pattern, setPattern] = useState({});
   const [bpm, setBpm] = useState(120);
+
+  // Animation variants (same as AnimatedPage)
+  const pageVariants = {
+    initial: { 
+      scale: 0.8, 
+      opacity: 0,
+      y: 50
+    },
+    in: { 
+      scale: 1, 
+      opacity: 1,
+      y: 0
+    },
+    out: { 
+      scale: 0.8, 
+      opacity: 0,
+      y: -50
+    }
+  };
+
+  const pageTransition = {
+    type: "spring",
+    stiffness: 100,
+    damping: 15,
+    mass: 0.8
+  };
 
   // Subscribe to WebSocket events
   useEffect(() => {
@@ -134,32 +161,62 @@ function DrumMachineApp() {
   // If not connected or not in room, show connection interface
   if (!isInRoom) {
     return (
-      <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-        {error && (
-          <div className="alert alert-danger text-center" role="alert">
-            {error}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="room-interface"
+          initial="initial"
+          animate="in"
+          exit="out"
+          variants={pageVariants}
+          transition={pageTransition}
+          style={{
+            width: '100%',
+            minHeight: '100vh'
+          }}
+        >
+          <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+            {error && (
+              <div className="alert alert-danger text-center" role="alert">
+                {error}
+              </div>
+            )}
+            <RoomInterface 
+              onCreateRoom={handleCreateRoom}
+              onJoinRoom={handleJoinRoom}
+              isConnected={isConnected}
+            />
           </div>
-        )}
-        <RoomInterface 
-          onCreateRoom={handleCreateRoom}
-          onJoinRoom={handleJoinRoom}
-          isConnected={isConnected}
-        />
-      </div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
   // Render the drum machine with server state
   return (
-    <DrumMachine 
-      roomId={roomId}
-      userCount={users.length}
-      initialPattern={pattern}
-      initialBpm={bpm}
-      onPatternChange={handlePatternChange}
-      onBpmChange={handleBpmChange}
-      onTransportCommand={handleTransportCommand}
-    />
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="drum-machine"
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+        style={{
+          width: '100%',
+          minHeight: '100vh'
+        }}
+      >
+        <DrumMachine 
+          roomId={roomId}
+          userCount={users.length}
+          initialPattern={pattern}
+          initialBpm={bpm}
+          onPatternChange={handlePatternChange}
+          onBpmChange={handleBpmChange}
+          onTransportCommand={handleTransportCommand}
+        />
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
