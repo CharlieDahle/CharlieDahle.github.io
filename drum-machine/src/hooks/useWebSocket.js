@@ -26,20 +26,27 @@ export function useWebSocket() {
 
     // Connection events
     newSocket.on("connect", () => {
-      console.log("Connected to server");
+      console.log(
+        `[${new Date().toISOString()}] Connected to server, ID: ${newSocket.id}`
+      );
       setIsConnected(true);
       setError(null);
     });
 
     newSocket.on("disconnect", () => {
-      console.log("Disconnected from server");
+      console.log(
+        `[${new Date().toISOString()}] Disconnected from server, reason: ${reason}`
+      );
       setIsConnected(false);
       setIsInRoom(false);
       setError("Disconnected from server");
     });
 
     newSocket.on("connect_error", (err) => {
-      console.error("Connection error:", err);
+      console.error(
+        `[${new Date().toISOString()}] Connection error:`,
+        err.message
+      );
       setError("Failed to connect to server");
     });
 
