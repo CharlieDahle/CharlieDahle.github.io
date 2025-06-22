@@ -49,7 +49,7 @@ class DrumScheduler {
     return true;
   }
 
-  // NEW: Set tracks and load their sounds
+  // Set tracks and load their sounds
   async setTracks(tracks) {
     console.log('DrumScheduler: Setting tracks', tracks);
     
