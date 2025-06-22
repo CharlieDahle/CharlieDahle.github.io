@@ -39,6 +39,10 @@ function PatternTimeline({
     }
   }, [currentTick, PIXELS_PER_TICK]);
 
+  useEffect(() => {
+  console.log("running create note!");
+  }, [pattern]);
+
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
     console.log('Track clicked:', trackId);
@@ -302,11 +306,14 @@ function PatternTimeline({
 
                 {/* Notes */}
                 {pattern[track.id]?.map((tick) => {
+                  
                   const isBeingDragged = draggedNote && 
                     draggedNote.trackId === track.id && 
                     draggedNote.originalTick === tick;
                   
                   const displayTick = isBeingDragged ? draggedNote.currentTick : tick;
+
+                  
                   
                   return (
                     <div

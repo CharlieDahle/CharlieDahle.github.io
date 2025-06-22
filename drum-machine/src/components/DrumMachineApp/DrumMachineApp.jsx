@@ -56,6 +56,7 @@ function DrumMachineApp() {
     // Pattern updates from other users
     subscribe('onPatternUpdate', (change) => {
       console.log('Pattern update received:', change);
+      console.log('Current state of pattern:', pattern)
       applyPatternChange(change);
     });
 

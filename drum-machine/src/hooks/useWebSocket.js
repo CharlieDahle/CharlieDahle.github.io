@@ -23,6 +23,7 @@ export function useWebSocket() {
   useEffect(() => {
     console.log("Connecting to server...");
     const newSocket = io("https://api.charliedahle.me");
+    // const newSocket = io("http://localhost:3001");
 
     // Connection events
     newSocket.on("connect", () => {
@@ -34,9 +35,7 @@ export function useWebSocket() {
     });
 
     newSocket.on("disconnect", () => {
-      console.log(
-        `[${new Date().toISOString()}] Disconnected from server, reason: ${reason}`
-      );
+      console.log(`[${new Date().toISOString()}] Disconnected from server`);
       setIsConnected(false);
       setIsInRoom(false);
       setError("Disconnected from server");
