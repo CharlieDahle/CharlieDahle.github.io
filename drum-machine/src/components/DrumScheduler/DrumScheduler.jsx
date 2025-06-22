@@ -61,7 +61,7 @@ class DrumScheduler {
   async loadSounds() {
     try {
       // Import the JSON file
-      const soundLibrary = await import('./drum-sounds.json');
+      const soundLibrary = await import('../../assets/data/drum-sounds.json');
       
       console.log('DrumScheduler: Loading sounds...');
       

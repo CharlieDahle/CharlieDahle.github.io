@@ -1,14 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import './styles/index.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import App from './App.jsx'
-import DrumMachine from './DrumMachine.jsx'
-import Home from './home.jsx'
+import DrumMachineApp from './components/DrumMachineApp/DrumMachineApp.jsx'
+import Home from './pages/home/Home.jsx'
 import AnimatedPage from './AnimatedPage.jsx'
-import './index.css'
+import './styles/index.css'
 
 function AppRouter() {
   const location = useLocation()
@@ -27,7 +27,7 @@ function AppRouter() {
             path="/DrumMachine" 
             element={
               <AnimatedPage>
-                <DrumMachine />
+                <DrumMachineApp /> {/* Changed from DrumMachine */}
               </AnimatedPage>
             } 
           />
@@ -61,16 +61,3 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>
 )
-
-// GitHub Pages SPA redirect handler
-if (typeof window !== 'undefined') {
-  const l = window.location;
-  if (l.search[1] === '/') {
-    var decoded = l.search.slice(1).split('&').map(function(s) { 
-      return s.replace(/~and~/g, '&')
-    }).join('?');
-    window.history.replaceState(null, null,
-        l.pathname.slice(0, -1) + decoded + l.hash
-    );
-  }
-}

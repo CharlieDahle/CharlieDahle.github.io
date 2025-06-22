@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './shapestack.css'
+import './ShapeStack.css'
 import { Link } from 'react-router-dom'
 
 function ShapeStack() {
