@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   base: "/", // Root of the site now!
   build: {
-    outDir: "../dist", // Build directly to dist (no /app subfolder)
+    outDir: "dist",
   },
 });
