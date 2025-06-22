@@ -49,7 +49,6 @@ function DrumMachine({
       setCurrentTick(tick);
     });
     
-    scheduler.init();
     schedulerRef.current = scheduler;
     
     return () => {
