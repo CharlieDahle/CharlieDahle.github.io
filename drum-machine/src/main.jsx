@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import App from './App.jsx'
 import DrumMachineApp from './components/DrumMachineApp/DrumMachineApp.jsx'
-import Home from './pages/home/Home.jsx'
+import Home from './pages/Home/Home.jsx'
 import AnimatedPage from './AnimatedPage.jsx'
 import './styles/index.css'
 
