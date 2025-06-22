@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import RoomInterface from '../RoomInterface/RoomInterface.jsx';
 import DrumMachine from '../DrumMachine/DrumMachine.jsx';
+import drumSounds from '../../assets/data/drum-sounds.json';
 
 function DrumMachineApp() {
   // Use the WebSocket hook
@@ -24,6 +25,38 @@ function DrumMachineApp() {
   // Server state that gets synced
   const [pattern, setPattern] = useState({});
   const [bpm, setBpm] = useState(120);
+  
+ // Track state. we start with a few defaults
+  const [tracks, setTracks] = useState([
+    {
+      id: 'kick',
+      name: 'Kick',
+      color: '#e74c3c',
+      soundFile: drumSounds.kicks[0].file,
+      availableSounds: drumSounds.kicks
+    },
+    {
+      id: 'snare',
+      name: 'Snare',
+      color: '#f39c12',
+      soundFile: drumSounds.snares[0].file,
+      availableSounds: drumSounds.snares
+    },
+    {
+      id: 'hihat',
+      name: 'Hi-Hat',
+      color: '#2ecc71',
+      soundFile: drumSounds.hihats[0].file,
+      availableSounds: drumSounds.hihats
+    },
+    {
+      id: 'openhat',
+      name: 'Open Hat',
+      color: '#3498db',
+      soundFile: drumSounds.cymbals[0].file,
+      availableSounds: drumSounds.cymbals
+    }
+  ]);
 
   // Animation variants (same as AnimatedPage)
   const pageVariants = {
@@ -138,6 +171,40 @@ function DrumMachineApp() {
     sendTransportCommand(command);
   };
 
+  // NEW: Track management handlers
+  const handleAddTrack = (trackData) => {
+    const newTrack = {
+      id: `track_${Date.now()}`, // Simple unique ID
+      name: trackData.name || 'New Track',
+      color: trackData.color || '#9b59b6',
+      soundFile: trackData.soundFile,
+      availableSounds: trackData.availableSounds || []
+    };
+    
+    setTracks(prevTracks => [...prevTracks, newTrack]);
+  };
+
+  const handleRemoveTrack = (trackId) => {
+    setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+    
+    // Clean up pattern data for removed track
+    setPattern(prevPattern => {
+      const newPattern = { ...prevPattern };
+      delete newPattern[trackId];
+      return newPattern;
+    });
+  };
+
+  const handleUpdateTrackSound = (trackId, newSoundFile) => {
+    setTracks(prevTracks => 
+      prevTracks.map(track => 
+        track.id === trackId 
+          ? { ...track, soundFile: newSoundFile }
+          : track
+      )
+    );
+  };
+
   // Room management handlers
   const handleCreateRoom = async () => {
     try {
@@ -212,9 +279,13 @@ function DrumMachineApp() {
           userCount={users.length}
           initialPattern={pattern}
           initialBpm={bpm}
+          tracks={tracks}
           onPatternChange={handlePatternChange}
           onBpmChange={handleBpmChange}
           onTransportCommand={handleTransportCommand}
+          onAddTrack={handleAddTrack}
+          onRemoveTrack={handleRemoveTrack}
+          onUpdateTrackSound={handleUpdateTrackSound}
         />
       </motion.div>
     </AnimatePresence>

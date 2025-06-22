@@ -25,13 +25,8 @@ class DrumScheduler {
     this.audioBuffers = {};
     this.soundsLoaded = false;
     
-    // Simple track to sound mapping
-    this.trackSounds = {
-      'kick': null,
-      'snare': null, 
-      'hihat': null,
-      'openhat': null
-    };
+    // NEW: Dynamic track to sound mapping (replaces hardcoded trackSounds)
+    this.trackSounds = {};
     
     // RAF handle for cleanup
     this.schedulerRAF = null;
@@ -49,47 +44,37 @@ class DrumScheduler {
       
       console.log('DrumScheduler: Audio context initialized');
       
-      // Load drum sounds
-      await this.loadSounds();
-      
       return true;
     }
     return true;
   }
 
-  // Load drum sounds from JSON and audio files
-  async loadSounds() {
-    try {
-      // Import the JSON file
-      const soundLibrary = await import('../../assets/data/drum-sounds.json');
+  // NEW: Set tracks and load their sounds
+  async setTracks(tracks) {
+    console.log('DrumScheduler: Setting tracks', tracks);
+    
+    // Clear existing mappings
+    this.trackSounds = {};
+    
+    // Build new track sound mappings
+    for (const track of tracks) {
+      this.trackSounds[track.id] = track.soundFile;
       
-      console.log('DrumScheduler: Loading sounds...');
-      
-      // Pick default sounds for each track (first sound from each category for now)
-      const defaultSounds = {
-        'kick': soundLibrary.kicks?.[0]?.file,
-        'snare': soundLibrary.snares?.[0]?.file,
-        'hihat': soundLibrary.hihats?.[0]?.file,
-        'openhat': soundLibrary.cymbals?.[0]?.file
-      };
-      
-      // Load audio files for default sounds
-      for (const [trackId, soundFile] of Object.entries(defaultSounds)) {
-        if (soundFile) {
-          console.log(`Loading ${trackId}: ${soundFile}`);
-          const audioBuffer = await this.loadAudioFile(soundFile);
-          this.audioBuffers[soundFile] = audioBuffer;
-          this.trackSounds[trackId] = soundFile;
+      // Load the sound file if not already loaded
+      if (track.soundFile && !this.audioBuffers[track.soundFile]) {
+        console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
+        try {
+          const audioBuffer = await this.loadAudioFile(track.soundFile);
+          if (audioBuffer) {
+            this.audioBuffers[track.soundFile] = audioBuffer;
+          }
+        } catch (error) {
+          console.error(`Failed to load sound for track ${track.name}:`, error);
         }
       }
-      
-      this.soundsLoaded = true;
-      console.log('DrumScheduler: All sounds loaded successfully');
-      
-    } catch (error) {
-      console.error('DrumScheduler: Failed to load sounds:', error);
-      this.soundsLoaded = false;
     }
+    
+    console.log('DrumScheduler: Track sounds mapped:', this.trackSounds);
   }
 
   // Load individual audio file into AudioBuffer
@@ -203,15 +188,15 @@ class DrumScheduler {
 
   // Schedule any notes that should play at this tick
   scheduleNotesAtTick(tick, when) {
-    if (!this.soundsLoaded) return;
-
-    // Check each track and play if there's a note at this tick
+    // Check each track in the pattern
     Object.keys(this.pattern).forEach(trackId => {
       if (this.pattern[trackId]?.includes(tick)) {
         const soundFile = this.trackSounds[trackId];
-        if (soundFile) {
+        if (soundFile && this.audioBuffers[soundFile]) {
           this.playSound(soundFile, when);
           console.log(`Playing ${trackId} at tick ${tick}`);
+        } else {
+          console.warn(`No sound available for track ${trackId}`);
         }
       }
     });
@@ -231,7 +216,8 @@ class DrumScheduler {
     return {
       isPlaying: this.isPlaying,
       currentTick: this.currentTick,
-      bpm: this.bpm
+      bpm: this.bpm,
+      trackSounds: this.trackSounds
     };
   }
 

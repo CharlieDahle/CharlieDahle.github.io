@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import drumSounds from '../../assets/data/drum-sounds.json';
 
 function PatternTimeline({ 
   pattern, 
@@ -6,9 +7,13 @@ function PatternTimeline({
   currentTick = 0,
   isPlaying = false,
   snapToGrid, 
+  tracks,
   onPatternChange,
   onBpmChange,
   onSnapToggle,
+  onAddTrack,
+  onRemoveTrack,
+  onUpdateTrackSound,
   TICKS_PER_BEAT = 480,
   BEATS_PER_LOOP = 16,
   PIXELS_PER_TICK = 0.1 
@@ -23,12 +28,11 @@ function PatternTimeline({
   const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
   const GRID_WIDTH = TOTAL_TICKS * PIXELS_PER_TICK;
 
-  // Track configuration
-  const tracks = [
-    { id: 'kick', name: 'Kick', color: '#e74c3c' },
-    { id: 'snare', name: 'Snare', color: '#f39c12' },
-    { id: 'hihat', name: 'Hi-Hat', color: '#2ecc71' },
-    { id: 'openhat', name: 'Open Hat', color: '#3498db' }
+  // Track color options
+  const colorOptions = [
+    '#e74c3c', '#f39c12', '#2ecc71', '#3498db', 
+    '#9b59b6', '#e67e22', '#1abc9c', '#f1c40f',
+    '#e91e63', '#795548', '#607d8b', '#ff5722'
   ];
 
   // Update playhead position when currentTick changes
@@ -39,9 +43,17 @@ function PatternTimeline({
     }
   }, [currentTick, PIXELS_PER_TICK]);
 
-  useEffect(() => {
-  console.log("running create note!");
-  }, [pattern]);
+  // Handle adding new track (simplified)
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: colorOptions[tracks.length % colorOptions.length],
+      soundFile: drumSounds.kicks[0].file,
+      availableSounds: drumSounds.kicks
+    };
+
+    onAddTrack(trackData);
+  };
 
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
@@ -56,30 +68,22 @@ function PatternTimeline({
 
     let snappedTick;
     if (snapToGrid) {
-      // Snap to beat boundaries
       const beatIndex = Math.floor(tick / TICKS_PER_BEAT);
       snappedTick = beatIndex * TICKS_PER_BEAT;
     } else {
-      // Free form placement
       snappedTick = Math.round(tick);
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
-    
-    // Check if there's already a note at this position
     const existingNote = pattern[trackId]?.includes(clampedTick);
 
     if (existingNote) {
-      // Remove existing note
-      console.log('Removing note at tick:', clampedTick);
       onPatternChange({
         type: 'remove-note',
         trackId,
         tick: clampedTick
       });
     } else {
-      // Add new note
-      console.log('Adding note at tick:', clampedTick);
       onPatternChange({
         type: 'add-note',
         trackId,
@@ -134,7 +138,6 @@ function PatternTimeline({
   // Handle mouse up - finish drag
   const handleMouseUp = () => {
     if (isDragging && draggedNote && hasDragged) {
-      console.log('Moving note from', draggedNote.originalTick, 'to', draggedNote.currentTick);
       onPatternChange({
         type: 'move-note',
         trackId: draggedNote.trackId,
@@ -152,7 +155,6 @@ function PatternTimeline({
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
-      console.log('Deleting note at tick:', tick);
       onPatternChange({
         type: 'remove-note',
         trackId,
@@ -160,6 +162,8 @@ function PatternTimeline({
       });
     }
   };
+
+
 
   // Add global mouse event listeners for dragging
   useEffect(() => {
@@ -208,6 +212,16 @@ function PatternTimeline({
       </div>
       
       <div className="card-body">
+        {/* NEW: Add Track Section */}
+        <div className="mb-3">
+          <button 
+            className="btn btn-success btn-sm"
+            onClick={handleAddTrack}
+          >
+            + Add Track
+          </button>
+        </div>
+
         <div style={{ overflowX: 'auto', padding: '10px' }}>
           {/* Beat markers */}
           <div style={{ 
@@ -260,91 +274,76 @@ function PatternTimeline({
 
             {/* Track rows */}
             {tracks.map((track) => (
-              <div
-                key={track.id}
-                style={{
-                  position: 'relative',
-                  height: '50px',
-                  background: '#f8f9fa',
-                  cursor: 'crosshair',
-                  borderRadius: '4px',
-                  border: '1px solid #dee2e6'
-                }}
-                onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
-              >
-                {/* Beat separator lines */}
-                {Array.from({ length: BEATS_PER_LOOP + 1 }, (_, beatIndex) => (
-                  <div
-                    key={`line-${beatIndex}`}
-                    style={{
-                      position: 'absolute',
-                      top: '0',
-                      bottom: '0',
-                      left: `${beatIndex * BEAT_WIDTH}px`,
-                      width: beatIndex % 4 === 0 ? '2px' : '1px',
-                      background: beatIndex % 4 === 0 ? '#999' : '#ccc',
-                      pointerEvents: 'none',
-                      zIndex: 1
-                    }}
-                  />
-                ))}
-
-                {/* Track label */}
-                <div style={{
-                  position: 'absolute',
-                  left: '-80px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: track.color,
-                  width: '70px',
-                  textAlign: 'right'
-                }}>
-                  {track.name}
-                </div>
-
-                {/* Notes */}
-                {pattern[track.id]?.map((tick) => {
-                  
-                  const isBeingDragged = draggedNote && 
-                    draggedNote.trackId === track.id && 
-                    draggedNote.originalTick === tick;
-                  
-                  const displayTick = isBeingDragged ? draggedNote.currentTick : tick;
-
-                  
-                  
-                  return (
+              <div key={track.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Track timeline */}
+                <div
+                  style={{
+                    position: 'relative',
+                    height: '50px',
+                    background: '#f8f9fa',
+                    cursor: 'crosshair',
+                    borderRadius: '4px',
+                    border: '1px solid #dee2e6',
+                    width: '100%'
+                  }}
+                  onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
+                >
+                  {/* Beat separator lines */}
+                  {Array.from({ length: BEATS_PER_LOOP + 1 }, (_, beatIndex) => (
                     <div
-                      key={`${track.id}-${tick}`}
-                      className="timeline-note"
+                      key={`line-${beatIndex}`}
                       style={{
                         position: 'absolute',
-                        left: `${displayTick * PIXELS_PER_TICK}px`,
-                        width: '20px',
-                        height: '40px',
-                        top: '5px',
-                        background: isBeingDragged ? '#e67e22' : track.color,
-                        cursor: 'grab',
-                        borderRadius: '4px',
-                        transition: isBeingDragged ? 'none' : 'background-color 0.1s ease',
-                        zIndex: isBeingDragged ? 10 : 2,
-                        border: '2px solid rgba(255,255,255,0.3)'
-                      }}
-                      onMouseDown={(e) => handleNoteMouseDown(e, track.id, tick)}
-                      onClick={(e) => handleNoteClick(e, track.id, tick)}
-                      onMouseEnter={(e) => {
-                        if (!isDragging) {
-                          e.target.style.opacity = '0.8';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.opacity = '1';
+                        top: '0',
+                        bottom: '0',
+                        left: `${beatIndex * BEAT_WIDTH}px`,
+                        width: beatIndex % 4 === 0 ? '2px' : '1px',
+                        background: beatIndex % 4 === 0 ? '#999' : '#ccc',
+                        pointerEvents: 'none',
+                        zIndex: 1
                       }}
                     />
-                  );
-                })}
+                  ))}
+
+                  {/* Notes */}
+                  {pattern[track.id]?.map((tick) => {
+                    const isBeingDragged = draggedNote && 
+                      draggedNote.trackId === track.id && 
+                      draggedNote.originalTick === tick;
+                    
+                    const displayTick = isBeingDragged ? draggedNote.currentTick : tick;
+                    
+                    return (
+                      <div
+                        key={`${track.id}-${tick}`}
+                        className="timeline-note"
+                        style={{
+                          position: 'absolute',
+                          left: `${displayTick * PIXELS_PER_TICK}px`,
+                          width: '20px',
+                          height: '40px',
+                          top: '5px',
+                          background: isBeingDragged ? '#e67e22' : track.color,
+                          cursor: 'grab',
+                          borderRadius: '4px',
+                          transition: isBeingDragged ? 'none' : 'background-color 0.1s ease',
+                          zIndex: isBeingDragged ? 10 : 2,
+                          border: '2px solid rgba(255,255,255,0.3)'
+                        }}
+                        onMouseDown={(e) => handleNoteMouseDown(e, track.id, tick)}
+                        onClick={(e) => handleNoteClick(e, track.id, tick)}
+                        onMouseEnter={(e) => {
+                          if (!isDragging) {
+                            e.target.style.opacity = '0.8';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.opacity = '1';
+                        }}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </div>

@@ -7,10 +7,14 @@ function DrumMachine({
   roomId, 
   userCount, 
   initialPattern, 
-  initialBpm, 
+  initialBpm,
+  tracks, // NEW: dynamic tracks
   onPatternChange, 
   onBpmChange, 
-  onTransportCommand 
+  onTransportCommand,
+  onAddTrack, // NEW: track management handlers
+  onRemoveTrack,
+  onUpdateTrackSound
 }) {
   // Local pattern state (synced with server via props)
   const [pattern, setPattern] = useState(initialPattern);
@@ -54,16 +58,25 @@ function DrumMachine({
     };
   }, []);
 
-  // Update scheduler when pattern or BPM changes
+  // Update scheduler when pattern, BPM, or tracks change
   useEffect(() => {
     if (schedulerRef.current) {
       schedulerRef.current.setPattern(pattern);
       schedulerRef.current.setBpm(bpm);
+      // NEW: Update scheduler with current tracks
+      schedulerRef.current.setTracks(tracks);
     }
-  }, [pattern, bpm]);
+  }, [pattern, bpm, tracks]);
 
   // Handle pattern changes (update local state and notify parent)
   const handlePatternChange = (change) => {
+    // Check if track still exists (in case it was removed)
+    const trackExists = tracks.some(track => track.id === change.trackId);
+    if (!trackExists) {
+      console.warn('Pattern change for non-existent track:', change.trackId);
+      return;
+    }
+
     // Update local state immediately for responsive UI
     setPattern(prevPattern => {
       const newPattern = { ...prevPattern };
@@ -213,9 +226,13 @@ function DrumMachine({
             currentTick={currentTick}
             isPlaying={isPlaying}
             snapToGrid={snapToGrid}
+            tracks={tracks} // NEW: pass dynamic tracks
             onPatternChange={handlePatternChange}
             onBpmChange={changeBpm}
             onSnapToggle={setSnapToGrid}
+            onAddTrack={onAddTrack} // NEW: pass track management handlers
+            onRemoveTrack={onRemoveTrack}
+            onUpdateTrackSound={onUpdateTrackSound}
             TICKS_PER_BEAT={TICKS_PER_BEAT}
             BEATS_PER_LOOP={BEATS_PER_LOOP}
             PIXELS_PER_TICK={0.1}
@@ -232,6 +249,8 @@ function DrumMachine({
             </div>
             <div className="card-body">
               <small className="text-muted">
+                <strong>Tracks:</strong> {tracks.map(t => t.name).join(', ')}
+                <br />
                 <strong>Pattern:</strong> {JSON.stringify(pattern, null, 2)}
                 <br />
                 <strong>Playback:</strong> Playing: {isPlaying}, Tick: {currentTick}
