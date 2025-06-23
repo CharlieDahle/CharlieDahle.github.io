@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
-import TransportControls from "../TransportControls/TransportControls";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 
 function DrumMachine({
@@ -64,7 +63,7 @@ function DrumMachine({
     if (schedulerRef.current) {
       schedulerRef.current.setPattern(pattern);
       schedulerRef.current.setBpm(bpm);
-      // NEW: Update scheduler with current tracks
+      // Update scheduler with current tracks
       schedulerRef.current.setTracks(tracks);
     }
   }, [pattern, bpm, tracks]);
@@ -187,42 +186,22 @@ function DrumMachine({
       {/* Header */}
       <div className="row mb-4">
         <div className="col">
-          <div className="card">
-            <div className="card-body">
-              <div className="row align-items-center">
-                <div className="col">
-                  <h3 className="mb-0">Drum Machine</h3>
-                  <small className="text-muted">Room: {roomId}</small>
-                </div>
-                <div className="col-auto">
-                  <span className="badge bg-success me-2">
-                    {userCount} user{userCount !== 1 ? "s" : ""} online
-                  </span>
-                  <span className="badge bg-success">Connected</span>
-                </div>
-              </div>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="mb-1 fw-bold">Drum Machine</h2>
+              <small className="text-muted">Room: {roomId}</small>
+            </div>
+            <div>
+              <span className="badge bg-success me-2 fs-6">
+                {userCount} user{userCount !== 1 ? "s" : ""} online
+              </span>
+              <span className="badge bg-success fs-6">Connected</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Transport Controls */}
-      <div className="row">
-        <div className="col">
-          <TransportControls
-            isPlaying={isPlaying}
-            currentTick={currentTick}
-            bpm={bpm}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onStop={handleStop}
-            TICKS_PER_BEAT={TICKS_PER_BEAT}
-            BEATS_PER_LOOP={BEATS_PER_LOOP}
-          />
-        </div>
-      </div>
-
-      {/* Pattern Timeline */}
+      {/* Integrated Pattern Timeline with Controls */}
       <div className="row">
         <div className="col">
           <PatternTimeline
@@ -231,13 +210,17 @@ function DrumMachine({
             currentTick={currentTick}
             isPlaying={isPlaying}
             snapToGrid={snapToGrid}
-            tracks={tracks} // NEW: pass dynamic tracks
+            tracks={tracks}
             onPatternChange={handlePatternChange}
             onBpmChange={changeBpm}
             onSnapToggle={setSnapToGrid}
-            onAddTrack={onAddTrack} // NEW: pass track management handlers
+            onAddTrack={onAddTrack}
             onRemoveTrack={onRemoveTrack}
             onUpdateTrackSound={onUpdateTrackSound}
+            // Transport control handlers
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onStop={handleStop}
             TICKS_PER_BEAT={TICKS_PER_BEAT}
             BEATS_PER_LOOP={BEATS_PER_LOOP}
             PIXELS_PER_TICK={0.1}
@@ -245,21 +228,29 @@ function DrumMachine({
         </div>
       </div>
 
-      {/* Debug info */}
+      {/* Debug info - Optional, can be removed for production */}
       <div className="row mt-4">
         <div className="col">
-          <div className="card">
-            <div className="card-header">
-              <h6 className="mb-0">Debug Info</h6>
+          <div className="card border-0 shadow-sm">
+            <div className="card-header bg-light">
+              <h6 className="mb-0 text-muted">Debug Info</h6>
             </div>
             <div className="card-body">
               <small className="text-muted">
                 <strong>Tracks:</strong> {tracks.map((t) => t.name).join(", ")}
                 <br />
-                <strong>Pattern:</strong> {JSON.stringify(pattern, null, 2)}
+                <strong>Active Notes:</strong>{" "}
+                {Object.keys(pattern)
+                  .map(
+                    (trackId) =>
+                      `${
+                        tracks.find((t) => t.id === trackId)?.name || trackId
+                      }: ${pattern[trackId]?.length || 0}`
+                  )
+                  .join(", ")}
                 <br />
-                <strong>Playback:</strong> Playing: {isPlaying}, Tick:{" "}
-                {currentTick}
+                <strong>Playback:</strong> Playing: {isPlaying ? "Yes" : "No"},
+                Tick: {currentTick}
               </small>
             </div>
           </div>
