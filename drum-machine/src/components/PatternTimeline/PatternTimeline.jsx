@@ -1,17 +1,102 @@
-import React, { useEffect, useRef, useState } from 'react';
 
-function PatternTimeline({ 
-  pattern, 
+import React, { useEffect, useRef, useState } from "react";
+import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal";
+import drumSounds from "../../assets/data/drum-sounds.json";
+import "./PatternTimeline.css";
+
+
+// TrackLabel component with hover controls
+function TrackLabel({ track, onSoundChange }) {
+  const [showControls, setShowControls] = useState(false);
+  const [showSoundModal, setShowSoundModal] = useState(false);
+
+  // Get display name - either sound name or "Choose Sound..."
+  const getDisplayName = () => {
+    if (!track.soundFile) {
+      return "Choose Sound...";
+    }
+
+    // Hard-coded mapping for the first four default tracks
+    const defaultSoundNames = {
+      "kicks/Ac_K.wav": "Acoustic Kick",
+      "snares/Box_Snr2.wav": "Box Snare 2",
+      "hihats/Jls_H.wav": "Jealous Hat",
+      "cymbals/CL_OHH1.wav": "Closed Hi-Hat 1",
+    };
+
+    if (defaultSoundNames[track.soundFile]) {
+      return defaultSoundNames[track.soundFile];
+    }
+
+    // Find the sound name from drumSounds for other sounds
+    for (const category of Object.values(drumSounds)) {
+      const sound = category.find((s) => s.file === track.soundFile);
+      if (sound) {
+        return sound.name;
+      }
+    }
+
+    // Fallback to track name if sound not found
+    return track.name;
+  };
+
+  return (
+    <>
+      <div
+        className="track-label"
+        onMouseEnter={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
+        <div
+          className="track-color-indicator"
+          style={{ backgroundColor: track.color }}
+        />
+        <span className="track-name">{getDisplayName()}</span>
+
+        {showControls && (
+          <div className="ms-auto d-flex gap-1">
+            <button
+              className="btn btn-sm btn-outline-secondary p-1"
+              style={{ fontSize: "12px", width: "24px", height: "24px" }}
+              onClick={() => setShowSoundModal(true)}
+              title="Change sound"
+            >
+              ⚙
+            </button>
+          </div>
+        )}
+      </div>
+
+      <SoundSelectorModal
+        isOpen={showSoundModal}
+        onClose={() => setShowSoundModal(false)}
+        track={track}
+        drumSounds={drumSounds}
+        onSoundSelect={(newSoundFile) => onSoundChange(track.id, newSoundFile)}
+      />
+    </>
+  );
+}
+
+function PatternTimeline({
+  pattern,
   bpm,
   currentTick = 0,
   isPlaying = false,
-  snapToGrid, 
+  snapToGrid,
+  tracks,
   onPatternChange,
   onBpmChange,
   onSnapToggle,
+  onAddTrack,
+  onRemoveTrack,
+  onUpdateTrackSound,
+  onPlay,
+  onPause,
+  onStop,
   TICKS_PER_BEAT = 480,
   BEATS_PER_LOOP = 16,
-  PIXELS_PER_TICK = 0.1 
+  PIXELS_PER_TICK = 0.1,
 }) {
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
@@ -22,33 +107,25 @@ function PatternTimeline({
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
   const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
   const GRID_WIDTH = TOTAL_TICKS * PIXELS_PER_TICK;
+  const TRACK_HEIGHT = 60;
+  const HEADER_HEIGHT = 50;
+  const SIDEBAR_WIDTH = 140;
 
-  // Track configuration
-  const tracks = [
-    { id: 'kick', name: 'Kick', color: '#e74c3c' },
-    { id: 'snare', name: 'Snare', color: '#f39c12' },
-    { id: 'hihat', name: 'Hi-Hat', color: '#2ecc71' },
-    { id: 'openhat', name: 'Open Hat', color: '#3498db' }
-  ];
-
+  // Calculate current position for display
+  const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
+  
   // Update playhead position when currentTick changes
   useEffect(() => {
     if (playheadRef.current) {
       const position = currentTick * PIXELS_PER_TICK;
-      playheadRef.current.style.left = `${position}px`;
+      playheadRef.current.style.transform = `translateX(${position}px)`;
     }
   }, [currentTick, PIXELS_PER_TICK]);
 
-  useEffect(() => {
-  console.log("running create note!");
-  }, [pattern]);
-
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
-    console.log('Track clicked:', trackId);
-    
-    if (e.target.classList.contains('timeline-note')) return;
-    
+    if (e.target.classList.contains("timeline-note")) return;
+
     const track = e.currentTarget;
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -73,17 +150,17 @@ function PatternTimeline({
       // Remove existing note
       console.log('Removing note at tick:', clampedTick);
       onPatternChange({
-        type: 'remove-note',
+        type: "remove-note",
         trackId,
-        tick: clampedTick
+        tick: clampedTick,
       });
     } else {
       // Add new note
       console.log('Adding note at tick:', clampedTick);
       onPatternChange({
-        type: 'add-note',
+        type: "add-note",
         trackId,
-        tick: clampedTick
+        tick: clampedTick,
       });
     }
   };
@@ -91,17 +168,17 @@ function PatternTimeline({
   // Handle note dragging start
   const handleNoteMouseDown = (e, trackId, tick) => {
     e.stopPropagation();
-    
+
     const noteRect = e.target.getBoundingClientRect();
     const offsetX = e.clientX - noteRect.left;
-    
+
     setIsDragging(true);
     setHasDragged(false);
-    setDraggedNote({ 
-      trackId, 
-      originalTick: tick, 
+    setDraggedNote({
+      trackId,
+      originalTick: tick,
       currentTick: tick,
-      offsetX
+      offsetX,
     });
   };
 
@@ -124,10 +201,10 @@ function PatternTimeline({
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
-    
-    setDraggedNote(prev => ({
+
+    setDraggedNote((prev) => ({
       ...prev,
-      currentTick: clampedTick
+      currentTick: clampedTick,
     }));
   };
 
@@ -136,13 +213,13 @@ function PatternTimeline({
     if (isDragging && draggedNote && hasDragged) {
       console.log('Moving note from', draggedNote.originalTick, 'to', draggedNote.currentTick);
       onPatternChange({
-        type: 'move-note',
+        type: "move-note",
         trackId: draggedNote.trackId,
         fromTick: draggedNote.originalTick,
-        toTick: draggedNote.currentTick
+        toTick: draggedNote.currentTick,
       });
     }
-    
+
     setIsDragging(false);
     setDraggedNote(null);
     setTimeout(() => setHasDragged(false), 10);
@@ -154,9 +231,9 @@ function PatternTimeline({
     if (!hasDragged) {
       console.log('Deleting note at tick:', tick);
       onPatternChange({
-        type: 'remove-note',
+        type: "remove-note",
         trackId,
-        tick
+        tick,
       });
     }
   };
@@ -164,189 +241,207 @@ function PatternTimeline({
   // Add global mouse event listeners for dragging
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [isDragging, draggedNote, snapToGrid, PIXELS_PER_TICK, TICKS_PER_BEAT, TOTAL_TICKS]);
+  }, [
+    isDragging,
+    draggedNote,
+    snapToGrid,
+    PIXELS_PER_TICK,
+    TICKS_PER_BEAT,
+    TOTAL_TICKS,
+  ]);
 
   return (
-    <div className="card">
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h5 className="mb-0">Pattern Timeline</h5>
-        <div className="d-flex align-items-center gap-3">
-          <div className="form-check">
-            <input 
-              className="form-check-input" 
-              type="checkbox" 
+    <div className="pattern-timeline">
+      {/* Transport Controls Bar */}
+      <div className="timeline-controls">
+        <div className="controls-section">
+          {/* Transport Controls */}
+          <div className="transport-controls">
+            <button
+              className={`btn btn-transport ${
+                isPlaying ? "btn-pause" : "btn-play"
+              }`}
+              onClick={isPlaying ? onPause : onPlay}
+            >
+              {isPlaying ? "⏸ Pause" : "▶ Play"}
+            </button>
+            <button className="btn btn-transport btn-stop" onClick={onStop}>
+              ⏹ Stop
+            </button>
+            <button className="btn btn-transport btn-loop">Loop</button>
+          </div>
+
+          {/* Position Display */}
+          <div className="position-display">
+            <span className="position-badge position-badge--beat">
+              Beat: {currentBeat}/{BEATS_PER_LOOP}
+            </span>
+            <span className="position-badge position-badge--tick">
+              Tick: {currentTick}
+            </span>
+          </div>
+        </div>
+
+        <div className="controls-section">
+          {/* Snap Toggle */}
+          <div className="snap-control">
+            <input
+              className="snap-checkbox"
+              type="checkbox"
               id="snapToggle"
-              checked={snapToGrid} 
+              checked={snapToGrid}
               onChange={(e) => onSnapToggle(e.target.checked)}
             />
-            <label className="form-check-label" htmlFor="snapToggle">
+            <label className="snap-label" htmlFor="snapToggle">
               Snap to beat
             </label>
           </div>
-          <div className="d-flex align-items-center">
-            <label className="form-label mb-0 me-2">BPM:</label>
+
+          {/* BPM Control */}
+          <div className="bpm-control">
+            <label className="bpm-label">BPM</label>
             <input
               type="range"
-              className="form-range me-2"
-              style={{ width: '120px' }}
+              className="bpm-slider"
               min="60"
               max="300"
               value={bpm}
               onChange={(e) => onBpmChange(parseInt(e.target.value))}
             />
-            <span className="badge bg-primary">{bpm}</span>
+            <span className="bpm-value">{bpm}</span>
           </div>
         </div>
       </div>
-      
-      <div className="card-body">
-        <div style={{ overflowX: 'auto', padding: '10px' }}>
-          {/* Beat markers */}
-          <div style={{ 
-            position: 'relative',
-            height: '20px',
-            width: `${GRID_WIDTH}px`,
-            marginBottom: '10px'
-          }}>
-            {Array.from({ length: BEATS_PER_LOOP }, (_, beatIndex) => (
-              <div
-                key={beatIndex}
-                style={{
-                  position: 'absolute',
-                  top: '0',
-                  left: `${beatIndex * BEAT_WIDTH}px`,
-                  fontSize: '12px',
-                  color: '#666',
-                  fontWeight: 'bold'
-                }}
-              >
-                {(beatIndex % 4) + 1}
-              </div>
-            ))}
+
+      {/* Grid Container */}
+      <div className="timeline-grid-container">
+        {/* Track Labels Sidebar */}
+        <div className="track-sidebar">
+          <div className="sidebar-header">TRACKS</div>
+
+          {tracks.map((track) => (
+            <TrackLabel
+              key={`label-${track.id}`}
+              track={track}
+              onSoundChange={onUpdateTrackSound}
+            />
+          ))}
+
+          <div className="add-track-container">
+            <button className="btn btn-add-track" onClick={onAddTrack}>
+              + Add Track
+            </button>
+          </div>
+        </div>
+
+        {/* Grid Area */}
+        <div className="timeline-grid-area">
+          {/* Beat Header */}
+          <div className="beat-header">
+            {/* Measure Numbers */}
+            <div className="measure-row">
+              {Array.from({ length: BEATS_PER_LOOP / 4 }, (_, i) => (
+                <div
+                  key={`measure-${i}`}
+                  className="measure-cell"
+                  style={{ width: `${BEAT_WIDTH * 4}px` }}
+                >
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+            
+            {/* Beat Numbers */}
+            <div className="beat-row">
+              {Array.from({ length: BEATS_PER_LOOP }, (_, i) => (
+                <div
+                  key={`beat-${i}`}
+                  className={`beat-cell ${
+                    i % 4 === 0 ? "beat-cell--downbeat" : ""
+                  }`}
+                  style={{ width: `${BEAT_WIDTH}px` }}
+                >
+                  {(i % 4) + 1}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Main timeline */}
-          <div ref={gridRef} style={{
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            width: `${GRID_WIDTH}px`,
-            minWidth: '800px'
-          }}>
-            {/* Playhead */}
-            <div
-              ref={playheadRef}
-              style={{
-                position: 'absolute',
-                top: '-20px',
-                bottom: '0',
-                width: '2px',
-                background: '#e74c3c',
-                zIndex: 10,
-                pointerEvents: 'none',
-                boxShadow: '0 0 4px rgba(231, 76, 60, 0.5)',
-                transition: isPlaying ? 'none' : 'left 0.1s ease'
-              }}
-            />
-
-            {/* Track rows */}
-            {tracks.map((track) => (
+          {/* Track Grid */}
+          <div
+            ref={gridRef}
+            className="track-grid"
+            style={{ width: `${GRID_WIDTH}px` }}
+          >
+            {/* Track Lanes */}
+            {tracks.map((track, trackIndex) => (
               <div
-                key={track.id}
-                style={{
-                  position: 'relative',
-                  height: '50px',
-                  background: '#f8f9fa',
-                  cursor: 'crosshair',
-                  borderRadius: '4px',
-                  border: '1px solid #dee2e6'
-                }}
+                key={`track-${track.id}`}
+                className={`track-lane ${
+                  trackIndex % 2 === 0 ? "track-lane--even" : "track-lane--odd"
+                }`}
                 onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
               >
                 {/* Beat separator lines */}
                 {Array.from({ length: BEATS_PER_LOOP + 1 }, (_, beatIndex) => (
                   <div
                     key={`line-${beatIndex}`}
-                    style={{
-                      position: 'absolute',
-                      top: '0',
-                      bottom: '0',
-                      left: `${beatIndex * BEAT_WIDTH}px`,
-                      width: beatIndex % 4 === 0 ? '2px' : '1px',
-                      background: beatIndex % 4 === 0 ? '#999' : '#ccc',
-                      pointerEvents: 'none',
-                      zIndex: 1
-                    }}
+                    className={`beat-line ${
+                      beatIndex % 4 === 0
+                        ? "beat-line--measure"
+                        : "beat-line--beat"
+                    }`}
+                    style={{ left: `${beatIndex * BEAT_WIDTH}px` }}
                   />
                 ))}
 
-                {/* Track label */}
-                <div style={{
-                  position: 'absolute',
-                  left: '-80px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: track.color,
-                  width: '70px',
-                  textAlign: 'right'
-                }}>
-                  {track.name}
-                </div>
-
                 {/* Notes */}
                 {pattern[track.id]?.map((tick) => {
-                  
-                  const isBeingDragged = draggedNote && 
-                    draggedNote.trackId === track.id && 
+                  const isBeingDragged =
+                    draggedNote &&
+                    draggedNote.trackId === track.id &&
                     draggedNote.originalTick === tick;
-                  
-                  const displayTick = isBeingDragged ? draggedNote.currentTick : tick;
 
-                  
-                  
+                  const displayTick = isBeingDragged
+                    ? draggedNote.currentTick
+                    : tick;
+
                   return (
                     <div
                       key={`${track.id}-${tick}`}
-                      className="timeline-note"
+                      className={`timeline-note ${
+                        isBeingDragged ? "timeline-note--dragging" : ""
+                      }`}
                       style={{
-                        position: 'absolute',
                         left: `${displayTick * PIXELS_PER_TICK}px`,
-                        width: '20px',
-                        height: '40px',
-                        top: '5px',
-                        background: isBeingDragged ? '#e67e22' : track.color,
-                        cursor: 'grab',
-                        borderRadius: '4px',
-                        transition: isBeingDragged ? 'none' : 'background-color 0.1s ease',
-                        zIndex: isBeingDragged ? 10 : 2,
-                        border: '2px solid rgba(255,255,255,0.3)'
+                        backgroundColor: track.color,
                       }}
-                      onMouseDown={(e) => handleNoteMouseDown(e, track.id, tick)}
+                      onMouseDown={(e) =>
+                        handleNoteMouseDown(e, track.id, tick)
+                      }
                       onClick={(e) => handleNoteClick(e, track.id, tick)}
-                      onMouseEnter={(e) => {
-                        if (!isDragging) {
-                          e.target.style.opacity = '0.8';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.opacity = '1';
-                      }}
                     />
                   );
                 })}
               </div>
             ))}
+
+            {/* Playhead */}
+            <div
+              ref={playheadRef}
+              className={`playhead ${isPlaying ? "playhead--playing" : ""}`}
+              style={{ height: `${tracks.length * TRACK_HEIGHT}px` }}
+            >
+              <div className="playhead-indicator" />
+            </div>
           </div>
         </div>
       </div>
