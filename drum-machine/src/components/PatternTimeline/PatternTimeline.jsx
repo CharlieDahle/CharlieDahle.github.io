@@ -1,5 +1,80 @@
 import React, { useEffect, useRef, useState } from "react";
-import "./PatternTimeline.css"; // We'll create a separate CSS file
+import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal";
+import drumSounds from "../../assets/data/drum-sounds.json";
+import "./PatternTimeline.css";
+
+// TrackLabel component with hover controls
+function TrackLabel({ track, onSoundChange }) {
+  const [showControls, setShowControls] = useState(false);
+  const [showSoundModal, setShowSoundModal] = useState(false);
+
+  // Get display name - either sound name or "Choose Sound..."
+  const getDisplayName = () => {
+    if (!track.soundFile) {
+      return "Choose Sound...";
+    }
+
+    // Hard-coded mapping for the first four default tracks
+    const defaultSoundNames = {
+      "kicks/Ac_K.wav": "Acoustic Kick",
+      "snares/Box_Snr2.wav": "Box Snare 2",
+      "hihats/Jls_H.wav": "Jealous Hat",
+      "cymbals/CL_OHH1.wav": "Closed Hi-Hat 1",
+    };
+
+    if (defaultSoundNames[track.soundFile]) {
+      return defaultSoundNames[track.soundFile];
+    }
+
+    // Find the sound name from drumSounds for other sounds
+    for (const category of Object.values(drumSounds)) {
+      const sound = category.find((s) => s.file === track.soundFile);
+      if (sound) {
+        return sound.name;
+      }
+    }
+
+    // Fallback to track name if sound not found
+    return track.name;
+  };
+
+  return (
+    <>
+      <div
+        className="track-label"
+        onMouseEnter={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
+        <div
+          className="track-color-indicator"
+          style={{ backgroundColor: track.color }}
+        />
+        <span className="track-name">{getDisplayName()}</span>
+
+        {showControls && (
+          <div className="ms-auto d-flex gap-1">
+            <button
+              className="btn btn-sm btn-outline-secondary p-1"
+              style={{ fontSize: "12px", width: "24px", height: "24px" }}
+              onClick={() => setShowSoundModal(true)}
+              title="Change sound"
+            >
+              ⚙
+            </button>
+          </div>
+        )}
+      </div>
+
+      <SoundSelectorModal
+        isOpen={showSoundModal}
+        onClose={() => setShowSoundModal(false)}
+        track={track}
+        drumSounds={drumSounds}
+        onSoundSelect={(newSoundFile) => onSoundChange(track.id, newSoundFile)}
+      />
+    </>
+  );
+}
 
 function PatternTimeline({
   pattern,
@@ -241,13 +316,11 @@ function PatternTimeline({
           <div className="sidebar-header">TRACKS</div>
 
           {tracks.map((track) => (
-            <div key={`label-${track.id}`} className="track-label">
-              <div
-                className="track-color-indicator"
-                style={{ backgroundColor: track.color }}
-              />
-              <span className="track-name">{track.name}</span>
-            </div>
+            <TrackLabel
+              key={`label-${track.id}`}
+              track={track}
+              onSoundChange={onUpdateTrackSound}
+            />
           ))}
 
           <div className="add-track-container">
