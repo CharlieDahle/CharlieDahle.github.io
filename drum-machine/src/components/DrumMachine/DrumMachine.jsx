@@ -14,6 +14,7 @@ function DrumMachine({
   onAddTrack, // track management handlers
   onRemoveTrack,
   onUpdateTrackSound,
+  remoteTransportCommand,
 }) {
   // Local pattern state (synced with server via props)
   const [pattern, setPattern] = useState(initialPattern);
@@ -41,6 +42,33 @@ function DrumMachine({
   useEffect(() => {
     setBpm(initialBpm);
   }, [initialBpm]);
+
+  useEffect(() => {
+    if (!remoteTransportCommand) return;
+    
+    console.log('Processing remote transport command:', remoteTransportCommand);
+    
+    // Handle the command based on its type
+    switch (remoteTransportCommand.type) {
+      case 'play':
+        if (!isPlaying) {
+          handlePlay();
+        }
+        break;
+      case 'pause':
+        if (isPlaying) {
+          handlePause();
+        }
+        break;
+      case 'stop':
+        if (isPlaying || currentTick !== 0) {
+          handleStop();
+        }
+        break;
+      default:
+        console.warn('Unknown transport command type:', remoteTransportCommand.type);
+    }
+  }, [remoteTransportCommand]);
 
   // Initialize scheduler
   useEffect(() => {
