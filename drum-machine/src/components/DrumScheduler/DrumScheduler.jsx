@@ -80,8 +80,15 @@ class DrumScheduler {
           console.error(`Failed to load sound for track ${track.name}:`, error);
         }
       }
+      
+      this.soundsLoaded = true;
+      console.log('DrumScheduler: All sounds loaded successfully');
+      
+    } catch (error) {
+      console.error('DrumScheduler: Failed to load sounds:', error);
+      this.soundsLoaded = false;
     }
-
+  
     console.log("DrumScheduler: Track sounds mapped:", this.trackSounds);
   }
 
@@ -203,11 +210,9 @@ class DrumScheduler {
     Object.keys(this.pattern).forEach((trackId) => {
       if (this.pattern[trackId]?.includes(tick)) {
         const soundFile = this.trackSounds[trackId];
-        if (soundFile && this.audioBuffers[soundFile]) {
+        if (soundFile) {
           this.playSound(soundFile, when);
           console.log(`Playing ${trackId} at tick ${tick}`);
-        } else {
-          console.warn(`No sound available for track ${trackId}`);
         }
       }
     });

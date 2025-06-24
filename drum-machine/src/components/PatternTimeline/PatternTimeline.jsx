@@ -1,7 +1,9 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
+
 
 // TrackLabel component with hover controls
 function TrackLabel({ track, onSoundChange }) {
@@ -111,7 +113,7 @@ function PatternTimeline({
 
   // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
-
+  
   // Update playhead position when currentTick changes
   useEffect(() => {
     if (playheadRef.current) {
@@ -131,22 +133,30 @@ function PatternTimeline({
 
     let snappedTick;
     if (snapToGrid) {
+      // Snap to beat boundaries
       const beatIndex = Math.floor(tick / TICKS_PER_BEAT);
       snappedTick = beatIndex * TICKS_PER_BEAT;
     } else {
+      // Free form placement
       snappedTick = Math.round(tick);
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
+    
+    // Check if there's already a note at this position
     const existingNote = pattern[trackId]?.includes(clampedTick);
 
     if (existingNote) {
+      // Remove existing note
+      console.log('Removing note at tick:', clampedTick);
       onPatternChange({
         type: "remove-note",
         trackId,
         tick: clampedTick,
       });
     } else {
+      // Add new note
+      console.log('Adding note at tick:', clampedTick);
       onPatternChange({
         type: "add-note",
         trackId,
@@ -201,6 +211,7 @@ function PatternTimeline({
   // Handle mouse up - finish drag
   const handleMouseUp = () => {
     if (isDragging && draggedNote && hasDragged) {
+      console.log('Moving note from', draggedNote.originalTick, 'to', draggedNote.currentTick);
       onPatternChange({
         type: "move-note",
         trackId: draggedNote.trackId,
@@ -218,6 +229,7 @@ function PatternTimeline({
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
+      console.log('Deleting note at tick:', tick);
       onPatternChange({
         type: "remove-note",
         trackId,
@@ -346,7 +358,7 @@ function PatternTimeline({
                 </div>
               ))}
             </div>
-
+            
             {/* Beat Numbers */}
             <div className="beat-row">
               {Array.from({ length: BEATS_PER_LOOP }, (_, i) => (
