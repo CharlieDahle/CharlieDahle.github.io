@@ -58,7 +58,7 @@ function DrumMachine({
     };
   }, []);
 
-  // Update scheduler when pattern or BPM changes
+  // Update scheduler when pattern, BPM, or tracks change
   useEffect(() => {
     if (schedulerRef.current) {
       schedulerRef.current.setPattern(pattern);
@@ -66,7 +66,7 @@ function DrumMachine({
       // Update scheduler with current tracks
       schedulerRef.current.setTracks(tracks);
     }
-  }, [pattern, bpm]);
+  }, [pattern, bpm, tracks]);
 
   // Handle pattern changes (update local state and notify parent)
   const handlePatternChange = (change) => {
@@ -76,7 +76,7 @@ function DrumMachine({
       console.warn("Pattern change for non-existent track:", change.trackId);
       return;
     }
-    
+
     // Update local state immediately for responsive UI
     setPattern((prevPattern) => {
       const newPattern = { ...prevPattern };
