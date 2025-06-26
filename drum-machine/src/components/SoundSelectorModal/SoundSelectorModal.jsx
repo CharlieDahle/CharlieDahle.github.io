@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useUIStore } from "../../stores/useUIStore";
 
-function SoundSelectorModal({
-  isOpen,
-  onClose,
-  track,
-  drumSounds,
-  onSoundSelect,
-}) {
+function SoundSelectorModal({ drumSounds, onSoundSelect }) {
+  const { soundModalOpen, soundModalTrack, closeSoundModal } = useUIStore();
+
   const [selectedCategory, setSelectedCategory] = useState("kicks");
   const [selectedSound, setSelectedSound] = useState(null);
   const [loadedSounds, setLoadedSounds] = useState({});
@@ -14,20 +11,20 @@ function SoundSelectorModal({
 
   // Initialize audio context
   useEffect(() => {
-    if (isOpen && !audioContext) {
+    if (soundModalOpen && !audioContext) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       setAudioContext(ctx);
     }
-  }, [isOpen]);
+  }, [soundModalOpen]);
 
   // Auto-select track's current category when modal opens
   useEffect(() => {
-    if (isOpen && track) {
+    if (soundModalOpen && soundModalTrack) {
       // Find which category contains the track's current sound
       const categories = Object.keys(drumSounds);
       for (const category of categories) {
         const soundExists = drumSounds[category].some(
-          (sound) => sound.file === track.soundFile
+          (sound) => sound.file === soundModalTrack.soundFile
         );
         if (soundExists) {
           setSelectedCategory(category);
@@ -35,9 +32,9 @@ function SoundSelectorModal({
         }
       }
       // Set current sound as selected
-      setSelectedSound(track.soundFile);
+      setSelectedSound(soundModalTrack.soundFile);
     }
-  }, [isOpen, track, drumSounds]);
+  }, [soundModalOpen, soundModalTrack, drumSounds]);
 
   // Load sounds for a category
   const loadCategorySounds = async (category) => {
@@ -89,20 +86,20 @@ function SoundSelectorModal({
 
   // Handle apply
   const handleApply = () => {
-    if (selectedSound) {
-      onSoundSelect(selectedSound);
+    if (selectedSound && soundModalTrack) {
+      onSoundSelect(soundModalTrack.id, selectedSound);
     }
-    onClose();
+    closeSoundModal();
   };
 
   // Load sounds for initial category when modal opens
   useEffect(() => {
-    if (isOpen && selectedCategory) {
+    if (soundModalOpen && selectedCategory) {
       loadCategorySounds(selectedCategory);
     }
-  }, [isOpen, selectedCategory]);
+  }, [soundModalOpen, selectedCategory]);
 
-  if (!isOpen) return null;
+  if (!soundModalOpen) return null;
 
   const categories = Object.keys(drumSounds);
   const currentSounds = drumSounds[selectedCategory] || [];
@@ -115,11 +112,13 @@ function SoundSelectorModal({
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Select Sound for {track?.name}</h5>
+            <h5 className="modal-title">
+              Select Sound for {soundModalTrack?.name}
+            </h5>
             <button
               type="button"
               className="btn-close"
-              onClick={onClose}
+              onClick={closeSoundModal}
             ></button>
           </div>
 
@@ -174,7 +173,7 @@ function SoundSelectorModal({
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={onClose}
+              onClick={closeSoundModal}
             >
               Cancel
             </button>

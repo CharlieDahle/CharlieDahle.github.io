@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal";
+import { useUIStore } from "../../stores/useUIStore";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
 // TrackLabel component with hover controls
 function TrackLabel({ track, onSoundChange }) {
   const [showControls, setShowControls] = useState(false);
-  const [showSoundModal, setShowSoundModal] = useState(false);
+  const { openSoundModal } = useUIStore();
 
   // Get display name - either sound name or "Choose Sound..."
   const getDisplayName = () => {
@@ -39,40 +39,30 @@ function TrackLabel({ track, onSoundChange }) {
   };
 
   return (
-    <>
+    <div
+      className="track-label"
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
       <div
-        className="track-label"
-        onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => setShowControls(false)}
-      >
-        <div
-          className="track-color-indicator"
-          style={{ backgroundColor: track.color }}
-        />
-        <span className="track-name">{getDisplayName()}</span>
-
-        {showControls && (
-          <div className="ms-auto d-flex gap-1">
-            <button
-              className="btn btn-sm btn-outline-secondary p-1"
-              style={{ fontSize: "12px", width: "24px", height: "24px" }}
-              onClick={() => setShowSoundModal(true)}
-              title="Change sound"
-            >
-              ⚙
-            </button>
-          </div>
-        )}
-      </div>
-
-      <SoundSelectorModal
-        isOpen={showSoundModal}
-        onClose={() => setShowSoundModal(false)}
-        track={track}
-        drumSounds={drumSounds}
-        onSoundSelect={(newSoundFile) => onSoundChange(track.id, newSoundFile)}
+        className="track-color-indicator"
+        style={{ backgroundColor: track.color }}
       />
-    </>
+      <span className="track-name">{getDisplayName()}</span>
+
+      {showControls && (
+        <div className="ms-auto d-flex gap-1">
+          <button
+            className="btn btn-sm btn-outline-secondary p-1"
+            style={{ fontSize: "12px", width: "24px", height: "24px" }}
+            onClick={() => openSoundModal(track)}
+            title="Change sound"
+          >
+            ⚙
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -81,11 +71,9 @@ function PatternTimeline({
   bpm,
   currentTick = 0,
   isPlaying = false,
-  snapToGrid,
   tracks,
   onPatternChange,
   onBpmChange,
-  onSnapToggle,
   onAddTrack,
   onRemoveTrack,
   onUpdateTrackSound,
@@ -102,12 +90,12 @@ function PatternTimeline({
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
 
+  // Get snap state from UI store
+  const { snapToGrid, setSnapToGrid } = useUIStore();
+
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
   const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
   const GRID_WIDTH = TOTAL_TICKS * PIXELS_PER_TICK;
-  const TRACK_HEIGHT = 60;
-  const HEADER_HEIGHT = 50;
-  const SIDEBAR_WIDTH = 140;
 
   // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
@@ -246,6 +234,8 @@ function PatternTimeline({
     TOTAL_TICKS,
   ]);
 
+  const TRACK_HEIGHT = 60;
+
   return (
     <div className="pattern-timeline">
       {/* Transport Controls Bar */}
@@ -286,7 +276,7 @@ function PatternTimeline({
               type="checkbox"
               id="snapToggle"
               checked={snapToGrid}
-              onChange={(e) => onSnapToggle(e.target.checked)}
+              onChange={(e) => setSnapToGrid(e.target.checked)}
             />
             <label className="snap-label" htmlFor="snapToggle">
               Snap to beat
@@ -298,7 +288,7 @@ function PatternTimeline({
             <label className="bpm-label">BPM</label>
             <input
               type="range"
-              className="bpm-slider"
+              className="bmp-slider"
               min="60"
               max="300"
               value={bpm}
