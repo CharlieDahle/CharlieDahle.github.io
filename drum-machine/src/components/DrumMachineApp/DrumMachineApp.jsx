@@ -17,6 +17,7 @@ function DrumMachineApp() {
     roomId,
     users,
     error,
+    lastRemoteTransportCommand,
     initializeConnection,
     setStoreReferences,
     createRoom,
@@ -196,13 +197,13 @@ function DrumMachineApp() {
         <DrumMachine
           roomId={roomId}
           userCount={users.length}
+          remoteTransportCommand={lastRemoteTransportCommand}
           onPatternChange={handlePatternChange}
           onBpmChange={handleBpmChange}
           onTransportCommand={handleTransportCommand}
           onAddTrack={handleAddTrack}
           onRemoveTrack={handleRemoveTrack}
           onUpdateTrackSound={handleUpdateTrackSound}
-          // All state now comes from stores - no more props!
         />
 
         {/* Global Sound Selector Modal */}

@@ -125,6 +125,12 @@ class DrumScheduler {
 
   // Start playback
   async start(fromTick = 0) {
+    console.log(`🔊 Scheduler.start() called:`, {
+      currentlyPlaying: this.isPlaying,
+      fromTick,
+      audioContextState: this.audioContext?.state,
+    });
+
     if (!this.audioContext) {
       await this.init();
     }
@@ -139,10 +145,17 @@ class DrumScheduler {
 
     console.log("DrumScheduler: Starting from tick", fromTick);
     this.scheduler();
+
+    console.log(
+      `🔊 Scheduler.start() completed - now playing:`,
+      this.isPlaying
+    );
   }
 
   // Pause playback (remember position)
   pause() {
+    console.log(`🔊 Scheduler.pause() called - was playing:`, this.isPlaying);
+
     this.isPlaying = false;
 
     if (this.schedulerRAF) {

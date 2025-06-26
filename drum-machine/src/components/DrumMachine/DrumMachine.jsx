@@ -8,6 +8,7 @@ import DrumScheduler from "../DrumScheduler/DrumScheduler";
 function DrumMachine({
   roomId,
   userCount,
+  remoteTransportCommand,
   onPatternChange,
   onBpmChange,
   onTransportCommand,
@@ -62,6 +63,43 @@ function DrumMachine({
     }
   }, [pattern, bpm, tracks]);
 
+  // Handle remote transport commands (from other users)
+  useEffect(() => {
+    if (!remoteTransportCommand || !schedulerRef.current) return;
+
+    console.log(`📡 [${roomId}] REMOTE COMMAND received:`, {
+      command: remoteTransportCommand,
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current.isPlaying,
+      currentTick,
+    });
+
+    // Handle audio scheduling based on the remote command
+    // The state is already updated by the WebSocket store
+    switch (remoteTransportCommand.type) {
+      case "play":
+        if (!schedulerRef.current.isPlaying) {
+          console.log(`📡 [${roomId}] Starting scheduler from remote play`);
+          schedulerRef.current.start(currentTick);
+        } else {
+          console.log(
+            `📡 [${roomId}] Scheduler already playing, ignoring remote play`
+          );
+        }
+        break;
+      case "pause":
+        if (schedulerRef.current.isPlaying) {
+          console.log("Pausing audio playback from remote command");
+          schedulerRef.current.pause();
+        }
+        break;
+      case "stop":
+        console.log("Stopping audio playback from remote command");
+        schedulerRef.current.stop();
+        break;
+    }
+  }, [remoteTransportCommand, currentTick]);
+
   // Handle pattern changes
   const handlePatternChange = (change) => {
     // Check if track still exists
@@ -101,6 +139,12 @@ function DrumMachine({
 
   // Transport control handlers
   const handlePlay = async () => {
+    console.log(`🎵 [${roomId}] LOCAL PLAY clicked - Current state:`, {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+      currentTick,
+    });
+
     // Initialize audio context on first play
     if (schedulerRef.current) {
       await schedulerRef.current.init();
@@ -116,9 +160,16 @@ function DrumMachine({
 
     // Notify server
     onTransportCommand({ type: "play" });
+
+    console.log(`🎵 [${roomId}] LOCAL PLAY completed - Scheduler started`);
   };
 
   const handlePause = () => {
+    console.log(`⏸️ [${roomId}] LOCAL PAUSE clicked - Current state:`, {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+    });
+
     // Update store state
     pause();
 
@@ -132,6 +183,11 @@ function DrumMachine({
   };
 
   const handleStop = () => {
+    console.log(`⏹️ [${roomId}] LOCAL STOP clicked - Current state:`, {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+    });
+
     // Update store state
     stop();
 

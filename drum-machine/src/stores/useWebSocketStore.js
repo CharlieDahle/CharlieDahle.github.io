@@ -1,4 +1,3 @@
-// src/stores/useWebSocketStore.js
 import { create } from "zustand";
 import io from "socket.io-client";
 
@@ -12,6 +11,9 @@ export const useWebSocketStore = create((set, get) => ({
   roomId: null,
   isInRoom: false,
   users: [],
+
+  // Remote transport command state for DrumMachine coordination
+  lastRemoteTransportCommand: null,
 
   // Store references for coordination (will be set by the app)
   patternStore: null,
@@ -77,10 +79,16 @@ export const useWebSocketStore = create((set, get) => ({
     });
 
     newSocket.on("transport-sync", (command) => {
-      console.log("Transport command received:", command);
+      console.log(`🌐 RECEIVED transport sync:`, command);
       const { transportStore } = get();
       if (transportStore) {
+        // Update the transport state
         transportStore.getState().syncTransportCommand(command);
+
+        // Set a flag that DrumMachine can listen to for audio coordination
+        set({
+          lastRemoteTransportCommand: { ...command, timestamp: Date.now() },
+        });
       }
     });
 
@@ -177,7 +185,7 @@ export const useWebSocketStore = create((set, get) => ({
     const { socket, isInRoom, roomId } = get();
     if (!socket || !isInRoom) return;
 
-    console.log("Sending transport command:", command);
+    console.log(`🌐 [${roomId}] SENDING transport command:`, command);
     socket.emit("transport-command", {
       roomId,
       command,
@@ -198,6 +206,7 @@ export const useWebSocketStore = create((set, get) => ({
       roomId: null,
       users: [],
       error: null,
+      lastRemoteTransportCommand: null,
     });
   },
 }));
