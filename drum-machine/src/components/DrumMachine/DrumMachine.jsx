@@ -1,46 +1,45 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
+import { usePatternStore } from "../../stores/usePatternStore";
+import { useTrackStore } from "../../stores/useTrackStore";
+import { useTransportStore } from "../../stores/useTransportStore";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 
 function DrumMachine({
   roomId,
   userCount,
-  initialPattern,
-  initialBpm,
-  tracks, // dynamic tracks
+  remoteTransportCommand,
   onPatternChange,
   onBpmChange,
   onTransportCommand,
-  onAddTrack, // track management handlers
+  onAddTrack,
   onRemoveTrack,
   onUpdateTrackSound,
 }) {
-  // Local pattern state (synced with server via props)
-  const [pattern, setPattern] = useState(initialPattern);
-  const [bpm, setBpm] = useState(initialBpm);
+  // Get all state from stores
+  const { pattern, addNote, removeNote, moveNote, clearTrack } =
+    usePatternStore();
 
-  // Local playback state (managed by scheduler)
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTick, setCurrentTick] = useState(0);
+  const { tracks } = useTrackStore();
 
-  // UI state
-  const [snapToGrid, setSnapToGrid] = useState(true);
+  const {
+    isPlaying,
+    currentTick,
+    bpm,
+    play,
+    pause,
+    stop,
+    setBpm,
+    setCurrentTick,
+    TICKS_PER_BEAT,
+    BEATS_PER_LOOP,
+  } = useTransportStore();
 
   // Scheduler instance
   const schedulerRef = useRef(null);
 
-  // Constants
-  const TICKS_PER_BEAT = 480;
-  const BEATS_PER_LOOP = 16;
-
-  // Sync props to local state when they change
-  useEffect(() => {
-    setPattern(initialPattern);
-  }, [initialPattern]);
-
-  useEffect(() => {
-    setBpm(initialBpm);
-  }, [initialBpm]);
+  // Track the last processed remote command to avoid re-processing
+  const lastProcessedCommandRef = useRef(null);
 
   // Initialize scheduler
   useEffect(() => {
@@ -56,90 +55,129 @@ function DrumMachine({
         schedulerRef.current.destroy();
       }
     };
-  }, []);
+  }, [setCurrentTick]);
 
-  // Update scheduler when pattern or BPM changes
+  // Update scheduler when pattern, BPM, or tracks change
   useEffect(() => {
     if (schedulerRef.current) {
       schedulerRef.current.setPattern(pattern);
       schedulerRef.current.setBpm(bpm);
-      // Update scheduler with current tracks
       schedulerRef.current.setTracks(tracks);
     }
-  }, [pattern, bpm]);
+  }, [pattern, bpm, tracks]);
 
-  // Handle pattern changes (update local state and notify parent)
+  // Handle remote transport commands (from other users)
+  useEffect(() => {
+    if (!remoteTransportCommand || !schedulerRef.current) return;
+
+    // Check if we've already processed this exact command
+    if (
+      lastProcessedCommandRef.current?.timestamp ===
+      remoteTransportCommand.timestamp
+    ) {
+      return;
+    }
+
+    // Remember this command so we don't process it again
+    lastProcessedCommandRef.current = remoteTransportCommand;
+
+    console.log("📡 [" + roomId + "] REMOTE COMMAND received:", {
+      command: remoteTransportCommand,
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current.isPlaying,
+      currentTick,
+    });
+
+    // Handle audio scheduling based on the remote command
+    // The state is already updated by the WebSocket store
+    switch (remoteTransportCommand.type) {
+      case "play":
+        if (!schedulerRef.current.isPlaying) {
+          console.log(
+            "📡 [" + roomId + "] Starting scheduler from remote play"
+          );
+          schedulerRef.current.start(currentTick);
+        } else {
+          console.log(
+            "📡 [" +
+              roomId +
+              "] Scheduler already playing, ignoring remote play"
+          );
+        }
+        break;
+      case "pause":
+        if (schedulerRef.current.isPlaying) {
+          console.log(
+            "📡 [" + roomId + "] Pausing scheduler from remote pause"
+          );
+          schedulerRef.current.pause();
+        } else {
+          console.log(
+            "📡 [" +
+              roomId +
+              "] Scheduler already paused, ignoring remote pause"
+          );
+        }
+        break;
+      case "stop":
+        console.log("📡 [" + roomId + "] Stopping scheduler from remote stop");
+        schedulerRef.current.stop();
+        break;
+    }
+  }, [remoteTransportCommand, roomId, isPlaying, currentTick]); // Keep currentTick for the start() call
+
+  // Handle pattern changes
   const handlePatternChange = (change) => {
-    // Check if track still exists (in case it was removed)
+    // Check if track still exists
     const trackExists = tracks.some((track) => track.id === change.trackId);
     if (!trackExists) {
       console.warn("Pattern change for non-existent track:", change.trackId);
       return;
     }
-    
-    // Update local state immediately for responsive UI
-    setPattern((prevPattern) => {
-      const newPattern = { ...prevPattern };
 
-      switch (change.type) {
-        case "add-note":
-          if (!newPattern[change.trackId]) {
-            newPattern[change.trackId] = [];
-          }
-          if (!newPattern[change.trackId].includes(change.tick)) {
-            newPattern[change.trackId] = [
-              ...newPattern[change.trackId],
-              change.tick,
-            ];
-          }
-          break;
+    // Update store immediately for responsive UI
+    switch (change.type) {
+      case "add-note":
+        addNote(change.trackId, change.tick);
+        break;
+      case "remove-note":
+        removeNote(change.trackId, change.tick);
+        break;
+      case "move-note":
+        moveNote(change.trackId, change.fromTick, change.toTick);
+        break;
+      case "clear-track":
+        clearTrack(change.trackId);
+        break;
+      default:
+        console.warn("Unknown pattern change type:", change.type);
+    }
 
-        case "remove-note":
-          if (newPattern[change.trackId]) {
-            newPattern[change.trackId] = newPattern[change.trackId].filter(
-              (tick) => tick !== change.tick
-            );
-          }
-          break;
-
-        case "move-note":
-          if (newPattern[change.trackId]) {
-            newPattern[change.trackId] = newPattern[change.trackId]
-              .filter((tick) => tick !== change.fromTick)
-              .concat(change.toTick);
-          }
-          break;
-
-        case "clear-track":
-          newPattern[change.trackId] = [];
-          break;
-
-        default:
-          console.warn("Unknown pattern change type:", change.type);
-      }
-
-      return newPattern;
-    });
-
-    // Notify parent
+    // Notify parent for WebSocket sync
     onPatternChange(change);
   };
 
   // Handle BPM changes
-  const changeBpm = (newBpm) => {
+  const handleBpmChange = (newBpm) => {
     setBpm(newBpm);
     onBpmChange(newBpm);
   };
 
   // Transport control handlers
   const handlePlay = async () => {
+    console.log("🎵 [" + roomId + "] LOCAL PLAY clicked - Current state:", {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+      currentTick,
+    });
+
     // Initialize audio context on first play
     if (schedulerRef.current) {
       await schedulerRef.current.init();
     }
 
-    // Update local state immediately
-    setIsPlaying(true);
+    // Update store state
+    play();
 
     // Start local playback
     if (schedulerRef.current) {
@@ -148,11 +186,18 @@ function DrumMachine({
 
     // Notify server
     onTransportCommand({ type: "play" });
+
+    console.log("🎵 [" + roomId + "] LOCAL PLAY completed - Scheduler started");
   };
 
   const handlePause = () => {
-    // Update local state immediately
-    setIsPlaying(false);
+    console.log("⏸️ [" + roomId + "] LOCAL PAUSE clicked - Current state:", {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+    });
+
+    // Update store state
+    pause();
 
     // Pause local playback
     if (schedulerRef.current) {
@@ -164,9 +209,13 @@ function DrumMachine({
   };
 
   const handleStop = () => {
-    // Update local state immediately
-    setIsPlaying(false);
-    setCurrentTick(0);
+    console.log("⏹️ [" + roomId + "] LOCAL STOP clicked - Current state:", {
+      storeIsPlaying: isPlaying,
+      schedulerIsPlaying: schedulerRef.current?.isPlaying,
+    });
+
+    // Update store state
+    stop();
 
     // Stop local playback
     if (schedulerRef.current) {
@@ -177,7 +226,6 @@ function DrumMachine({
     onTransportCommand({ type: "stop" });
   };
 
-  // Main drum machine interface
   return (
     <div
       className="container-fluid py-4"
@@ -201,7 +249,7 @@ function DrumMachine({
         </div>
       </div>
 
-      {/* Integrated Pattern Timeline with Controls */}
+      {/* Pattern Timeline */}
       <div className="row">
         <div className="col">
           <PatternTimeline
@@ -209,15 +257,12 @@ function DrumMachine({
             bpm={bpm}
             currentTick={currentTick}
             isPlaying={isPlaying}
-            snapToGrid={snapToGrid}
             tracks={tracks}
             onPatternChange={handlePatternChange}
-            onBpmChange={changeBpm}
-            onSnapToggle={setSnapToGrid}
+            onBpmChange={handleBpmChange}
             onAddTrack={onAddTrack}
             onRemoveTrack={onRemoveTrack}
             onUpdateTrackSound={onUpdateTrackSound}
-            // Transport control handlers
             onPlay={handlePlay}
             onPause={handlePause}
             onStop={handleStop}
@@ -228,7 +273,7 @@ function DrumMachine({
         </div>
       </div>
 
-      {/* Debug info - Optional, can be removed for production */}
+      {/* Debug info */}
       <div className="row mt-4">
         <div className="col">
           <div className="card border-0 shadow-sm">
@@ -250,7 +295,7 @@ function DrumMachine({
                   .join(", ")}
                 <br />
                 <strong>Playback:</strong> Playing: {isPlaying ? "Yes" : "No"},
-                Tick: {currentTick}
+                Tick: {currentTick}, BPM: {bpm}
               </small>
             </div>
           </div>

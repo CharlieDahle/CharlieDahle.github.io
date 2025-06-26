@@ -80,15 +80,8 @@ class DrumScheduler {
           console.error(`Failed to load sound for track ${track.name}:`, error);
         }
       }
-      
-      this.soundsLoaded = true;
-      console.log('DrumScheduler: All sounds loaded successfully');
-      
-    } catch (error) {
-      console.error('DrumScheduler: Failed to load sounds:', error);
-      this.soundsLoaded = false;
     }
-  
+
     console.log("DrumScheduler: Track sounds mapped:", this.trackSounds);
   }
 
@@ -132,6 +125,12 @@ class DrumScheduler {
 
   // Start playback
   async start(fromTick = 0) {
+    console.log(`🔊 Scheduler.start() called:`, {
+      currentlyPlaying: this.isPlaying,
+      fromTick,
+      audioContextState: this.audioContext?.state,
+    });
+
     if (!this.audioContext) {
       await this.init();
     }
@@ -146,10 +145,17 @@ class DrumScheduler {
 
     console.log("DrumScheduler: Starting from tick", fromTick);
     this.scheduler();
+
+    console.log(
+      `🔊 Scheduler.start() completed - now playing:`,
+      this.isPlaying
+    );
   }
 
   // Pause playback (remember position)
   pause() {
+    console.log(`🔊 Scheduler.pause() called - was playing:`, this.isPlaying);
+
     this.isPlaying = false;
 
     if (this.schedulerRAF) {
@@ -210,9 +216,11 @@ class DrumScheduler {
     Object.keys(this.pattern).forEach((trackId) => {
       if (this.pattern[trackId]?.includes(tick)) {
         const soundFile = this.trackSounds[trackId];
-        if (soundFile) {
+        if (soundFile && this.audioBuffers[soundFile]) {
           this.playSound(soundFile, when);
           console.log(`Playing ${trackId} at tick ${tick}`);
+        } else {
+          console.warn(`No sound available for track ${trackId}`);
         }
       }
     });

@@ -1,141 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useWebSocket } from '../../hooks/useWebSocket';
-import RoomInterface from '../RoomInterface/RoomInterface.jsx';
-import DrumMachine from '../DrumMachine/DrumMachine.jsx';
+import React, { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useTrackStore } from "../../stores/useTrackStore";
+import { usePatternStore } from "../../stores/usePatternStore";
+import { useTransportStore } from "../../stores/useTransportStore";
+import RoomInterface from "../RoomInterface/RoomInterface.jsx";
+import DrumMachine from "../DrumMachine/DrumMachine.jsx";
+import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
+import drumSounds from "../../assets/data/drum-sounds.json";
 
 function DrumMachineApp() {
-  // Use the WebSocket hook
+  // Use all stores
   const {
     isConnected,
     isInRoom,
     roomId,
     users,
     error,
+    lastRemoteTransportCommand,
+    initializeConnection,
+    setStoreReferences,
     createRoom,
     joinRoom,
     sendPatternChange,
-    setBpm: sendBpmChange,
+    sendBpmChange,
     sendTransportCommand,
-    subscribe,
-    unsubscribe
-  } = useWebSocket();
-  
-  // Server state that gets synced
-  const [pattern, setPattern] = useState({});
-  const [bpm, setBpm] = useState(120);
+    cleanup,
+  } = useWebSocketStore();
 
-  // Animation variants (same as AnimatedPage)
+  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
+
+  const { pattern, setPattern, removeTrackFromPattern } = usePatternStore();
+
+  const {
+    bpm,
+    isPlaying,
+    currentTick,
+    syncBpm,
+    TICKS_PER_BEAT,
+    BEATS_PER_LOOP,
+  } = useTransportStore();
+
+  // Animation variants
   const pageVariants = {
-    initial: { 
-      scale: 0.8, 
+    initial: {
+      scale: 0.8,
       opacity: 0,
-      y: 50
+      y: 50,
     },
-    in: { 
-      scale: 1, 
+    in: {
+      scale: 1,
       opacity: 1,
-      y: 0
+      y: 0,
     },
-    out: { 
-      scale: 0.8, 
+    out: {
+      scale: 0.8,
       opacity: 0,
-      y: -50
-    }
+      y: -50,
+    },
   };
 
   const pageTransition = {
     type: "spring",
     stiffness: 100,
     damping: 15,
-    mass: 0.8
+    mass: 0.8,
   };
 
-  // Subscribe to WebSocket events
+  // Initialize WebSocket connection and set up store coordination
   useEffect(() => {
-    // Pattern updates from other users
-    subscribe('onPatternUpdate', (change) => {
-      console.log('Pattern update received:', change);
-      console.log('Current state of pattern:', pattern)
-      applyPatternChange(change);
-    });
+    const socket = initializeConnection();
 
-    // BPM changes
-    subscribe('onBpmChange', (newBpm) => {
-      console.log('BPM changed to:', newBpm);
-      setBpm(newBpm);
-    });
-
-    // We don't handle transport sync here since that's local to DrumMachine
-    // Transport commands need to be handled by the audio engine directly
+    // Set up store references for coordination
+    setStoreReferences(
+      { getState: () => usePatternStore.getState() },
+      { getState: () => useTransportStore.getState() }
+    );
 
     return () => {
-      unsubscribe('onPatternUpdate');
-      unsubscribe('onBpmChange');
+      cleanup();
     };
-  }, [subscribe, unsubscribe]);
+  }, [initializeConnection, setStoreReferences, cleanup]);
 
-  // Apply pattern changes from server
-  const applyPatternChange = (change) => {
-    setPattern(prevPattern => {
-      const newPattern = { ...prevPattern };
-      
-      switch (change.type) {
-        case 'add-note':
-          if (!newPattern[change.trackId]) {
-            newPattern[change.trackId] = [];
-          }
-          if (!newPattern[change.trackId].includes(change.tick)) {
-            newPattern[change.trackId] = [...newPattern[change.trackId], change.tick];
-          }
-          break;
-          
-        case 'remove-note':
-          if (newPattern[change.trackId]) {
-            newPattern[change.trackId] = newPattern[change.trackId].filter(
-              tick => tick !== change.tick
-            );
-          }
-          break;
-          
-        case 'move-note':
-          if (newPattern[change.trackId]) {
-            newPattern[change.trackId] = newPattern[change.trackId]
-              .filter(tick => tick !== change.fromTick)
-              .concat(change.toTick);
-          }
-          break;
-          
-        case 'clear-track':
-          newPattern[change.trackId] = [];
-          break;
-          
-        default:
-          console.warn('Unknown pattern change type:', change.type);
-      }
-      
-      return newPattern;
-    });
-  };
-
-  // Handlers for DrumMachine callbacks
+  // Handlers that bridge components to WebSocket store
   const handlePatternChange = (change) => {
-    // Optimistically update local state
-    applyPatternChange(change);
-    // Send to server
+    // Pattern is already updated in local store by DrumMachine
+    // Just send to server
     sendPatternChange(change);
   };
 
   const handleBpmChange = (newBpm) => {
-    // Optimistically update local state
-    setBpm(newBpm);
-    // Send to server
+    // BPM is already updated in local store by DrumMachine
+    // Just send to server
     sendBpmChange(newBpm);
   };
 
   const handleTransportCommand = (command) => {
-    // Just pass through to server - DrumMachine will handle local audio
+    // Transport state is already updated in local store by DrumMachine
+    // Just send to server
     sendTransportCommand(command);
+  };
+
+  // Track management handlers
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      soundFile: null,
+      availableSounds: drumSounds.other,
+    };
+
+    addTrack(trackData);
+  };
+
+  const handleRemoveTrack = (trackId) => {
+    removeTrack(trackId);
+    removeTrackFromPattern(trackId);
+  };
+
+  const handleUpdateTrackSound = (trackId, newSoundFile) => {
+    updateTrackSound(trackId, newSoundFile);
   };
 
   // Room management handlers
@@ -143,9 +127,9 @@ function DrumMachineApp() {
     try {
       const roomState = await createRoom();
       setPattern(roomState.pattern);
-      setBpm(roomState.bpm);
+      syncBpm(roomState.bpm);
     } catch (error) {
-      console.error('Failed to create room:', error);
+      console.error("Failed to create room:", error);
     }
   };
 
@@ -153,9 +137,9 @@ function DrumMachineApp() {
     try {
       const roomState = await joinRoom(targetRoomId);
       setPattern(roomState.pattern);
-      setBpm(roomState.bpm);
+      syncBpm(roomState.bpm);
     } catch (error) {
-      console.error('Failed to join room:', error);
+      console.error("Failed to join room:", error);
     }
   };
 
@@ -171,17 +155,20 @@ function DrumMachineApp() {
           variants={pageVariants}
           transition={pageTransition}
           style={{
-            width: '100%',
-            minHeight: '100vh'
+            width: "100%",
+            minHeight: "100vh",
           }}
         >
-          <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+          <div
+            className="container-fluid py-4"
+            style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
+          >
             {error && (
               <div className="alert alert-danger text-center" role="alert">
                 {error}
               </div>
             )}
-            <RoomInterface 
+            <RoomInterface
               onCreateRoom={handleCreateRoom}
               onJoinRoom={handleJoinRoom}
               isConnected={isConnected}
@@ -192,7 +179,7 @@ function DrumMachineApp() {
     );
   }
 
-  // Render the drum machine with server state
+  // Render the drum machine
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -203,18 +190,26 @@ function DrumMachineApp() {
         variants={pageVariants}
         transition={pageTransition}
         style={{
-          width: '100%',
-          minHeight: '100vh'
+          width: "100%",
+          minHeight: "100vh",
         }}
       >
-        <DrumMachine 
+        <DrumMachine
           roomId={roomId}
           userCount={users.length}
-          initialPattern={pattern}
-          initialBpm={bpm}
+          remoteTransportCommand={lastRemoteTransportCommand}
           onPatternChange={handlePatternChange}
           onBpmChange={handleBpmChange}
           onTransportCommand={handleTransportCommand}
+          onAddTrack={handleAddTrack}
+          onRemoveTrack={handleRemoveTrack}
+          onUpdateTrackSound={handleUpdateTrackSound}
+        />
+
+        {/* Global Sound Selector Modal */}
+        <SoundSelectorModal
+          drumSounds={drumSounds}
+          onSoundSelect={handleUpdateTrackSound}
         />
       </motion.div>
     </AnimatePresence>
