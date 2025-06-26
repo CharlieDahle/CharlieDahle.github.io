@@ -38,6 +38,9 @@ function DrumMachine({
   // Scheduler instance
   const schedulerRef = useRef(null);
 
+  // Track the last processed remote command to avoid re-processing
+  const lastProcessedCommandRef = useRef(null);
+
   // Initialize scheduler
   useEffect(() => {
     const scheduler = new DrumScheduler(bpm, (tick) => {
@@ -67,7 +70,18 @@ function DrumMachine({
   useEffect(() => {
     if (!remoteTransportCommand || !schedulerRef.current) return;
 
-    console.log(`📡 [${roomId}] REMOTE COMMAND received:`, {
+    // Check if we've already processed this exact command
+    if (
+      lastProcessedCommandRef.current?.timestamp ===
+      remoteTransportCommand.timestamp
+    ) {
+      return;
+    }
+
+    // Remember this command so we don't process it again
+    lastProcessedCommandRef.current = remoteTransportCommand;
+
+    console.log("📡 [" + roomId + "] REMOTE COMMAND received:", {
       command: remoteTransportCommand,
       storeIsPlaying: isPlaying,
       schedulerIsPlaying: schedulerRef.current.isPlaying,
@@ -79,26 +93,38 @@ function DrumMachine({
     switch (remoteTransportCommand.type) {
       case "play":
         if (!schedulerRef.current.isPlaying) {
-          console.log(`📡 [${roomId}] Starting scheduler from remote play`);
+          console.log(
+            "📡 [" + roomId + "] Starting scheduler from remote play"
+          );
           schedulerRef.current.start(currentTick);
         } else {
           console.log(
-            `📡 [${roomId}] Scheduler already playing, ignoring remote play`
+            "📡 [" +
+              roomId +
+              "] Scheduler already playing, ignoring remote play"
           );
         }
         break;
       case "pause":
         if (schedulerRef.current.isPlaying) {
-          console.log("Pausing audio playback from remote command");
+          console.log(
+            "📡 [" + roomId + "] Pausing scheduler from remote pause"
+          );
           schedulerRef.current.pause();
+        } else {
+          console.log(
+            "📡 [" +
+              roomId +
+              "] Scheduler already paused, ignoring remote pause"
+          );
         }
         break;
       case "stop":
-        console.log("Stopping audio playback from remote command");
+        console.log("📡 [" + roomId + "] Stopping scheduler from remote stop");
         schedulerRef.current.stop();
         break;
     }
-  }, [remoteTransportCommand, currentTick]);
+  }, [remoteTransportCommand, roomId, isPlaying, currentTick]); // Keep currentTick for the start() call
 
   // Handle pattern changes
   const handlePatternChange = (change) => {
@@ -139,7 +165,7 @@ function DrumMachine({
 
   // Transport control handlers
   const handlePlay = async () => {
-    console.log(`🎵 [${roomId}] LOCAL PLAY clicked - Current state:`, {
+    console.log("🎵 [" + roomId + "] LOCAL PLAY clicked - Current state:", {
       storeIsPlaying: isPlaying,
       schedulerIsPlaying: schedulerRef.current?.isPlaying,
       currentTick,
@@ -161,11 +187,11 @@ function DrumMachine({
     // Notify server
     onTransportCommand({ type: "play" });
 
-    console.log(`🎵 [${roomId}] LOCAL PLAY completed - Scheduler started`);
+    console.log("🎵 [" + roomId + "] LOCAL PLAY completed - Scheduler started");
   };
 
   const handlePause = () => {
-    console.log(`⏸️ [${roomId}] LOCAL PAUSE clicked - Current state:`, {
+    console.log("⏸️ [" + roomId + "] LOCAL PAUSE clicked - Current state:", {
       storeIsPlaying: isPlaying,
       schedulerIsPlaying: schedulerRef.current?.isPlaying,
     });
@@ -183,7 +209,7 @@ function DrumMachine({
   };
 
   const handleStop = () => {
-    console.log(`⏹️ [${roomId}] LOCAL STOP clicked - Current state:`, {
+    console.log("⏹️ [" + roomId + "] LOCAL STOP clicked - Current state:", {
       storeIsPlaying: isPlaying,
       schedulerIsPlaying: schedulerRef.current?.isPlaying,
     });
