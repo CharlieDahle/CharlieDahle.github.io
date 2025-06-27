@@ -12,6 +12,7 @@ function DrumMachine({
   onPatternChange,
   onBpmChange,
   onTransportCommand,
+  onMeasureCountChange,
   onAddTrack,
   onRemoveTrack,
   onUpdateTrackSound,
@@ -22,6 +23,7 @@ function DrumMachine({
 
   const { tracks } = useTrackStore();
 
+  const transportStore = useTransportStore();
   const {
     isPlaying,
     currentTick,
@@ -33,7 +35,11 @@ function DrumMachine({
     setCurrentTick,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
-  } = useTransportStore();
+    getTotalTicks,
+    measureCount,
+    addMeasure,
+    removeMeasure,
+  } = transportStore;
 
   // Scheduler instance
   const schedulerRef = useRef(null);
@@ -41,11 +47,15 @@ function DrumMachine({
   // Track the last processed remote command to avoid re-processing
   const lastProcessedCommandRef = useRef(null);
 
-  // Initialize scheduler
+  // Initialize scheduler with transport store reference
   useEffect(() => {
-    const scheduler = new DrumScheduler(bpm, (tick) => {
-      setCurrentTick(tick);
-    });
+    const scheduler = new DrumScheduler(
+      bpm,
+      (tick) => {
+        setCurrentTick(tick);
+      },
+      useTransportStore
+    ); // Pass the store
 
     scheduler.init();
     schedulerRef.current = scheduler;
@@ -124,7 +134,7 @@ function DrumMachine({
         schedulerRef.current.stop();
         break;
     }
-  }, [remoteTransportCommand, roomId, isPlaying, currentTick]); // Keep currentTick for the start() call
+  }, [remoteTransportCommand, roomId, isPlaying, currentTick]);
 
   // Handle pattern changes
   const handlePatternChange = (change) => {
@@ -161,6 +171,13 @@ function DrumMachine({
   const handleBpmChange = (newBpm) => {
     setBpm(newBpm);
     onBpmChange(newBpm);
+  };
+
+  // Handle measure changes
+  const handleMeasureChange = (newMeasureCount) => {
+    // No need to call local store - the buttons already do that
+    // Just notify server for sync
+    onMeasureCountChange(newMeasureCount);
   };
 
   // Transport control handlers
@@ -266,6 +283,15 @@ function DrumMachine({
             onPlay={handlePlay}
             onPause={handlePause}
             onStop={handleStop}
+            onAddMeasure={() => {
+              addMeasure();
+              handleMeasureChange(measureCount + 1);
+            }}
+            onRemoveMeasure={() => {
+              removeMeasure();
+              handleMeasureChange(Math.max(1, measureCount - 1));
+            }}
+            measureCount={measureCount}
             TICKS_PER_BEAT={TICKS_PER_BEAT}
             BEATS_PER_LOOP={BEATS_PER_LOOP}
             PIXELS_PER_TICK={0.1}
@@ -296,6 +322,9 @@ function DrumMachine({
                 <br />
                 <strong>Playback:</strong> Playing: {isPlaying ? "Yes" : "No"},
                 Tick: {currentTick}, BPM: {bpm}
+                <br />
+                <strong>Grid:</strong> {measureCount} measures, {BEATS_PER_LOOP}{" "}
+                beats, {getTotalTicks()} total ticks
               </small>
             </div>
           </div>

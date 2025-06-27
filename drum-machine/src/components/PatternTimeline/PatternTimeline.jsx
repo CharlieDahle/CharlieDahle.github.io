@@ -80,6 +80,9 @@ function PatternTimeline({
   onPlay,
   onPause,
   onStop,
+  onAddMeasure,
+  onRemoveMeasure,
+  measureCount = 4,
   TICKS_PER_BEAT = 480,
   BEATS_PER_LOOP = 16,
   PIXELS_PER_TICK = 0.1,
@@ -266,6 +269,28 @@ function PatternTimeline({
               Tick: {currentTick}
             </span>
           </div>
+
+          {/* Measure Controls */}
+          <div className="measure-controls d-flex align-items-center gap-2">
+            <span className="text-muted fw-bold">Measures:</span>
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={onRemoveMeasure}
+              disabled={measureCount <= 1}
+              title="Remove measure"
+            >
+              −
+            </button>
+            <span className="badge bg-secondary">{measureCount}</span>
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={onAddMeasure}
+              disabled={measureCount >= 16}
+              title="Add measure"
+            >
+              +
+            </button>
+          </div>
         </div>
 
         <div className="controls-section">
@@ -326,7 +351,7 @@ function PatternTimeline({
           <div className="beat-header">
             {/* Measure Numbers */}
             <div className="measure-row">
-              {Array.from({ length: BEATS_PER_LOOP / 4 }, (_, i) => (
+              {Array.from({ length: measureCount }, (_, i) => (
                 <div
                   key={`measure-${i}`}
                   className="measure-cell"
