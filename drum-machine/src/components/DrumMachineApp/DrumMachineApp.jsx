@@ -24,19 +24,26 @@ function DrumMachineApp() {
     joinRoom,
     sendPatternChange,
     sendBpmChange,
+    sendMeasureCountChange,
+    sendAddTrack,
+    sendRemoveTrack,
+    sendUpdateTrackSound,
     sendTransportCommand,
     cleanup,
   } = useWebSocketStore();
 
-  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
+  const { tracks, addTrack, removeTrack, updateTrackSound, setTracks } =
+    useTrackStore();
 
   const { pattern, setPattern, removeTrackFromPattern } = usePatternStore();
 
   const {
     bpm,
+    measureCount,
     isPlaying,
     currentTick,
     syncBpm,
+    syncMeasureCount,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
   } = useTransportStore();
@@ -74,7 +81,8 @@ function DrumMachineApp() {
     // Set up store references for coordination
     setStoreReferences(
       { getState: () => usePatternStore.getState() },
-      { getState: () => useTransportStore.getState() }
+      { getState: () => useTransportStore.getState() },
+      { getState: () => useTrackStore.getState() }
     );
 
     return () => {
@@ -95,6 +103,12 @@ function DrumMachineApp() {
     sendBpmChange(newBpm);
   };
 
+  const handleMeasureCountChange = (newMeasureCount) => {
+    // Measure count is already updated in local store by DrumMachine
+    // Just send to server
+    sendMeasureCountChange(newMeasureCount);
+  };
+
   const handleTransportCommand = (command) => {
     // Transport state is already updated in local store by DrumMachine
     // Just send to server
@@ -110,16 +124,25 @@ function DrumMachineApp() {
       availableSounds: drumSounds.other,
     };
 
-    addTrack(trackData);
+    const newTrack = addTrack(trackData);
+
+    // Send the actual track data that was created (with ID)
+    sendAddTrack(newTrack);
   };
 
   const handleRemoveTrack = (trackId) => {
     removeTrack(trackId);
     removeTrackFromPattern(trackId);
+
+    // Send to server
+    sendRemoveTrack(trackId);
   };
 
   const handleUpdateTrackSound = (trackId, newSoundFile) => {
     updateTrackSound(trackId, newSoundFile);
+
+    // Send to server
+    sendUpdateTrackSound(trackId, newSoundFile);
   };
 
   // Room management handlers
@@ -128,6 +151,12 @@ function DrumMachineApp() {
       const roomState = await createRoom();
       setPattern(roomState.pattern);
       syncBpm(roomState.bpm);
+      if (roomState.measureCount) {
+        syncMeasureCount(roomState.measureCount);
+      }
+      if (roomState.tracks) {
+        setTracks(roomState.tracks);
+      }
     } catch (error) {
       console.error("Failed to create room:", error);
     }
@@ -138,6 +167,12 @@ function DrumMachineApp() {
       const roomState = await joinRoom(targetRoomId);
       setPattern(roomState.pattern);
       syncBpm(roomState.bpm);
+      if (roomState.measureCount) {
+        syncMeasureCount(roomState.measureCount);
+      }
+      if (roomState.tracks) {
+        setTracks(roomState.tracks);
+      }
     } catch (error) {
       console.error("Failed to join room:", error);
     }
@@ -200,6 +235,7 @@ function DrumMachineApp() {
           remoteTransportCommand={lastRemoteTransportCommand}
           onPatternChange={handlePatternChange}
           onBpmChange={handleBpmChange}
+          onMeasureCountChange={handleMeasureCountChange}
           onTransportCommand={handleTransportCommand}
           onAddTrack={handleAddTrack}
           onRemoveTrack={handleRemoveTrack}

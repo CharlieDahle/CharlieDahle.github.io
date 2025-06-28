@@ -18,6 +18,7 @@ export const useWebSocketStore = create((set, get) => ({
   // Store references for coordination (will be set by the app)
   patternStore: null,
   transportStore: null,
+  trackStore: null,
 
   // Initialize WebSocket connection
   initializeConnection: () => {
@@ -78,6 +79,40 @@ export const useWebSocketStore = create((set, get) => ({
       }
     });
 
+    // Add missing measure count handler
+    newSocket.on("measure-count-change", ({ measureCount }) => {
+      console.log("Measure count changed to:", measureCount);
+      const { transportStore } = get();
+      if (transportStore) {
+        transportStore.getState().syncMeasureCount(measureCount);
+      }
+    });
+
+    // Track management events (FIXED - removed duplicates)
+    newSocket.on("track-added", ({ trackData }) => {
+      console.log("Track added:", trackData);
+      const { trackStore } = get();
+      if (trackStore) {
+        trackStore.getState().syncAddTrack(trackData);
+      }
+    });
+
+    newSocket.on("track-removed", ({ trackId }) => {
+      console.log("Track removed:", trackId);
+      const { trackStore } = get();
+      if (trackStore) {
+        trackStore.getState().syncRemoveTrack(trackId);
+      }
+    });
+
+    newSocket.on("track-sound-updated", ({ trackId, soundFile }) => {
+      console.log("Track sound updated:", trackId, soundFile);
+      const { trackStore } = get();
+      if (trackStore) {
+        trackStore.getState().syncUpdateTrackSound(trackId, soundFile);
+      }
+    });
+
     newSocket.on("transport-sync", (command) => {
       console.log(`🌐 RECEIVED transport sync:`, command);
       const { transportStore } = get();
@@ -98,8 +133,8 @@ export const useWebSocketStore = create((set, get) => ({
   },
 
   // Set store references for coordination
-  setStoreReferences: (patternStore, transportStore) => {
-    set({ patternStore, transportStore });
+  setStoreReferences: (patternStore, transportStore, trackStore) => {
+    set({ patternStore, transportStore, trackStore });
   },
 
   // Room management
@@ -177,6 +212,53 @@ export const useWebSocketStore = create((set, get) => ({
     socket.emit("set-bpm", {
       roomId,
       bpm: clampedBpm,
+    });
+  },
+
+  // Send measure count change to server
+  sendMeasureCountChange: (measureCount) => {
+    const { socket, isInRoom, roomId } = get();
+    if (!socket || !isInRoom) return;
+
+    console.log("Sending measure count change:", measureCount);
+    socket.emit("set-measure-count", {
+      roomId,
+      measureCount,
+    });
+  },
+
+  // Track management methods (FIXED - removed duplicates)
+  sendAddTrack: (trackData) => {
+    const { socket, isInRoom, roomId } = get();
+    if (!socket || !isInRoom) return;
+
+    console.log("Sending add track:", trackData);
+    socket.emit("add-track", {
+      roomId,
+      trackData,
+    });
+  },
+
+  sendRemoveTrack: (trackId) => {
+    const { socket, isInRoom, roomId } = get();
+    if (!socket || !isInRoom) return;
+
+    console.log("Sending remove track:", trackId);
+    socket.emit("remove-track", {
+      roomId,
+      trackId,
+    });
+  },
+
+  sendUpdateTrackSound: (trackId, soundFile) => {
+    const { socket, isInRoom, roomId } = get();
+    if (!socket || !isInRoom) return;
+
+    console.log("Sending track sound update:", trackId, soundFile);
+    socket.emit("update-track-sound", {
+      roomId,
+      trackId,
+      soundFile,
     });
   },
 

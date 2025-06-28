@@ -83,6 +83,27 @@ export const useTrackStore = create((set, get) => ({
     return get().tracks.length;
   },
 
+  // Sync methods for WebSocket coordination
+  syncAddTrack: (trackData) => {
+    set((state) => ({
+      tracks: [...state.tracks, trackData],
+    }));
+  },
+
+  syncRemoveTrack: (trackId) => {
+    set((state) => ({
+      tracks: state.tracks.filter((track) => track.id !== trackId),
+    }));
+  },
+
+  syncUpdateTrackSound: (trackId, newSoundFile) => {
+    set((state) => ({
+      tracks: state.tracks.map((track) =>
+        track.id === trackId ? { ...track, soundFile: newSoundFile } : track
+      ),
+    }));
+  },
+
   // Reset tracks (useful for room changes)
   setTracks: (newTracks) => {
     set({ tracks: newTracks });

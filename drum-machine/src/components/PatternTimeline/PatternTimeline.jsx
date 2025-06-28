@@ -80,6 +80,9 @@ function PatternTimeline({
   onPlay,
   onPause,
   onStop,
+  onAddMeasure,
+  onRemoveMeasure,
+  measureCount = 4,
   TICKS_PER_BEAT = 480,
   BEATS_PER_LOOP = 16,
   PIXELS_PER_TICK = 0.1,
@@ -93,9 +96,16 @@ function PatternTimeline({
   // Get snap state from UI store
   const { snapToGrid, setSnapToGrid } = useUIStore();
 
-  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
-  const GRID_WIDTH = TOTAL_TICKS * PIXELS_PER_TICK;
+  // FIXED WIDTH CALCULATIONS
+  const MEASURES_PER_PAGE = 4; // Always show 4 measures
+  const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // 48px per beat
+  const FIXED_GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 768px total grid
+  const SIDEBAR_WIDTH = 170; // From CSS
+  const TOTAL_WIDTH = SIDEBAR_WIDTH + FIXED_GRID_WIDTH; // 938px total
+
+  // Use fixed values instead of dynamic ones
+  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE; // Fixed to 16 beats
 
   // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
@@ -237,7 +247,7 @@ function PatternTimeline({
   const TRACK_HEIGHT = 60;
 
   return (
-    <div className="pattern-timeline">
+    <div className="pattern-timeline" style={{ width: `${TOTAL_WIDTH}px` }}>
       {/* Transport Controls Bar */}
       <div className="timeline-controls">
         <div className="controls-section">
@@ -260,11 +270,40 @@ function PatternTimeline({
           {/* Position Display */}
           <div className="position-display">
             <span className="position-badge position-badge--beat">
-              Beat: {currentBeat}/{BEATS_PER_LOOP}
+              Beat: {currentBeat}/{BEATS_PER_PAGE}
             </span>
             <span className="position-badge position-badge--tick">
               Tick: {currentTick}
             </span>
+          </div>
+
+          {/* Measure Controls - Only subtract now */}
+          <div className="measure-controls d-flex align-items-center gap-2">
+            <span className="text-muted fw-bold">Measures:</span>
+
+            {/* Subtract button - only show if more than 1 measure */}
+            {measureCount > 1 && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={onRemoveMeasure}
+                title="Remove measure"
+              >
+                −
+              </button>
+            )}
+
+            <span className="badge bg-secondary">{measureCount}</span>
+
+            {/* Add button - only show if less than 4 measures */}
+            {measureCount < 4 && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={onAddMeasure}
+                title="Add measure"
+              >
+                +
+              </button>
+            )}
           </div>
         </div>
 
@@ -294,12 +333,12 @@ function PatternTimeline({
               value={bpm}
               onChange={(e) => onBpmChange(parseInt(e.target.value))}
             />
-            <span className="bpm-value">{bpm}</span>
+            <span className="bmp-value">{bpm}</span>
           </div>
         </div>
       </div>
 
-      {/* Grid Container */}
+      {/* Grid Container - Fixed width, no scrolling */}
       <div className="timeline-grid-container">
         {/* Track Labels Sidebar */}
         <div className="track-sidebar">
@@ -320,34 +359,43 @@ function PatternTimeline({
           </div>
         </div>
 
-        {/* Grid Area */}
-        <div className="timeline-grid-area">
+        {/* Grid Area - Fixed width */}
+        <div
+          className="timeline-grid-area"
+          style={{ width: `${FIXED_GRID_WIDTH}px` }}
+        >
           {/* Beat Header */}
           <div className="beat-header">
-            {/* Measure Numbers */}
+            {/* Measure Numbers - Always show 4 measures */}
             <div className="measure-row">
-              {Array.from({ length: BEATS_PER_LOOP / 4 }, (_, i) => (
+              {Array.from({ length: MEASURES_PER_PAGE }, (_, i) => (
                 <div
                   key={`measure-${i}`}
-                  className="measure-cell"
+                  className={`measure-cell ${
+                    i >= measureCount ? "measure-cell--disabled" : ""
+                  }`}
                   style={{ width: `${BEAT_WIDTH * 4}px` }}
                 >
-                  {i + 1}
+                  {i < measureCount ? i + 1 : ""}
                 </div>
               ))}
             </div>
 
-            {/* Beat Numbers */}
+            {/* Beat Numbers - Always show 16 beats */}
             <div className="beat-row">
-              {Array.from({ length: BEATS_PER_LOOP }, (_, i) => (
+              {Array.from({ length: BEATS_PER_PAGE }, (_, i) => (
                 <div
                   key={`beat-${i}`}
                   className={`beat-cell ${
                     i % 4 === 0 ? "beat-cell--downbeat" : ""
+                  } ${
+                    Math.floor(i / 4) >= measureCount
+                      ? "beat-cell--disabled"
+                      : ""
                   }`}
                   style={{ width: `${BEAT_WIDTH}px` }}
                 >
-                  {(i % 4) + 1}
+                  {Math.floor(i / 4) < measureCount ? (i % 4) + 1 : ""}
                 </div>
               ))}
             </div>
@@ -357,7 +405,7 @@ function PatternTimeline({
           <div
             ref={gridRef}
             className="track-grid"
-            style={{ width: `${GRID_WIDTH}px` }}
+            style={{ width: `${FIXED_GRID_WIDTH}px` }}
           >
             {/* Track Lanes */}
             {tracks.map((track, trackIndex) => (
@@ -368,18 +416,57 @@ function PatternTimeline({
                 }`}
                 onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
               >
-                {/* Beat separator lines */}
-                {Array.from({ length: BEATS_PER_LOOP + 1 }, (_, beatIndex) => (
+                {/* Subdivision lines - 16th, 8th, and quarter notes */}
+                {Array.from(
+                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 4) + 1 },
+                  (_, subdivisionIndex) => {
+                    const tickPosition =
+                      subdivisionIndex * (TICKS_PER_BEAT / 4); // Every 16th note
+                    const beatPosition = tickPosition / TICKS_PER_BEAT;
+                    const measureIndex = Math.floor(beatPosition / 4);
+
+                    // Determine line type
+                    let lineType;
+                    if (tickPosition % TICKS_PER_BEAT === 0) {
+                      // Quarter note (beat)
+                      lineType =
+                        beatPosition % 4 === 0
+                          ? "beat-line--measure"
+                          : "beat-line--beat";
+                    } else if (tickPosition % (TICKS_PER_BEAT / 2) === 0) {
+                      // 8th note
+                      lineType = "beat-line--eighth";
+                    } else {
+                      // 16th note
+                      lineType = "beat-line--sixteenth";
+                    }
+
+                    return (
+                      <div
+                        key={`subdivision-${subdivisionIndex}`}
+                        className={`beat-line ${lineType} ${
+                          measureIndex >= measureCount
+                            ? "beat-line--disabled"
+                            : ""
+                        }`}
+                        style={{ left: `${tickPosition * PIXELS_PER_TICK}px` }}
+                      />
+                    );
+                  }
+                )}
+
+                {/* Disabled overlay for unused measures */}
+                {measureCount < MEASURES_PER_PAGE && (
                   <div
-                    key={`line-${beatIndex}`}
-                    className={`beat-line ${
-                      beatIndex % 4 === 0
-                        ? "beat-line--measure"
-                        : "beat-line--beat"
-                    }`}
-                    style={{ left: `${beatIndex * BEAT_WIDTH}px` }}
+                    className="disabled-measures-overlay"
+                    style={{
+                      left: `${measureCount * 4 * BEAT_WIDTH}px`,
+                      width: `${
+                        (MEASURES_PER_PAGE - measureCount) * 4 * BEAT_WIDTH
+                      }px`,
+                    }}
                   />
-                ))}
+                )}
 
                 {/* Notes */}
                 {pattern[track.id]?.map((tick) => {

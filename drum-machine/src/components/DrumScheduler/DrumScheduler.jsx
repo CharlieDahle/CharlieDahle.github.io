@@ -1,13 +1,14 @@
 class DrumScheduler {
-  constructor(bpm = 120, onTickUpdate = null) {
+  constructor(bpm = 120, onTickUpdate = null, transportStore = null) {
     this.audioContext = null;
     this.bpm = bpm;
-    this.onTickUpdate = onTickUpdate; // Callback to update React state
+    this.onTickUpdate = onTickUpdate;
+    this.transportStore = transportStore; // Reference to get dynamic constants
 
-    // Timing constants
-    this.TICKS_PER_BEAT = 480;
-    this.BEATS_PER_LOOP = 16;
-    this.TOTAL_TICKS = this.TICKS_PER_BEAT * this.BEATS_PER_LOOP;
+    // Remove hardcoded constants - get from store instead
+    // this.TICKS_PER_BEAT = 480;
+    // this.BEATS_PER_LOOP = 16;
+    // this.TOTAL_TICKS = this.TICKS_PER_BEAT * this.BEATS_PER_LOOP;
 
     // Playback state
     this.isPlaying = false;
@@ -15,21 +16,39 @@ class DrumScheduler {
     this.nextNoteTime = 0;
 
     // Scheduling parameters
-    this.lookahead = 25.0; // How frequently to call scheduler (ms)
-    this.scheduleAheadTime = 0.1; // How far ahead to schedule audio (seconds)
+    this.lookahead = 25.0;
+    this.scheduleAheadTime = 0.1;
 
-    // Pattern data (will be set from React state)
+    // Pattern data
     this.pattern = {};
 
     // Audio buffers for loaded sounds
     this.audioBuffers = {};
     this.soundsLoaded = false;
 
-    // NEW: Dynamic track to sound mapping (replaces hardcoded trackSounds)
+    // Dynamic track to sound mapping
     this.trackSounds = {};
 
     // RAF handle for cleanup
     this.schedulerRAF = null;
+  }
+
+  // Helper to get current timing constants from store
+  getTimingConstants() {
+    if (this.transportStore) {
+      const state = this.transportStore.getState();
+      return {
+        TICKS_PER_BEAT: state.TICKS_PER_BEAT,
+        BEATS_PER_LOOP: state.BEATS_PER_LOOP,
+        TOTAL_TICKS: state.getTotalTicks(),
+      };
+    }
+    // Fallback to hardcoded values if no store
+    return {
+      TICKS_PER_BEAT: 480,
+      BEATS_PER_LOOP: 16,
+      TOTAL_TICKS: 480 * 16,
+    };
   }
 
   // Initialize audio context and load sounds
@@ -38,13 +57,11 @@ class DrumScheduler {
       this.audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
 
-      // Resume if suspended (required by some browsers)
       if (this.audioContext.state === "suspended") {
         await this.audioContext.resume();
       }
 
       console.log("DrumScheduler: Audio context initialized");
-
       return true;
     }
     return true;
@@ -54,18 +71,14 @@ class DrumScheduler {
   async setTracks(tracks) {
     console.log("DrumScheduler: Setting tracks", tracks);
 
-    // Clear existing mappings
     this.trackSounds = {};
 
-    // Build new track sound mappings
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
 
-      // Load the sound file if not already loaded
       if (track.soundFile && !this.audioBuffers[track.soundFile]) {
         console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
 
-        // Guard clause: skip loading if no audio context yet
         if (!this.audioContext) {
           console.log("No audio context yet, will load sounds later");
           continue;
@@ -190,7 +203,8 @@ class DrumScheduler {
 
     // Calculate time per tick
     const secondsPerBeat = 60.0 / this.bpm;
-    const secondsPerTick = secondsPerBeat / this.TICKS_PER_BEAT;
+    const { TICKS_PER_BEAT } = this.getTimingConstants();
+    const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
 
     // Look ahead and schedule any notes that need to play
     while (
@@ -229,10 +243,11 @@ class DrumScheduler {
   // Advance to next tick
   advanceTick() {
     const secondsPerBeat = 60.0 / this.bpm;
-    const secondsPerTick = secondsPerBeat / this.TICKS_PER_BEAT;
+    const { TICKS_PER_BEAT, TOTAL_TICKS } = this.getTimingConstants();
+    const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
 
     this.nextNoteTime += secondsPerTick;
-    this.currentTick = (this.currentTick + 1) % this.TOTAL_TICKS;
+    this.currentTick = (this.currentTick + 1) % TOTAL_TICKS;
   }
 
   // Get current playback state

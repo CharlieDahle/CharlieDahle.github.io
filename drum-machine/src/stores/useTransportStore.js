@@ -7,9 +7,10 @@ export const useTransportStore = create((set, get) => ({
   currentTick: 0,
   bpm: 120,
 
-  // Constants
+  // Dynamic timing constants (moved from hardcoded)
   TICKS_PER_BEAT: 480,
-  BEATS_PER_LOOP: 16,
+  BEATS_PER_LOOP: 16, // Now dynamic!
+  measureCount: 4, // Number of measures (4 beats per measure)
 
   // Transport control actions
   play: () => {
@@ -43,6 +44,39 @@ export const useTransportStore = create((set, get) => ({
     set({ bpm: serverBpm });
   },
 
+  syncMeasureCount: (serverMeasureCount) => {
+    set({
+      measureCount: serverMeasureCount,
+      BEATS_PER_LOOP: serverMeasureCount * 4,
+    });
+  },
+
+  // Measure management
+  addMeasure: () => {
+    set((state) => ({
+      measureCount: state.measureCount + 1,
+      BEATS_PER_LOOP: (state.measureCount + 1) * 4,
+    }));
+  },
+
+  removeMeasure: () => {
+    set((state) => {
+      const newMeasureCount = Math.max(1, state.measureCount - 1); // Minimum 1 measure
+      return {
+        measureCount: newMeasureCount,
+        BEATS_PER_LOOP: newMeasureCount * 4,
+      };
+    });
+  },
+
+  setMeasureCount: (count) => {
+    const clampedCount = Math.max(1, Math.min(16, count)); // 1-16 measures max
+    set({
+      measureCount: clampedCount,
+      BEATS_PER_LOOP: clampedCount * 4,
+    });
+  },
+
   // Sync transport state from remote commands
   syncTransportCommand: (command) => {
     switch (command.type) {
@@ -67,7 +101,16 @@ export const useTransportStore = create((set, get) => ({
     }
   },
 
-  // Getter helpers
+  // Computed getters that use the dynamic constants
+  getTotalTicks: () => {
+    const { TICKS_PER_BEAT, BEATS_PER_LOOP } = get();
+    return TICKS_PER_BEAT * BEATS_PER_LOOP;
+  },
+
+  getTotalMeasures: () => {
+    return get().measureCount;
+  },
+
   getCurrentBeat: () => {
     const { currentTick, TICKS_PER_BEAT } = get();
     return Math.floor(currentTick / TICKS_PER_BEAT) + 1;
@@ -79,13 +122,8 @@ export const useTransportStore = create((set, get) => ({
   },
 
   getProgress: () => {
-    const { currentTick, TICKS_PER_BEAT, BEATS_PER_LOOP } = get();
-    const totalTicks = TICKS_PER_BEAT * BEATS_PER_LOOP;
+    const { currentTick } = get();
+    const totalTicks = get().getTotalTicks();
     return (currentTick / totalTicks) * 100;
-  },
-
-  getTotalTicks: () => {
-    const { TICKS_PER_BEAT, BEATS_PER_LOOP } = get();
-    return TICKS_PER_BEAT * BEATS_PER_LOOP;
   },
 }));
