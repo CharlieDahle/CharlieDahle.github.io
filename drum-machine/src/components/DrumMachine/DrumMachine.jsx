@@ -294,7 +294,7 @@ function DrumMachine({
             measureCount={measureCount}
             TICKS_PER_BEAT={TICKS_PER_BEAT}
             BEATS_PER_LOOP={BEATS_PER_LOOP}
-            PIXELS_PER_TICK={0.1}
+            PIXELS_PER_TICK={0.15}
           />
         </div>
       </div>

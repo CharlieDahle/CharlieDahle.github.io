@@ -19,7 +19,6 @@ export const useWebSocketStore = create((set, get) => ({
   patternStore: null,
   transportStore: null,
   trackStore: null,
-  trackStore: null,
 
   // Initialize WebSocket connection
   initializeConnection: () => {
@@ -80,32 +79,16 @@ export const useWebSocketStore = create((set, get) => ({
       }
     });
 
-    // Track management events
-    newSocket.on("track-added", ({ trackData }) => {
-      console.log("Track added:", trackData);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncAddTrack(trackData);
+    // Add missing measure count handler
+    newSocket.on("measure-count-change", ({ measureCount }) => {
+      console.log("Measure count changed to:", measureCount);
+      const { transportStore } = get();
+      if (transportStore) {
+        transportStore.getState().syncMeasureCount(measureCount);
       }
     });
 
-    newSocket.on("track-removed", ({ trackId }) => {
-      console.log("Track removed:", trackId);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncRemoveTrack(trackId);
-      }
-    });
-
-    newSocket.on("track-sound-updated", ({ trackId, soundFile }) => {
-      console.log("Track sound updated:", trackId, soundFile);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncUpdateTrackSound(trackId, soundFile);
-      }
-    });
-
-    // Track management events
+    // Track management events (FIXED - removed duplicates)
     newSocket.on("track-added", ({ trackData }) => {
       console.log("Track added:", trackData);
       const { trackStore } = get();
@@ -232,42 +215,19 @@ export const useWebSocketStore = create((set, get) => ({
     });
   },
 
-  // Send track management events
-  sendAddTrack: (trackData) => {
+  // Send measure count change to server
+  sendMeasureCountChange: (measureCount) => {
     const { socket, isInRoom, roomId } = get();
     if (!socket || !isInRoom) return;
 
-    console.log("Sending add track:", trackData);
-    socket.emit("add-track", {
+    console.log("Sending measure count change:", measureCount);
+    socket.emit("set-measure-count", {
       roomId,
-      trackData,
+      measureCount,
     });
   },
 
-  sendRemoveTrack: (trackId) => {
-    const { socket, isInRoom, roomId } = get();
-    if (!socket || !isInRoom) return;
-
-    console.log("Sending remove track:", trackId);
-    socket.emit("remove-track", {
-      roomId,
-      trackId,
-    });
-  },
-
-  sendUpdateTrackSound: (trackId, soundFile) => {
-    const { socket, isInRoom, roomId } = get();
-    if (!socket || !isInRoom) return;
-
-    console.log("Sending track sound update:", trackId, soundFile);
-    socket.emit("update-track-sound", {
-      roomId,
-      trackId,
-      soundFile,
-    });
-  },
-
-  // Send track management events
+  // Track management methods (FIXED - removed duplicates)
   sendAddTrack: (trackData) => {
     const { socket, isInRoom, roomId } = get();
     if (!socket || !isInRoom) return;
