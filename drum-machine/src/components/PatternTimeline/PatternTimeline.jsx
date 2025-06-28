@@ -280,16 +280,30 @@ function PatternTimeline({
           {/* Measure Controls - Only subtract now */}
           <div className="measure-controls d-flex align-items-center gap-2">
             <span className="text-muted fw-bold">Measures:</span>
-            <button
-              className="btn btn-sm btn-outline-secondary"
-              onClick={onRemoveMeasure}
-              disabled={measureCount <= 1}
-              title="Remove measure"
-            >
-              −
-            </button>
+
+            {/* Subtract button - only show if more than 1 measure */}
+            {measureCount > 1 && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={onRemoveMeasure}
+                title="Remove measure"
+              >
+                −
+              </button>
+            )}
+
             <span className="badge bg-secondary">{measureCount}</span>
-            {/* Removed the + button since we can't add measures anymore */}
+
+            {/* Add button - only show if less than 4 measures */}
+            {measureCount < 4 && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={onAddMeasure}
+                title="Add measure"
+              >
+                +
+              </button>
+            )}
           </div>
         </div>
 
