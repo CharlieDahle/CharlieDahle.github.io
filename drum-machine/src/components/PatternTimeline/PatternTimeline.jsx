@@ -125,14 +125,21 @@ function PatternTimeline({
     const track = e.currentTarget;
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const tick = x / PIXELS_PER_TICK;
 
+    // Convert click position to tick
+    const clickTick = x / PIXELS_PER_TICK;
+
+    // STEP 1: Center the note (subtract half note width in ticks)
+    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
+    const centeredTick = clickTick - noteWidthInTicks / 2;
+
+    // STEP 2: Apply snap-to-grid on the centered position
     let snappedTick;
     if (snapToGrid) {
-      const beatIndex = Math.floor(tick / TICKS_PER_BEAT);
-      snappedTick = beatIndex * TICKS_PER_BEAT;
+      const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
+      snappedTick = eighthNoteIndex * (TICKS_PER_BEAT / 2);
     } else {
-      snappedTick = Math.round(tick);
+      snappedTick = Math.round(centeredTick);
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
@@ -178,14 +185,21 @@ function PatternTimeline({
 
     const rect = gridRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - draggedNote.offsetX;
-    const tick = x / PIXELS_PER_TICK;
 
+    // Convert position to tick
+    const dragTick = x / PIXELS_PER_TICK;
+
+    // STEP 1: Center the note (subtract half note width in ticks)
+    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
+    const centeredTick = dragTick - noteWidthInTicks / 2;
+
+    // STEP 2: Apply snap-to-grid on the centered position
     let snappedTick;
     if (snapToGrid) {
-      const beatIndex = Math.floor(tick / TICKS_PER_BEAT);
-      snappedTick = beatIndex * TICKS_PER_BEAT;
+      const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
+      snappedTick = eighthNoteIndex * (TICKS_PER_BEAT / 2);
     } else {
-      snappedTick = Math.round(tick);
+      snappedTick = Math.round(centeredTick);
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
@@ -318,7 +332,7 @@ function PatternTimeline({
               onChange={(e) => setSnapToGrid(e.target.checked)}
             />
             <label className="snap-label" htmlFor="snapToggle">
-              Snap to beat
+              Snap to grid
             </label>
           </div>
 
