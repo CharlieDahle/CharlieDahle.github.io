@@ -10,7 +10,7 @@ import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 function DrumMachineApp() {
-  // Use all stores
+  // WebSocket store for connection and room management
   const {
     isConnected,
     isInRoom,
@@ -19,34 +19,15 @@ function DrumMachineApp() {
     error,
     lastRemoteTransportCommand,
     initializeConnection,
-    setStoreReferences,
     createRoom,
     joinRoom,
-    sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
-    sendAddTrack,
-    sendRemoveTrack,
-    sendUpdateTrackSound,
-    sendTransportCommand,
     cleanup,
   } = useWebSocketStore();
 
-  const { tracks, addTrack, removeTrack, updateTrackSound, setTracks } =
-    useTrackStore();
-
-  const { pattern, setPattern, removeTrackFromPattern } = usePatternStore();
-
-  const {
-    bpm,
-    measureCount,
-    isPlaying,
-    currentTick,
-    syncBpm,
-    syncMeasureCount,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
-  } = useTransportStore();
+  // Other stores for room sync
+  const { setTracks } = useTrackStore();
+  const { setPattern } = usePatternStore();
+  const { syncBpm, syncMeasureCount } = useTransportStore();
 
   // Animation variants
   const pageVariants = {
@@ -74,81 +55,20 @@ function DrumMachineApp() {
     mass: 0.8,
   };
 
-  // Initialize WebSocket connection and set up store coordination
+  // Initialize WebSocket connection
   useEffect(() => {
-    const socket = initializeConnection();
-
-    // Set up store references for coordination
-    setStoreReferences(
-      { getState: () => usePatternStore.getState() },
-      { getState: () => useTransportStore.getState() },
-      { getState: () => useTrackStore.getState() }
-    );
+    initializeConnection();
 
     return () => {
       cleanup();
     };
-  }, [initializeConnection, setStoreReferences, cleanup]);
-
-  // Handlers that bridge components to WebSocket store
-  const handlePatternChange = (change) => {
-    // Pattern is already updated in local store by DrumMachine
-    // Just send to server
-    sendPatternChange(change);
-  };
-
-  const handleBpmChange = (newBpm) => {
-    // BPM is already updated in local store by DrumMachine
-    // Just send to server
-    sendBpmChange(newBpm);
-  };
-
-  const handleMeasureCountChange = (newMeasureCount) => {
-    // Measure count is already updated in local store by DrumMachine
-    // Just send to server
-    sendMeasureCountChange(newMeasureCount);
-  };
-
-  const handleTransportCommand = (command) => {
-    // Transport state is already updated in local store by DrumMachine
-    // Just send to server
-    sendTransportCommand(command);
-  };
-
-  // Track management handlers
-  const handleAddTrack = () => {
-    const trackData = {
-      name: `Track ${tracks.length + 1}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      soundFile: null,
-      availableSounds: drumSounds.other,
-    };
-
-    const newTrack = addTrack(trackData);
-
-    // Send the actual track data that was created (with ID)
-    sendAddTrack(newTrack);
-  };
-
-  const handleRemoveTrack = (trackId) => {
-    removeTrack(trackId);
-    removeTrackFromPattern(trackId);
-
-    // Send to server
-    sendRemoveTrack(trackId);
-  };
-
-  const handleUpdateTrackSound = (trackId, newSoundFile) => {
-    updateTrackSound(trackId, newSoundFile);
-
-    // Send to server
-    sendUpdateTrackSound(trackId, newSoundFile);
-  };
+  }, [initializeConnection, cleanup]);
 
   // Room management handlers
   const handleCreateRoom = async () => {
     try {
       const roomState = await createRoom();
+      // Sync all stores with room state
       setPattern(roomState.pattern);
       syncBpm(roomState.bpm);
       if (roomState.measureCount) {
@@ -165,6 +85,7 @@ function DrumMachineApp() {
   const handleJoinRoom = async (targetRoomId) => {
     try {
       const roomState = await joinRoom(targetRoomId);
+      // Sync all stores with room state
       setPattern(roomState.pattern);
       syncBpm(roomState.bpm);
       if (roomState.measureCount) {
@@ -233,20 +154,10 @@ function DrumMachineApp() {
           roomId={roomId}
           userCount={users.length}
           remoteTransportCommand={lastRemoteTransportCommand}
-          onPatternChange={handlePatternChange}
-          onBpmChange={handleBpmChange}
-          onMeasureCountChange={handleMeasureCountChange}
-          onTransportCommand={handleTransportCommand}
-          onAddTrack={handleAddTrack}
-          onRemoveTrack={handleRemoveTrack}
-          onUpdateTrackSound={handleUpdateTrackSound}
         />
 
         {/* Global Sound Selector Modal */}
-        <SoundSelectorModal
-          drumSounds={drumSounds}
-          onSoundSelect={handleUpdateTrackSound}
-        />
+        <SoundSelectorModal drumSounds={drumSounds} />
       </motion.div>
     </AnimatePresence>
   );
