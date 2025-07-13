@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useUIStore } from "../../stores/useUIStore";
+import { useTrackStore } from "../../stores/useTrackStore";
+import { useWebSocketStore } from "../../stores/useWebSocketStore";
 
-function SoundSelectorModal({ drumSounds, onSoundSelect }) {
+function SoundSelectorModal({ drumSounds }) {
   const { soundModalOpen, soundModalTrack, closeSoundModal } = useUIStore();
+  const { updateTrackSound } = useTrackStore();
+  const { sendUpdateTrackSound } = useWebSocketStore();
 
   const [selectedCategory, setSelectedCategory] = useState("kicks");
   const [selectedSound, setSelectedSound] = useState(null);
@@ -84,10 +88,13 @@ function SoundSelectorModal({ drumSounds, onSoundSelect }) {
     playSound(soundFile);
   };
 
-  // Handle apply
+  // Handle apply - use stores directly
   const handleApply = () => {
     if (selectedSound && soundModalTrack) {
-      onSoundSelect(soundModalTrack.id, selectedSound);
+      // Update store directly
+      updateTrackSound(soundModalTrack.id, selectedSound);
+      // Send to server
+      sendUpdateTrackSound(soundModalTrack.id, selectedSound);
     }
     closeSoundModal();
   };

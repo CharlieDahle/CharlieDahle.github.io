@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useUIStore } from "../../stores/useUIStore";
+import { usePatternStore } from "../../stores/usePatternStore";
+import { useTrackStore } from "../../stores/useTrackStore";
+import { useTransportStore } from "../../stores/useTransportStore";
+import { useWebSocketStore } from "../../stores/useWebSocketStore";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
 // TrackLabel component with hover controls
-function TrackLabel({ track, onSoundChange }) {
+function TrackLabel({ track }) {
   const [showControls, setShowControls] = useState(false);
   const { openSoundModal } = useUIStore();
 
@@ -66,39 +70,44 @@ function TrackLabel({ track, onSoundChange }) {
   );
 }
 
-function PatternTimeline({
-  pattern,
-  bpm,
-  currentTick = 0,
-  isPlaying = false,
-  tracks,
-  onPatternChange,
-  onBpmChange,
-  onAddTrack,
-  onRemoveTrack,
-  onUpdateTrackSound,
-  onPlay,
-  onPause,
-  onStop,
-  onAddMeasure,
-  onRemoveMeasure,
-  measureCount = 4,
-  TICKS_PER_BEAT = 480,
-  BEATS_PER_LOOP = 16,
-  PIXELS_PER_TICK = 0.1,
-}) {
+function PatternTimeline({ onPlay, onPause, onStop }) {
+  // Get all state from stores
+  const { pattern, addNote, removeNote, moveNote, clearTrack } =
+    usePatternStore();
+  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
+  const {
+    bpm,
+    currentTick,
+    isPlaying,
+    measureCount,
+    setBpm,
+    addMeasure,
+    removeMeasure,
+    TICKS_PER_BEAT,
+    BEATS_PER_LOOP,
+    getTotalTicks,
+  } = useTransportStore();
+  const {
+    sendPatternChange,
+    sendBpmChange,
+    sendMeasureCountChange,
+    sendAddTrack,
+    sendRemoveTrack,
+  } = useWebSocketStore();
+
+  // Get snap state from UI store
+  const { snapToGrid, setSnapToGrid } = useUIStore();
+
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
   const [draggedNote, setDraggedNote] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
 
-  // Get snap state from UI store
-  const { snapToGrid, setSnapToGrid } = useUIStore();
-
   // FIXED WIDTH CALCULATIONS
   const MEASURES_PER_PAGE = 4; // Always show 4 measures
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
+  const PIXELS_PER_TICK = 0.15;
   const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // 48px per beat
   const FIXED_GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 768px total grid
   const SIDEBAR_WIDTH = 170; // From CSS
@@ -117,6 +126,56 @@ function PatternTimeline({
       playheadRef.current.style.transform = `translateX(${position}px)`;
     }
   }, [currentTick, PIXELS_PER_TICK]);
+
+  // Handle pattern changes
+  const handlePatternChange = (change) => {
+    // Check if track still exists
+    const trackExists = tracks.some((track) => track.id === change.trackId);
+    if (!trackExists) {
+      console.warn("Pattern change for non-existent track:", change.trackId);
+      return;
+    }
+
+    // Update store directly
+    switch (change.type) {
+      case "add-note":
+        addNote(change.trackId, change.tick);
+        break;
+      case "remove-note":
+        removeNote(change.trackId, change.tick);
+        break;
+      case "move-note":
+        moveNote(change.trackId, change.fromTick, change.toTick);
+        break;
+      case "clear-track":
+        clearTrack(change.trackId);
+        break;
+      default:
+        console.warn("Unknown pattern change type:", change.type);
+    }
+
+    // Send to server
+    sendPatternChange(change);
+  };
+
+  // Handle BPM changes
+  const handleBpmChange = (newBpm) => {
+    setBpm(newBpm);
+    sendBpmChange(newBpm);
+  };
+
+  // Handle track management
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      soundFile: null,
+      availableSounds: [],
+    };
+
+    const newTrack = addTrack(trackData);
+    sendAddTrack(newTrack);
+  };
 
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
@@ -146,13 +205,13 @@ function PatternTimeline({
     const existingNote = pattern[trackId]?.includes(clampedTick);
 
     if (existingNote) {
-      onPatternChange({
+      handlePatternChange({
         type: "remove-note",
         trackId,
         tick: clampedTick,
       });
     } else {
-      onPatternChange({
+      handlePatternChange({
         type: "add-note",
         trackId,
         tick: clampedTick,
@@ -213,7 +272,7 @@ function PatternTimeline({
   // Handle mouse up - finish drag
   const handleMouseUp = () => {
     if (isDragging && draggedNote && hasDragged) {
-      onPatternChange({
+      handlePatternChange({
         type: "move-note",
         trackId: draggedNote.trackId,
         fromTick: draggedNote.originalTick,
@@ -230,7 +289,7 @@ function PatternTimeline({
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
-      onPatternChange({
+      handlePatternChange({
         type: "remove-note",
         trackId,
         tick,
@@ -291,7 +350,7 @@ function PatternTimeline({
             </span>
           </div>
 
-          {/* Measure Controls - Only subtract now */}
+          {/* Measure Controls */}
           <div className="measure-controls d-flex align-items-center gap-2">
             <span className="text-muted fw-bold">Measures:</span>
 
@@ -299,7 +358,10 @@ function PatternTimeline({
             {measureCount > 1 && (
               <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={onRemoveMeasure}
+                onClick={() => {
+                  removeMeasure();
+                  sendMeasureCountChange(Math.max(1, measureCount - 1));
+                }}
                 title="Remove measure"
               >
                 −
@@ -312,7 +374,10 @@ function PatternTimeline({
             {measureCount < 4 && (
               <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={onAddMeasure}
+                onClick={() => {
+                  addMeasure();
+                  sendMeasureCountChange(measureCount + 1);
+                }}
                 title="Add measure"
               >
                 +
@@ -337,15 +402,15 @@ function PatternTimeline({
           </div>
 
           {/* BPM Control */}
-          <div className="bpm-control">
-            <label className="bpm-label">BPM</label>
+          <div className="bmp-control">
+            <label className="bmp-label">BPM</label>
             <input
               type="range"
               className="bmp-slider"
               min="60"
               max="300"
               value={bpm}
-              onChange={(e) => onBpmChange(parseInt(e.target.value))}
+              onChange={(e) => handleBpmChange(parseInt(e.target.value))}
             />
             <span className="bmp-value">{bpm}</span>
           </div>
@@ -359,15 +424,11 @@ function PatternTimeline({
           <div className="sidebar-header">TRACKS</div>
 
           {tracks.map((track) => (
-            <TrackLabel
-              key={`label-${track.id}`}
-              track={track}
-              onSoundChange={onUpdateTrackSound}
-            />
+            <TrackLabel key={`label-${track.id}`} track={track} />
           ))}
 
           <div className="add-track-container">
-            <button className="btn btn-add-track" onClick={onAddTrack}>
+            <button className="btn btn-add-track" onClick={handleAddTrack}>
               + Add Track
             </button>
           </div>

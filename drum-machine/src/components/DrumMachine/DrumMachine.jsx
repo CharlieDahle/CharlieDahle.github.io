@@ -2,44 +2,42 @@ import React, { useEffect, useRef } from "react";
 import { usePatternStore } from "../../stores/usePatternStore";
 import { useTrackStore } from "../../stores/useTrackStore";
 import { useTransportStore } from "../../stores/useTransportStore";
+import { useWebSocketStore } from "../../stores/useWebSocketStore";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 
-function DrumMachine({
-  roomId,
-  userCount,
-  remoteTransportCommand,
-  onPatternChange,
-  onBpmChange,
-  onTransportCommand,
-  onMeasureCountChange,
-  onAddTrack,
-  onRemoveTrack,
-  onUpdateTrackSound,
-}) {
-  // Get all state from stores
+function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
+  // Get all state from stores directly
   const { pattern, addNote, removeNote, moveNote, clearTrack } =
     usePatternStore();
-
-  const { tracks } = useTrackStore();
-
-  const transportStore = useTransportStore();
+  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
   const {
     isPlaying,
     currentTick,
     bpm,
+    measureCount,
     play,
     pause,
     stop,
     setBpm,
     setCurrentTick,
+    addMeasure,
+    removeMeasure,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
     getTotalTicks,
-    measureCount,
-    addMeasure,
-    removeMeasure,
-  } = transportStore;
+  } = useTransportStore();
+
+  // Get WebSocket methods
+  const {
+    sendPatternChange,
+    sendBpmChange,
+    sendMeasureCountChange,
+    sendAddTrack,
+    sendRemoveTrack,
+    sendUpdateTrackSound,
+    sendTransportCommand,
+  } = useWebSocketStore();
 
   // Scheduler instance
   const schedulerRef = useRef(null);
@@ -55,7 +53,7 @@ function DrumMachine({
         setCurrentTick(tick);
       },
       useTransportStore
-    ); // Pass the store
+    );
 
     scheduler.init();
     schedulerRef.current = scheduler;
@@ -145,7 +143,7 @@ function DrumMachine({
       return;
     }
 
-    // Update store immediately for responsive UI
+    // Update store directly
     switch (change.type) {
       case "add-note":
         addNote(change.trackId, change.tick);
@@ -163,21 +161,43 @@ function DrumMachine({
         console.warn("Unknown pattern change type:", change.type);
     }
 
-    // Notify parent for WebSocket sync
-    onPatternChange(change);
+    // Send to server
+    sendPatternChange(change);
   };
 
   // Handle BPM changes
   const handleBpmChange = (newBpm) => {
     setBpm(newBpm);
-    onBpmChange(newBpm);
+    sendBpmChange(newBpm);
   };
 
   // Handle measure changes
   const handleMeasureChange = (newMeasureCount) => {
-    // No need to call local store - the buttons already do that
-    // Just notify server for sync
-    onMeasureCountChange(newMeasureCount);
+    // Just notify server for sync - store is already updated by button handlers
+    sendMeasureCountChange(newMeasureCount);
+  };
+
+  // Handle track management
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      soundFile: null,
+      availableSounds: [], // Will be set by sound selector
+    };
+
+    const newTrack = addTrack(trackData);
+    sendAddTrack(newTrack);
+  };
+
+  const handleRemoveTrack = (trackId) => {
+    removeTrack(trackId);
+    sendRemoveTrack(trackId);
+  };
+
+  const handleUpdateTrackSound = (trackId, newSoundFile) => {
+    updateTrackSound(trackId, newSoundFile);
+    sendUpdateTrackSound(trackId, newSoundFile);
   };
 
   // Transport control handlers
@@ -202,7 +222,7 @@ function DrumMachine({
     }
 
     // Notify server
-    onTransportCommand({ type: "play" });
+    sendTransportCommand({ type: "play" });
 
     console.log("🎵 [" + roomId + "] LOCAL PLAY completed - Scheduler started");
   };
@@ -222,7 +242,7 @@ function DrumMachine({
     }
 
     // Notify server
-    onTransportCommand({ type: "pause" });
+    sendTransportCommand({ type: "pause" });
   };
 
   const handleStop = () => {
@@ -240,7 +260,7 @@ function DrumMachine({
     }
 
     // Notify server
-    onTransportCommand({ type: "stop" });
+    sendTransportCommand({ type: "stop" });
   };
 
   return (
@@ -270,16 +290,11 @@ function DrumMachine({
       <div className="row">
         <div className="col">
           <PatternTimeline
-            pattern={pattern}
-            bpm={bpm}
-            currentTick={currentTick}
-            isPlaying={isPlaying}
-            tracks={tracks}
             onPatternChange={handlePatternChange}
             onBpmChange={handleBpmChange}
-            onAddTrack={onAddTrack}
-            onRemoveTrack={onRemoveTrack}
-            onUpdateTrackSound={onUpdateTrackSound}
+            onAddTrack={handleAddTrack}
+            onRemoveTrack={handleRemoveTrack}
+            onUpdateTrackSound={handleUpdateTrackSound}
             onPlay={handlePlay}
             onPause={handlePause}
             onStop={handleStop}
@@ -291,10 +306,6 @@ function DrumMachine({
               removeMeasure();
               handleMeasureChange(Math.max(1, measureCount - 1));
             }}
-            measureCount={measureCount}
-            TICKS_PER_BEAT={TICKS_PER_BEAT}
-            BEATS_PER_LOOP={BEATS_PER_LOOP}
-            PIXELS_PER_TICK={0.15}
           />
         </div>
       </div>

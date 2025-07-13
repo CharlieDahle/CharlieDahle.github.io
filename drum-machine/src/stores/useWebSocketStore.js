@@ -15,11 +15,6 @@ export const useWebSocketStore = create((set, get) => ({
   // Remote transport command state for DrumMachine coordination
   lastRemoteTransportCommand: null,
 
-  // Store references for coordination (will be set by the app)
-  patternStore: null,
-  transportStore: null,
-  trackStore: null,
-
   // Initialize WebSocket connection
   initializeConnection: () => {
     console.log("Connecting to server...");
@@ -62,79 +57,73 @@ export const useWebSocketStore = create((set, get) => ({
       set((state) => ({ users: state.users.filter((id) => id !== userId) }));
     });
 
-    // Pattern and playback events - coordinate with other stores
+    // Pattern and playback events - call other stores directly
     newSocket.on("pattern-update", (change) => {
       console.log("Pattern update received:", change);
-      const { patternStore } = get();
-      if (patternStore) {
-        patternStore.getState().applyPatternChange(change);
-      }
+      // Import and call the store directly
+      import("./usePatternStore").then(({ usePatternStore }) => {
+        usePatternStore.getState().applyPatternChange(change);
+      });
     });
 
-    newSocket.on("bpm-change", ({ bpm: newBpm }) => {
+    newSocket.on("bmp-change", ({ bpm: newBpm }) => {
       console.log("BPM changed to:", newBpm);
-      const { transportStore } = get();
-      if (transportStore) {
-        transportStore.getState().syncBpm(newBpm);
-      }
+      // Import and call the store directly
+      import("./useTransportStore").then(({ useTransportStore }) => {
+        useTransportStore.getState().syncBpm(newBpm);
+      });
     });
 
-    // Add missing measure count handler
     newSocket.on("measure-count-change", ({ measureCount }) => {
       console.log("Measure count changed to:", measureCount);
-      const { transportStore } = get();
-      if (transportStore) {
-        transportStore.getState().syncMeasureCount(measureCount);
-      }
+      // Import and call the store directly
+      import("./useTransportStore").then(({ useTransportStore }) => {
+        useTransportStore.getState().syncMeasureCount(measureCount);
+      });
     });
 
-    // Track management events (FIXED - removed duplicates)
+    // Track management events
     newSocket.on("track-added", ({ trackData }) => {
       console.log("Track added:", trackData);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncAddTrack(trackData);
-      }
+      // Import and call the store directly
+      import("./useTrackStore").then(({ useTrackStore }) => {
+        useTrackStore.getState().syncAddTrack(trackData);
+      });
     });
 
     newSocket.on("track-removed", ({ trackId }) => {
       console.log("Track removed:", trackId);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncRemoveTrack(trackId);
-      }
+      // Import and call the store directly
+      import("./useTrackStore").then(({ useTrackStore }) => {
+        useTrackStore.getState().syncRemoveTrack(trackId);
+      });
     });
 
     newSocket.on("track-sound-updated", ({ trackId, soundFile }) => {
       console.log("Track sound updated:", trackId, soundFile);
-      const { trackStore } = get();
-      if (trackStore) {
-        trackStore.getState().syncUpdateTrackSound(trackId, soundFile);
-      }
+      // Import and call the store directly
+      import("./useTrackStore").then(({ useTrackStore }) => {
+        useTrackStore.getState().syncUpdateTrackSound(trackId, soundFile);
+      });
     });
 
     newSocket.on("transport-sync", (command) => {
       console.log(`🌐 RECEIVED transport sync:`, command);
-      const { transportStore } = get();
-      if (transportStore) {
-        // Update the transport state
-        transportStore.getState().syncTransportCommand(command);
 
-        // Set a flag that DrumMachine can listen to for audio coordination
-        set({
-          lastRemoteTransportCommand: { ...command, timestamp: Date.now() },
-        });
-      }
+      // Import and call the transport store directly
+      import("./useTransportStore").then(({ useTransportStore }) => {
+        useTransportStore.getState().syncTransportCommand(command);
+      });
+
+      // Set a flag that DrumMachine can listen to for audio coordination
+      set({
+        lastRemoteTransportCommand: { ...command, timestamp: Date.now() },
+      });
     });
 
     set({ socket: newSocket });
 
     return newSocket;
-  },
-
-  // Set store references for coordination
-  setStoreReferences: (patternStore, transportStore, trackStore) => {
-    set({ patternStore, transportStore, trackStore });
   },
 
   // Room management
@@ -227,7 +216,7 @@ export const useWebSocketStore = create((set, get) => ({
     });
   },
 
-  // Track management methods (FIXED - removed duplicates)
+  // Track management methods
   sendAddTrack: (trackData) => {
     const { socket, isInRoom, roomId } = get();
     if (!socket || !isInRoom) return;
