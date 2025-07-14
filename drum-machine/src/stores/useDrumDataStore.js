@@ -431,7 +431,7 @@ export const useDrumDataStore = create((set, get) => ({
     set({
       pattern: serverState.pattern || {},
       tracks: serverState.tracks || get().tracks,
-      bmp: serverState.bpm || get().bpm,
+      bpm: serverState.bpm || get().bpm,
       measureCount: serverState.measureCount || get().measureCount,
     });
   },
