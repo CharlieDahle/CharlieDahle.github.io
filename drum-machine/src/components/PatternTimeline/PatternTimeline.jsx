@@ -1,10 +1,8 @@
+// src/components/PatternTimeline/PatternTimeline.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { useUIStore } from "../../stores/useUIStore";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTrackStore } from "../../stores/useTrackStore";
+import { useDrumDataStore } from "../../stores/useDrumDataStore";
 import { useTransportStore } from "../../stores/useTransportStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
-import drumSounds from "../../assets/data/drum-sounds.json";
+import { useUIStore } from "../../stores/useUIStore";
 import "./PatternTimeline.css";
 
 // TrackLabel component with hover controls
@@ -18,7 +16,7 @@ function TrackLabel({ track }) {
       return "Choose Sound...";
     }
 
-    // Hard-coded mapping for the first four default tracks
+    // Hard-coded mapping for default tracks (you can expand this)
     const defaultSoundNames = {
       "kicks/Ac_K.wav": "Acoustic Kick",
       "snares/Box_Snr2.wav": "Box Snare 2",
@@ -26,20 +24,7 @@ function TrackLabel({ track }) {
       "cymbals/CL_OHH1.wav": "Closed Hi-Hat 1",
     };
 
-    if (defaultSoundNames[track.soundFile]) {
-      return defaultSoundNames[track.soundFile];
-    }
-
-    // Find the sound name from drumSounds for other sounds
-    for (const category of Object.values(drumSounds)) {
-      const sound = category.find((s) => s.file === track.soundFile);
-      if (sound) {
-        return sound.name;
-      }
-    }
-
-    // Fallback to track name if sound not found
-    return track.name;
+    return defaultSoundNames[track.soundFile] || track.name;
   };
 
   return (
@@ -71,128 +56,72 @@ function TrackLabel({ track }) {
 }
 
 function PatternTimeline({ onPlay, onPause, onStop }) {
-  // Get all state from stores
-  const { pattern, addNote, removeNote, moveNote, clearTrack } =
-    usePatternStore();
-  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
-  const {
-    bpm,
-    currentTick,
-    isPlaying,
-    measureCount,
-    setBpm,
-    addMeasure,
-    removeMeasure,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
-    getTotalTicks,
-  } = useTransportStore();
-  const {
-    sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
-    sendAddTrack,
-    sendRemoveTrack,
-  } = useWebSocketStore();
+  // ============ STORE SUBSCRIPTIONS ============
 
-  // Get snap state from UI store
+  // Hot state (playhead position)
+  const { isPlaying, currentTick } = useTransportStore();
+
+  // Warm state (pattern data and coordination)
+  const {
+    pattern,
+    tracks,
+    bpm,
+    measureCount,
+    addNoteAndSync,
+    removeNoteAndSync,
+    moveNoteAndSync,
+    setBpmAndSync,
+    addMeasureAndSync,
+    removeMeasureAndSync,
+    addTrackAndSync,
+    getTotalTicks,
+  } = useDrumDataStore();
+
+  // UI preferences
   const { snapToGrid, setSnapToGrid } = useUIStore();
+
+  // ============ REFS AND LOCAL STATE ============
 
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
+
+  // Drag state
   const [draggedNote, setDraggedNote] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
 
-  // FIXED WIDTH CALCULATIONS
-  const MEASURES_PER_PAGE = 4; // Always show 4 measures
-  const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
+  // ============ CONSTANTS ============
+
+  const MEASURES_PER_PAGE = 4;
+  const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4;
+  const TICKS_PER_BEAT = 480;
   const PIXELS_PER_TICK = 0.15;
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // 48px per beat
-  const FIXED_GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 768px total grid
-  const SIDEBAR_WIDTH = 170; // From CSS
-  const TOTAL_WIDTH = SIDEBAR_WIDTH + FIXED_GRID_WIDTH; // 938px total
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
+  const FIXED_GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH;
+  const SIDEBAR_WIDTH = 170;
+  const TOTAL_WIDTH = SIDEBAR_WIDTH + FIXED_GRID_WIDTH;
+  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE;
 
-  // Use fixed values instead of dynamic ones
-  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE; // Fixed to 16 beats
+  // ============ COMPUTED VALUES ============
 
-  // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
 
-  // Update playhead position when currentTick changes
+  // ============ PLAYHEAD UPDATE ============
+
   useEffect(() => {
     if (playheadRef.current) {
       const position = currentTick * PIXELS_PER_TICK;
       playheadRef.current.style.transform = `translateX(${position}px)`;
     }
-  }, [currentTick, PIXELS_PER_TICK]);
+  }, [currentTick]);
 
-  // Handle pattern changes
-  const handlePatternChange = (change) => {
-    // Check if track still exists
-    const trackExists = tracks.some((track) => track.id === change.trackId);
-    if (!trackExists) {
-      console.warn("Pattern change for non-existent track:", change.trackId);
-      return;
-    }
+  // ============ HELPER FUNCTIONS ============
 
-    // Update store directly
-    switch (change.type) {
-      case "add-note":
-        addNote(change.trackId, change.tick);
-        break;
-      case "remove-note":
-        removeNote(change.trackId, change.tick);
-        break;
-      case "move-note":
-        moveNote(change.trackId, change.fromTick, change.toTick);
-        break;
-      case "clear-track":
-        clearTrack(change.trackId);
-        break;
-      default:
-        console.warn("Unknown pattern change type:", change.type);
-    }
+  const convertClickToTick = (clickX) => {
+    const rawTick = clickX / PIXELS_PER_TICK;
+    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const centeredTick = rawTick - noteWidthInTicks / 2;
 
-    // Send to server
-    sendPatternChange(change);
-  };
-
-  // Handle BPM changes
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle track management
-  const handleAddTrack = () => {
-    const trackData = {
-      name: `Track ${tracks.length + 1}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      soundFile: null,
-      availableSounds: [],
-    };
-
-    const newTrack = addTrack(trackData);
-    sendAddTrack(newTrack);
-  };
-
-  // Handle track clicks for note placement
-  const handleTrackMouseDown = (e, trackId) => {
-    if (e.target.classList.contains("timeline-note")) return;
-
-    const track = e.currentTarget;
-    const rect = track.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-
-    // Convert click position to tick
-    const clickTick = x / PIXELS_PER_TICK;
-
-    // STEP 1: Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
-    const centeredTick = clickTick - noteWidthInTicks / 2;
-
-    // STEP 2: Apply snap-to-grid on the centered position
     let snappedTick;
     if (snapToGrid) {
       const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
@@ -201,25 +130,30 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
       snappedTick = Math.round(centeredTick);
     }
 
-    const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
-    const existingNote = pattern[trackId]?.includes(clampedTick);
+    return Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
+  };
+
+  // ============ TRACK INTERACTION HANDLERS ============
+
+  const handleTrackMouseDown = (e, trackId) => {
+    if (e.target.classList.contains("timeline-note")) return;
+
+    const track = e.currentTarget;
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const tick = convertClickToTick(x);
+
+    const existingNote = pattern[trackId]?.includes(tick);
 
     if (existingNote) {
-      handlePatternChange({
-        type: "remove-note",
-        trackId,
-        tick: clampedTick,
-      });
+      removeNoteAndSync(trackId, tick);
     } else {
-      handlePatternChange({
-        type: "add-note",
-        trackId,
-        tick: clampedTick,
-      });
+      addNoteAndSync(trackId, tick);
     }
   };
 
-  // Handle note dragging start
+  // ============ NOTE DRAGGING HANDLERS ============
+
   const handleNoteMouseDown = (e, trackId, tick) => {
     e.stopPropagation();
 
@@ -236,7 +170,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     });
   };
 
-  // Handle mouse move during drag
   const handleMouseMove = (e) => {
     if (!isDragging || !draggedNote) return;
 
@@ -244,40 +177,23 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
     const rect = gridRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - draggedNote.offsetX;
-
-    // Convert position to tick
-    const dragTick = x / PIXELS_PER_TICK;
-
-    // STEP 1: Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
-    const centeredTick = dragTick - noteWidthInTicks / 2;
-
-    // STEP 2: Apply snap-to-grid on the centered position
-    let snappedTick;
-    if (snapToGrid) {
-      const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
-      snappedTick = eighthNoteIndex * (TICKS_PER_BEAT / 2);
-    } else {
-      snappedTick = Math.round(centeredTick);
-    }
-
-    const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
+    const tick = convertClickToTick(x + 24 / 2); // Adjust for note center
 
     setDraggedNote((prev) => ({
       ...prev,
-      currentTick: clampedTick,
+      currentTick: tick,
     }));
   };
 
-  // Handle mouse up - finish drag
   const handleMouseUp = () => {
     if (isDragging && draggedNote && hasDragged) {
-      handlePatternChange({
-        type: "move-note",
-        trackId: draggedNote.trackId,
-        fromTick: draggedNote.originalTick,
-        toTick: draggedNote.currentTick,
-      });
+      if (draggedNote.originalTick !== draggedNote.currentTick) {
+        moveNoteAndSync(
+          draggedNote.trackId,
+          draggedNote.originalTick,
+          draggedNote.currentTick
+        );
+      }
     }
 
     setIsDragging(false);
@@ -285,19 +201,15 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     setTimeout(() => setHasDragged(false), 10);
   };
 
-  // Handle note click (delete if not dragged)
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
-      handlePatternChange({
-        type: "remove-note",
-        trackId,
-        tick,
-      });
+      removeNoteAndSync(trackId, tick);
     }
   };
 
-  // Add global mouse event listeners for dragging
+  // ============ MOUSE EVENT LISTENERS ============
+
   useEffect(() => {
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
@@ -308,14 +220,21 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [
-    isDragging,
-    draggedNote,
-    snapToGrid,
-    PIXELS_PER_TICK,
-    TICKS_PER_BEAT,
-    TOTAL_TICKS,
-  ]);
+  }, [isDragging, draggedNote, snapToGrid]);
+
+  // ============ TRACK MANAGEMENT HANDLERS ============
+
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      soundFile: null,
+    };
+
+    addTrackAndSync(trackData);
+  };
+
+  // ============ RENDER ============
 
   const TRACK_HEIGHT = 60;
 
@@ -354,14 +273,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           <div className="measure-controls d-flex align-items-center gap-2">
             <span className="text-muted fw-bold">Measures:</span>
 
-            {/* Subtract button - only show if more than 1 measure */}
             {measureCount > 1 && (
               <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  removeMeasure();
-                  sendMeasureCountChange(Math.max(1, measureCount - 1));
-                }}
+                onClick={removeMeasureAndSync}
                 title="Remove measure"
               >
                 −
@@ -370,14 +285,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
             <span className="badge bg-secondary">{measureCount}</span>
 
-            {/* Add button - only show if less than 4 measures */}
             {measureCount < 4 && (
               <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  addMeasure();
-                  sendMeasureCountChange(measureCount + 1);
-                }}
+                onClick={addMeasureAndSync}
                 title="Add measure"
               >
                 +
@@ -402,22 +313,22 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
 
           {/* BPM Control */}
-          <div className="bmp-control">
-            <label className="bmp-label">BPM</label>
+          <div className="bpm-control">
+            <label className="bpm-label">BPM</label>
             <input
               type="range"
-              className="bmp-slider"
+              className="bpm-slider"
               min="60"
               max="300"
               value={bpm}
-              onChange={(e) => handleBpmChange(parseInt(e.target.value))}
+              onChange={(e) => setBpmAndSync(parseInt(e.target.value))}
             />
-            <span className="bmp-value">{bpm}</span>
+            <span className="bpm-value">{bpm}</span>
           </div>
         </div>
       </div>
 
-      {/* Grid Container - Fixed width, no scrolling */}
+      {/* Grid Container */}
       <div className="timeline-grid-container">
         {/* Track Labels Sidebar */}
         <div className="track-sidebar">
@@ -434,14 +345,14 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
         </div>
 
-        {/* Grid Area - Fixed width */}
+        {/* Grid Area */}
         <div
           className="timeline-grid-area"
           style={{ width: `${FIXED_GRID_WIDTH}px` }}
         >
           {/* Beat Header */}
           <div className="beat-header">
-            {/* Measure Numbers - Always show 4 measures */}
+            {/* Measure Numbers */}
             <div className="measure-row">
               {Array.from({ length: MEASURES_PER_PAGE }, (_, i) => (
                 <div
@@ -456,7 +367,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               ))}
             </div>
 
-            {/* Beat Numbers - Always show 16 beats */}
+            {/* Beat Numbers */}
             <div className="beat-row">
               {Array.from({ length: BEATS_PER_PAGE }, (_, i) => (
                 <div
@@ -491,28 +402,24 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                 }`}
                 onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
               >
-                {/* Subdivision lines - 16th, 8th, and quarter notes */}
+                {/* Subdivision lines */}
                 {Array.from(
                   { length: TOTAL_TICKS / (TICKS_PER_BEAT / 4) + 1 },
                   (_, subdivisionIndex) => {
                     const tickPosition =
-                      subdivisionIndex * (TICKS_PER_BEAT / 4); // Every 16th note
+                      subdivisionIndex * (TICKS_PER_BEAT / 4);
                     const beatPosition = tickPosition / TICKS_PER_BEAT;
                     const measureIndex = Math.floor(beatPosition / 4);
 
-                    // Determine line type
                     let lineType;
                     if (tickPosition % TICKS_PER_BEAT === 0) {
-                      // Quarter note (beat)
                       lineType =
                         beatPosition % 4 === 0
                           ? "beat-line--measure"
                           : "beat-line--beat";
                     } else if (tickPosition % (TICKS_PER_BEAT / 2) === 0) {
-                      // 8th note
                       lineType = "beat-line--eighth";
                     } else {
-                      // 16th note
                       lineType = "beat-line--sixteenth";
                     }
 

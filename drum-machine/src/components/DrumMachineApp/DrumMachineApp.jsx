@@ -1,35 +1,34 @@
+// src/components/DrumMachineApp/DrumMachineApp.jsx
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTransportStore } from "../../stores/useTransportStore";
+import { useDrumDataStore } from "../../stores/useDrumDataStore";
+import { useUIStore } from "../../stores/useUIStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 function DrumMachineApp() {
-  // WebSocket store for connection and room management
+  // ============ STORE SUBSCRIPTIONS ============
+
+  // Connection and room state
   const {
     isConnected,
     isInRoom,
     roomId,
     users,
     error,
-    lastRemoteTransportCommand,
-    initializeConnection,
+    connect,
     createRoom,
     joinRoom,
-    cleanup,
-  } = useWebSocketStore();
+    disconnect,
+  } = useDrumDataStore();
 
-  // Other stores for room sync
-  const { setTracks } = useTrackStore();
-  const { setPattern } = usePatternStore();
-  const { syncBpm, syncMeasureCount } = useTransportStore();
+  // UI state for error handling
+  const { setError: setUIError, clearError } = useUIStore();
 
-  // Animation variants
+  // ============ ANIMATION VARIANTS ============
+
   const pageVariants = {
     initial: {
       scale: 0.8,
@@ -55,88 +54,95 @@ function DrumMachineApp() {
     mass: 0.8,
   };
 
-  // Initialize WebSocket connection
+  // ============ INITIALIZATION ============
+
   useEffect(() => {
-    initializeConnection();
+    console.log("DrumMachineApp: Initializing connection");
+    connect();
 
+    // Cleanup on unmount
     return () => {
-      cleanup();
+      console.log("DrumMachineApp: Cleaning up connection");
+      disconnect();
     };
-  }, [initializeConnection, cleanup]);
+  }, [connect, disconnect]);
 
-  // Room management handlers
+  // ============ ROOM MANAGEMENT HANDLERS ============
+
   const handleCreateRoom = async () => {
     try {
+      console.log("DrumMachineApp: Creating room");
+      clearError(); // Clear any previous errors
+
       const roomState = await createRoom();
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
+      console.log("DrumMachineApp: Room created successfully", roomState);
+
+      // Room state sync is handled automatically by the store
     } catch (error) {
-      console.error("Failed to create room:", error);
+      console.error("DrumMachineApp: Failed to create room:", error);
+      setUIError("Failed to create room. Please try again.");
     }
   };
 
   const handleJoinRoom = async (targetRoomId) => {
     try {
+      console.log("DrumMachineApp: Joining room", targetRoomId);
+      clearError(); // Clear any previous errors
+
       const roomState = await joinRoom(targetRoomId);
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
+      console.log("DrumMachineApp: Room joined successfully", roomState);
+
+      // Room state sync is handled automatically by the store
     } catch (error) {
-      console.error("Failed to join room:", error);
+      console.error("DrumMachineApp: Failed to join room:", error);
+      setUIError(
+        `Failed to join room "${targetRoomId}". Please check the room ID and try again.`
+      );
     }
   };
 
-  // If not connected or not in room, show connection interface
-  if (!isInRoom) {
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="room-interface"
-          initial="initial"
-          animate="in"
-          exit="out"
-          variants={pageVariants}
-          transition={pageTransition}
-          style={{
-            width: "100%",
-            minHeight: "100vh",
-          }}
-        >
-          <div
-            className="container-fluid py-4"
-            style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
-          >
-            {error && (
-              <div className="alert alert-danger text-center" role="alert">
-                {error}
-              </div>
-            )}
-            <RoomInterface
-              onCreateRoom={handleCreateRoom}
-              onJoinRoom={handleJoinRoom}
-              isConnected={isConnected}
-            />
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
+  // ============ RENDER HELPERS ============
 
-  // Render the drum machine
-  return (
+  const renderRoomInterface = () => (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="room-interface"
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+        }}
+      >
+        <div
+          className="container-fluid py-4"
+          style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
+        >
+          {/* Connection Error Display */}
+          {error && (
+            <div className="row mb-3">
+              <div className="col">
+                <div className="alert alert-danger text-center" role="alert">
+                  {error}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <RoomInterface
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            isConnected={isConnected}
+          />
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+
+  const renderDrumMachine = () => (
     <AnimatePresence mode="wait">
       <motion.div
         key="drum-machine"
@@ -150,17 +156,23 @@ function DrumMachineApp() {
           minHeight: "100vh",
         }}
       >
-        <DrumMachine
-          roomId={roomId}
-          userCount={users.length}
-          remoteTransportCommand={lastRemoteTransportCommand}
-        />
+        <DrumMachine roomId={roomId} userCount={users.length} />
 
         {/* Global Sound Selector Modal */}
         <SoundSelectorModal drumSounds={drumSounds} />
       </motion.div>
     </AnimatePresence>
   );
+
+  // ============ MAIN RENDER ============
+
+  // Show room interface if not connected or not in room
+  if (!isInRoom) {
+    return renderRoomInterface();
+  }
+
+  // Show drum machine if connected and in room
+  return renderDrumMachine();
 }
 
 export default DrumMachineApp;

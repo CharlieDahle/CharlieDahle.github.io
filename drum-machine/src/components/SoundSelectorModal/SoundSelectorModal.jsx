@@ -1,27 +1,34 @@
 import React, { useState, useEffect } from "react";
 import { useUIStore } from "../../stores/useUIStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useDrumDataStore } from "../../stores/useDrumDataStore";
 
 function SoundSelectorModal({ drumSounds }) {
+  // ============ STORE SUBSCRIPTIONS ============
+
+  // UI state (modal management)
   const { soundModalOpen, soundModalTrack, closeSoundModal } = useUIStore();
-  const { updateTrackSound } = useTrackStore();
-  const { sendUpdateTrackSound } = useWebSocketStore();
+
+  // Business logic (track sound updates)
+  const { updateTrackSoundAndSync } = useDrumDataStore();
+
+  // ============ LOCAL STATE ============
 
   const [selectedCategory, setSelectedCategory] = useState("kicks");
   const [selectedSound, setSelectedSound] = useState(null);
   const [loadedSounds, setLoadedSounds] = useState({});
   const [audioContext, setAudioContext] = useState(null);
 
-  // Initialize audio context
+  // ============ INITIALIZATION ============
+
+  // Initialize audio context when modal opens
   useEffect(() => {
     if (soundModalOpen && !audioContext) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       setAudioContext(ctx);
     }
-  }, [soundModalOpen]);
+  }, [soundModalOpen, audioContext]);
 
-  // Auto-select track's current category when modal opens
+  // Auto-select track's current category and sound when modal opens
   useEffect(() => {
     if (soundModalOpen && soundModalTrack) {
       // Find which category contains the track's current sound
@@ -35,12 +42,21 @@ function SoundSelectorModal({ drumSounds }) {
           break;
         }
       }
+
       // Set current sound as selected
       setSelectedSound(soundModalTrack.soundFile);
     }
   }, [soundModalOpen, soundModalTrack, drumSounds]);
 
-  // Load sounds for a category
+  // Load sounds for initial category when modal opens
+  useEffect(() => {
+    if (soundModalOpen && selectedCategory) {
+      loadCategorySounds(selectedCategory);
+    }
+  }, [soundModalOpen, selectedCategory]);
+
+  // ============ SOUND LOADING ============
+
   const loadCategorySounds = async (category) => {
     if (loadedSounds[category] || !audioContext) return;
 
@@ -65,13 +81,8 @@ function SoundSelectorModal({ drumSounds }) {
     }));
   };
 
-  // Handle category selection
-  const handleCategoryClick = (category) => {
-    setSelectedCategory(category);
-    loadCategorySounds(category);
-  };
+  // ============ SOUND PREVIEW ============
 
-  // Play sound preview
   const playSound = (soundFile) => {
     if (!audioContext || !loadedSounds[selectedCategory]?.[soundFile]) return;
 
@@ -82,29 +93,27 @@ function SoundSelectorModal({ drumSounds }) {
     source.start();
   };
 
-  // Handle sound selection
+  // ============ EVENT HANDLERS ============
+
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+    loadCategorySounds(category);
+  };
+
   const handleSoundClick = (soundFile) => {
     setSelectedSound(soundFile);
     playSound(soundFile);
   };
 
-  // Handle apply - use stores directly
   const handleApply = () => {
     if (selectedSound && soundModalTrack) {
-      // Update store directly
-      updateTrackSound(soundModalTrack.id, selectedSound);
-      // Send to server
-      sendUpdateTrackSound(soundModalTrack.id, selectedSound);
+      // Use coordinated action - handles local update + server sync
+      updateTrackSoundAndSync(soundModalTrack.id, selectedSound);
     }
     closeSoundModal();
   };
 
-  // Load sounds for initial category when modal opens
-  useEffect(() => {
-    if (soundModalOpen && selectedCategory) {
-      loadCategorySounds(selectedCategory);
-    }
-  }, [soundModalOpen, selectedCategory]);
+  // ============ RENDER ============
 
   if (!soundModalOpen) return null;
 

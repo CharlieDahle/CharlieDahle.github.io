@@ -1,30 +1,63 @@
+// src/stores/useUIStore.js
 import { create } from "zustand";
 
-export const useUIStore = create((set) => ({
-  // Snap to grid setting
-  snapToGrid: true,
-  setSnapToGrid: (value) => set({ snapToGrid: value }),
+export const useUIStore = create((set, get) => ({
+  // ============ COLD STATE (updates rarely - user preferences) ============
 
-  // Sound selector modal state
+  // Modal state
   soundModalOpen: false,
   soundModalTrack: null,
-  openSoundModal: (track) =>
+
+  // User preferences
+  snapToGrid: true,
+
+  // App-level UI state
+  isLoading: false,
+  error: null,
+
+  // ============ MODAL ACTIONS ============
+
+  openSoundModal: (track) => {
     set({
       soundModalOpen: true,
       soundModalTrack: track,
-    }),
-  closeSoundModal: () =>
+    });
+  },
+
+  closeSoundModal: () => {
     set({
       soundModalOpen: false,
       soundModalTrack: null,
-    }),
+    });
+  },
 
-  // Error state for the app
-  error: null,
-  setError: (error) => set({ error }),
-  clearError: () => set({ error: null }),
+  // ============ PREFERENCE ACTIONS ============
 
-  // Loading states
-  isLoading: false,
-  setLoading: (loading) => set({ isLoading: loading }),
+  setSnapToGrid: (enabled) => {
+    set({ snapToGrid: enabled });
+  },
+
+  // ============ LOADING/ERROR ACTIONS ============
+
+  setLoading: (loading) => {
+    set({ isLoading: loading });
+  },
+
+  setError: (error) => {
+    set({ error });
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  // ============ HELPER GETTERS ============
+
+  hasError: () => {
+    return get().error !== null;
+  },
+
+  isModalOpen: () => {
+    return get().soundModalOpen;
+  },
 }));

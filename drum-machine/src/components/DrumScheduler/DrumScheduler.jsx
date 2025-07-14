@@ -1,14 +1,16 @@
 class DrumScheduler {
-  constructor(bpm = 120, onTickUpdate = null, transportStore = null) {
+  constructor(bpm = 120, onTickUpdate = null) {
+    // Audio context
     this.audioContext = null;
-    this.bpm = bpm;
-    this.onTickUpdate = onTickUpdate;
-    this.transportStore = transportStore; // Reference to get dynamic constants
 
-    // Remove hardcoded constants - get from store instead
-    // this.TICKS_PER_BEAT = 480;
-    // this.BEATS_PER_LOOP = 16;
-    // this.TOTAL_TICKS = this.TICKS_PER_BEAT * this.BEATS_PER_LOOP;
+    // Timing
+    this.bpm = bpm;
+    this.onTickUpdate = onTickUpdate; // Callback to update transport store
+
+    // Timing constants - now fixed and simple
+    this.TICKS_PER_BEAT = 480;
+    this.BEATS_PER_MEASURE = 4;
+    this.TOTAL_MEASURES = 4; // Will be updated dynamically
 
     // Playback state
     this.isPlaying = false;
@@ -19,39 +21,17 @@ class DrumScheduler {
     this.lookahead = 25.0;
     this.scheduleAheadTime = 0.1;
 
-    // Pattern data
+    // Pattern and track data
     this.pattern = {};
-
-    // Audio buffers for loaded sounds
-    this.audioBuffers = {};
-    this.soundsLoaded = false;
-
-    // Dynamic track to sound mapping
-    this.trackSounds = {};
+    this.trackSounds = {}; // trackId -> soundFile mapping
+    this.audioBuffers = {}; // soundFile -> AudioBuffer mapping
 
     // RAF handle for cleanup
     this.schedulerRAF = null;
   }
 
-  // Helper to get current timing constants from store
-  getTimingConstants() {
-    if (this.transportStore) {
-      const state = this.transportStore.getState();
-      return {
-        TICKS_PER_BEAT: state.TICKS_PER_BEAT,
-        BEATS_PER_LOOP: state.BEATS_PER_LOOP,
-        TOTAL_TICKS: state.getTotalTicks(),
-      };
-    }
-    // Fallback to hardcoded values if no store
-    return {
-      TICKS_PER_BEAT: 480,
-      BEATS_PER_LOOP: 16,
-      TOTAL_TICKS: 480 * 16,
-    };
-  }
+  // ============ INITIALIZATION ============
 
-  // Initialize audio context and load sounds
   async init() {
     if (!this.audioContext) {
       this.audioContext = new (window.AudioContext ||
@@ -67,24 +47,50 @@ class DrumScheduler {
     return true;
   }
 
-  // Set tracks and load their sounds
+  // ============ TIMING HELPERS ============
+
+  getTotalTicks() {
+    return this.TICKS_PER_BEAT * this.BEATS_PER_MEASURE * this.TOTAL_MEASURES;
+  }
+
+  getSecondsPerTick() {
+    const secondsPerBeat = 60.0 / this.bmp;
+    return secondsPerBeat / this.TICKS_PER_BEAT;
+  }
+
+  // ============ AUDIO BUFFER MANAGEMENT ============
+
+  async loadAudioFile(filePath) {
+    try {
+      const response = await fetch(`/sounds/${filePath}`);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      return audioBuffer;
+    } catch (error) {
+      console.error(`Failed to load audio file: ${filePath}`, error);
+      return null;
+    }
+  }
+
   async setTracks(tracks) {
     console.log("DrumScheduler: Setting tracks", tracks);
 
+    // Clear old mappings
     this.trackSounds = {};
 
+    // Map tracks to their sounds and load new audio files
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
 
+      // Load audio buffer if not already loaded
       if (track.soundFile && !this.audioBuffers[track.soundFile]) {
-        console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
-
         if (!this.audioContext) {
           console.log("No audio context yet, will load sounds later");
           continue;
         }
 
         try {
+          console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
           const audioBuffer = await this.loadAudioFile(track.soundFile);
           if (audioBuffer) {
             this.audioBuffers[track.soundFile] = audioBuffer;
@@ -98,20 +104,25 @@ class DrumScheduler {
     console.log("DrumScheduler: Track sounds mapped:", this.trackSounds);
   }
 
-  // Load individual audio file into AudioBuffer
-  async loadAudioFile(filePath) {
-    try {
-      const response = await fetch(filePath);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      return audioBuffer;
-    } catch (error) {
-      console.error(`Failed to load audio file: ${filePath}`, error);
-      return null;
-    }
+  // ============ PATTERN AND TIMING UPDATES ============
+
+  setPattern(pattern) {
+    this.pattern = pattern;
+    console.log("DrumScheduler: Pattern updated");
   }
 
-  // Play a sound at a specific time
+  setBpm(newBpm) {
+    this.bpm = Math.max(60, Math.min(300, newBpm));
+    console.log("DrumScheduler: BPM set to", this.bpm);
+  }
+
+  setMeasureCount(measureCount) {
+    this.TOTAL_MEASURES = Math.max(1, Math.min(16, measureCount));
+    console.log("DrumScheduler: Measure count set to", this.TOTAL_MEASURES);
+  }
+
+  // ============ AUDIO PLAYBACK ============
+
   playSound(soundFile, when) {
     if (!this.audioContext || !this.audioBuffers[soundFile]) {
       return;
@@ -124,25 +135,10 @@ class DrumScheduler {
     source.start(when);
   }
 
-  // Update BPM
-  setBpm(newBpm) {
-    this.bpm = Math.max(60, Math.min(300, newBpm));
-    console.log("DrumScheduler: BPM set to", this.bpm);
-  }
+  // ============ TRANSPORT CONTROL ============
 
-  // Update pattern data
-  setPattern(pattern) {
-    this.pattern = pattern;
-    console.log("DrumScheduler: Pattern updated");
-  }
-
-  // Start playback
   async start(fromTick = 0) {
-    console.log(`🔊 Scheduler.start() called:`, {
-      currentlyPlaying: this.isPlaying,
-      fromTick,
-      audioContextState: this.audioContext?.state,
-    });
+    console.log(`DrumScheduler: Starting from tick ${fromTick}`);
 
     if (!this.audioContext) {
       await this.init();
@@ -156,31 +152,21 @@ class DrumScheduler {
     this.currentTick = fromTick;
     this.nextNoteTime = this.audioContext.currentTime;
 
-    console.log("DrumScheduler: Starting from tick", fromTick);
     this.scheduler();
-
-    console.log(
-      `🔊 Scheduler.start() completed - now playing:`,
-      this.isPlaying
-    );
   }
 
-  // Pause playback (remember position)
   pause() {
-    console.log(`🔊 Scheduler.pause() called - was playing:`, this.isPlaying);
-
+    console.log("DrumScheduler: Pausing");
     this.isPlaying = false;
 
     if (this.schedulerRAF) {
       cancelAnimationFrame(this.schedulerRAF);
       this.schedulerRAF = null;
     }
-
-    console.log("DrumScheduler: Paused at tick", this.currentTick);
   }
 
-  // Stop playback (reset to beginning)
   stop() {
+    console.log("DrumScheduler: Stopping");
     this.isPlaying = false;
     this.currentTick = 0;
 
@@ -189,22 +175,18 @@ class DrumScheduler {
       this.schedulerRAF = null;
     }
 
-    // Update React state immediately
+    // Update transport store immediately
     if (this.onTickUpdate) {
       this.onTickUpdate(0);
     }
-
-    console.log("DrumScheduler: Stopped");
   }
 
-  // Main scheduler loop
+  // ============ MAIN SCHEDULER LOOP ============
+
   scheduler() {
     if (!this.isPlaying) return;
 
-    // Calculate time per tick
-    const secondsPerBeat = 60.0 / this.bpm;
-    const { TICKS_PER_BEAT } = this.getTimingConstants();
-    const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
+    const secondsPerTick = this.getSecondsPerTick();
 
     // Look ahead and schedule any notes that need to play
     while (
@@ -215,7 +197,7 @@ class DrumScheduler {
       this.advanceTick();
     }
 
-    // Update React state with current tick (for playhead)
+    // Update transport store with current tick (for playhead)
     if (this.onTickUpdate) {
       this.onTickUpdate(this.currentTick);
     }
@@ -224,7 +206,6 @@ class DrumScheduler {
     this.schedulerRAF = requestAnimationFrame(() => this.scheduler());
   }
 
-  // Schedule any notes that should play at this tick
   scheduleNotesAtTick(tick, when) {
     // Check each track in the pattern
     Object.keys(this.pattern).forEach((trackId) => {
@@ -240,27 +221,28 @@ class DrumScheduler {
     });
   }
 
-  // Advance to next tick
   advanceTick() {
-    const secondsPerBeat = 60.0 / this.bpm;
-    const { TICKS_PER_BEAT, TOTAL_TICKS } = this.getTimingConstants();
-    const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
+    const secondsPerTick = this.getSecondsPerTick();
+    const totalTicks = this.getTotalTicks();
 
     this.nextNoteTime += secondsPerTick;
-    this.currentTick = (this.currentTick + 1) % TOTAL_TICKS;
+    this.currentTick = (this.currentTick + 1) % totalTicks;
   }
 
-  // Get current playback state
+  // ============ STATE QUERIES ============
+
   getState() {
     return {
       isPlaying: this.isPlaying,
       currentTick: this.currentTick,
-      bpm: this.bpm,
+      bpm: this.bmp,
+      measureCount: this.TOTAL_MEASURES,
       trackSounds: this.trackSounds,
     };
   }
 
-  // Cleanup
+  // ============ CLEANUP ============
+
   destroy() {
     this.stop();
 
@@ -268,6 +250,10 @@ class DrumScheduler {
       this.audioContext.close();
       this.audioContext = null;
     }
+
+    // Clear audio buffers
+    this.audioBuffers = {};
+    this.trackSounds = {};
 
     console.log("DrumScheduler: Destroyed");
   }

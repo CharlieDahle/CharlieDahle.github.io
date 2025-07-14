@@ -1,267 +1,137 @@
-import React, { useEffect, useRef } from "react";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTrackStore } from "../../stores/useTrackStore";
+// src/components/DrumMachine/DrumMachine.jsx
+import React, { useEffect } from "react";
+import { useDrumDataStore } from "../../stores/useDrumDataStore";
 import { useTransportStore } from "../../stores/useTransportStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useSchedulerStore } from "../../stores/useSchedulerStore";
+import { useUIStore } from "../../stores/useUIStore";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
-import DrumScheduler from "../DrumScheduler/DrumScheduler";
+import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal";
+import drumSounds from "../../assets/data/drum-sounds.json";
 
-function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
-  // Get all state from stores directly
-  const { pattern, addNote, removeNote, moveNote, clearTrack } =
-    usePatternStore();
-  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
+function DrumMachine({ roomId, userCount }) {
+  // ============ STORE SUBSCRIPTIONS ============
+
+  // Hot state (for UI display only)
+  const { isPlaying, currentTick } = useTransportStore();
+
+  // Warm state (business logic)
   const {
-    isPlaying,
-    currentTick,
+    pattern,
+    tracks,
     bpm,
     measureCount,
-    play,
-    pause,
-    stop,
-    setBpm,
-    setCurrentTick,
-    addMeasure,
-    removeMeasure,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
+    playAndSync,
+    pauseAndSync,
+    stopAndSync,
     getTotalTicks,
-  } = useTransportStore();
+  } = useDrumDataStore();
 
-  // Get WebSocket methods
+  // Audio system
   const {
-    sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
-    sendAddTrack,
-    sendRemoveTrack,
-    sendUpdateTrackSound,
-    sendTransportCommand,
-  } = useWebSocketStore();
+    init: initScheduler,
+    start: startScheduler,
+    pause: pauseScheduler,
+    stop: stopScheduler,
+    updatePattern,
+    updateTracks,
+    updateBpm,
+    resumeAudioContext,
+    isReady: isSchedulerReady,
+  } = useSchedulerStore();
 
-  // Scheduler instance
-  const schedulerRef = useRef(null);
+  // UI state
+  const { error, clearError } = useUIStore();
 
-  // Track the last processed remote command to avoid re-processing
-  const lastProcessedCommandRef = useRef(null);
+  // ============ INITIALIZATION ============
 
-  // Initialize scheduler with transport store reference
   useEffect(() => {
-    const scheduler = new DrumScheduler(
-      bpm,
-      (tick) => {
-        setCurrentTick(tick);
-      },
-      useTransportStore
-    );
+    console.log("DrumMachine: Initializing scheduler");
+    initScheduler();
+  }, [initScheduler]);
 
-    scheduler.init();
-    schedulerRef.current = scheduler;
+  // ============ SYNC SCHEDULER WITH APP STATE ============
 
-    return () => {
-      if (schedulerRef.current) {
-        schedulerRef.current.destroy();
-      }
-    };
-  }, [setCurrentTick]);
-
-  // Update scheduler when pattern, BPM, or tracks change
+  // Sync pattern when it changes
   useEffect(() => {
-    if (schedulerRef.current) {
-      schedulerRef.current.setPattern(pattern);
-      schedulerRef.current.setBpm(bpm);
-      schedulerRef.current.setTracks(tracks);
+    if (isSchedulerReady()) {
+      updatePattern(pattern);
     }
-  }, [pattern, bpm, tracks]);
+  }, [pattern, updatePattern, isSchedulerReady]);
 
-  // Handle remote transport commands (from other users)
+  // Sync tracks when they change
   useEffect(() => {
-    if (!remoteTransportCommand || !schedulerRef.current) return;
-
-    // Check if we've already processed this exact command
-    if (
-      lastProcessedCommandRef.current?.timestamp ===
-      remoteTransportCommand.timestamp
-    ) {
-      return;
+    if (isSchedulerReady()) {
+      updateTracks(tracks);
     }
+  }, [tracks, updateTracks, isSchedulerReady]);
 
-    // Remember this command so we don't process it again
-    lastProcessedCommandRef.current = remoteTransportCommand;
-
-    console.log("📡 [" + roomId + "] REMOTE COMMAND received:", {
-      command: remoteTransportCommand,
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current.isPlaying,
-      currentTick,
-    });
-
-    // Handle audio scheduling based on the remote command
-    // The state is already updated by the WebSocket store
-    switch (remoteTransportCommand.type) {
-      case "play":
-        if (!schedulerRef.current.isPlaying) {
-          console.log(
-            "📡 [" + roomId + "] Starting scheduler from remote play"
-          );
-          schedulerRef.current.start(currentTick);
-        } else {
-          console.log(
-            "📡 [" +
-              roomId +
-              "] Scheduler already playing, ignoring remote play"
-          );
-        }
-        break;
-      case "pause":
-        if (schedulerRef.current.isPlaying) {
-          console.log(
-            "📡 [" + roomId + "] Pausing scheduler from remote pause"
-          );
-          schedulerRef.current.pause();
-        } else {
-          console.log(
-            "📡 [" +
-              roomId +
-              "] Scheduler already paused, ignoring remote pause"
-          );
-        }
-        break;
-      case "stop":
-        console.log("📡 [" + roomId + "] Stopping scheduler from remote stop");
-        schedulerRef.current.stop();
-        break;
+  // Sync BPM when it changes
+  useEffect(() => {
+    if (isSchedulerReady()) {
+      updateBpm(bpm);
     }
-  }, [remoteTransportCommand, roomId, isPlaying, currentTick]);
+  }, [bpm, updateBpm, isSchedulerReady]);
 
-  // Handle pattern changes
-  const handlePatternChange = (change) => {
-    // Check if track still exists
-    const trackExists = tracks.some((track) => track.id === change.trackId);
-    if (!trackExists) {
-      console.warn("Pattern change for non-existent track:", change.trackId);
-      return;
-    }
+  // ============ TRANSPORT HANDLERS ============
 
-    // Update store directly
-    switch (change.type) {
-      case "add-note":
-        addNote(change.trackId, change.tick);
-        break;
-      case "remove-note":
-        removeNote(change.trackId, change.tick);
-        break;
-      case "move-note":
-        moveNote(change.trackId, change.fromTick, change.toTick);
-        break;
-      case "clear-track":
-        clearTrack(change.trackId);
-        break;
-      default:
-        console.warn("Unknown pattern change type:", change.type);
-    }
-
-    // Send to server
-    sendPatternChange(change);
-  };
-
-  // Handle BPM changes
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle measure changes
-  const handleMeasureChange = (newMeasureCount) => {
-    // Just notify server for sync - store is already updated by button handlers
-    sendMeasureCountChange(newMeasureCount);
-  };
-
-  // Handle track management
-  const handleAddTrack = () => {
-    const trackData = {
-      name: `Track ${tracks.length + 1}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      soundFile: null,
-      availableSounds: [], // Will be set by sound selector
-    };
-
-    const newTrack = addTrack(trackData);
-    sendAddTrack(newTrack);
-  };
-
-  const handleRemoveTrack = (trackId) => {
-    removeTrack(trackId);
-    sendRemoveTrack(trackId);
-  };
-
-  const handleUpdateTrackSound = (trackId, newSoundFile) => {
-    updateTrackSound(trackId, newSoundFile);
-    sendUpdateTrackSound(trackId, newSoundFile);
-  };
-
-  // Transport control handlers
   const handlePlay = async () => {
-    console.log("🎵 [" + roomId + "] LOCAL PLAY clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-      currentTick,
-    });
+    try {
+      console.log("🎵 PLAY CLICKED - Starting debug");
+      console.log("🎵 Transport state before:", { isPlaying, currentTick });
 
-    // Initialize audio context on first play
-    if (schedulerRef.current) {
-      await schedulerRef.current.init();
+      await resumeAudioContext();
+      console.log("🎵 Audio context resumed");
+
+      playAndSync();
+      console.log("🎵 playAndSync called");
+
+      await startScheduler(currentTick);
+      console.log("🎵 startScheduler called");
+
+      console.log("🎵 PLAY COMPLETED");
+    } catch (error) {
+      console.error("🎵 PLAY FAILED:", error);
     }
-
-    // Update store state
-    play();
-
-    // Start local playback
-    if (schedulerRef.current) {
-      await schedulerRef.current.start(currentTick);
-    }
-
-    // Notify server
-    sendTransportCommand({ type: "play" });
-
-    console.log("🎵 [" + roomId + "] LOCAL PLAY completed - Scheduler started");
   };
 
   const handlePause = () => {
-    console.log("⏸️ [" + roomId + "] LOCAL PAUSE clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-    });
+    try {
+      console.log("DrumMachine: Pause requested");
 
-    // Update store state
-    pause();
+      // Update app state and sync to server
+      pauseAndSync();
 
-    // Pause local playback
-    if (schedulerRef.current) {
-      schedulerRef.current.pause();
+      // Pause audio playback
+      pauseScheduler();
+
+      console.log("DrumMachine: Pause completed");
+    } catch (error) {
+      console.error("DrumMachine: Pause failed:", error);
     }
-
-    // Notify server
-    sendTransportCommand({ type: "pause" });
   };
 
   const handleStop = () => {
-    console.log("⏹️ [" + roomId + "] LOCAL STOP clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-    });
+    try {
+      console.log("DrumMachine: Stop requested");
 
-    // Update store state
-    stop();
+      // Update app state and sync to server
+      stopAndSync();
 
-    // Stop local playback
-    if (schedulerRef.current) {
-      schedulerRef.current.stop();
+      // Stop audio playback
+      stopScheduler();
+
+      console.log("DrumMachine: Stop completed");
+    } catch (error) {
+      console.error("DrumMachine: Stop failed:", error);
     }
-
-    // Notify server
-    sendTransportCommand({ type: "stop" });
   };
+
+  // ============ COMPUTED VALUES ============
+
+  const currentBeat = Math.floor(currentTick / 480) + 1;
+  const totalTicks = getTotalTicks();
+
+  // ============ RENDER ============
 
   return (
     <div
@@ -286,31 +156,35 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="row mb-3">
+          <div className="col">
+            <div className="alert alert-danger alert-dismissible" role="alert">
+              {error}
+              <button
+                type="button"
+                className="btn-close"
+                onClick={clearError}
+                aria-label="Close"
+              ></button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pattern Timeline */}
       <div className="row">
         <div className="col">
           <PatternTimeline
-            onPatternChange={handlePatternChange}
-            onBpmChange={handleBpmChange}
-            onAddTrack={handleAddTrack}
-            onRemoveTrack={handleRemoveTrack}
-            onUpdateTrackSound={handleUpdateTrackSound}
             onPlay={handlePlay}
             onPause={handlePause}
             onStop={handleStop}
-            onAddMeasure={() => {
-              addMeasure();
-              handleMeasureChange(measureCount + 1);
-            }}
-            onRemoveMeasure={() => {
-              removeMeasure();
-              handleMeasureChange(Math.max(1, measureCount - 1));
-            }}
           />
         </div>
       </div>
 
-      {/* Debug info */}
+      {/* Debug Info */}
       <div className="row mt-4">
         <div className="col">
           <div className="card border-0 shadow-sm">
@@ -332,15 +206,21 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
                   .join(", ")}
                 <br />
                 <strong>Playback:</strong> Playing: {isPlaying ? "Yes" : "No"},
-                Tick: {currentTick}, BPM: {bpm}
+                Beat: {currentBeat}, Tick: {currentTick}, BPM: {bpm}
                 <br />
-                <strong>Grid:</strong> {measureCount} measures, {BEATS_PER_LOOP}{" "}
-                beats, {getTotalTicks()} total ticks
+                <strong>Grid:</strong> {measureCount} measures, Total ticks:{" "}
+                {totalTicks}
+                <br />
+                <strong>Scheduler:</strong> Ready:{" "}
+                {isSchedulerReady() ? "Yes" : "No"}
               </small>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Global Sound Selector Modal */}
+      <SoundSelectorModal drumSounds={drumSounds} />
     </div>
   );
 }
