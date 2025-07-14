@@ -54,7 +54,7 @@ class DrumScheduler {
   }
 
   getSecondsPerTick() {
-    const secondsPerBeat = 60.0 / this.bmp;
+    const secondsPerBeat = 60.0 / this.bpm;
     return secondsPerBeat / this.TICKS_PER_BEAT;
   }
 
@@ -235,7 +235,7 @@ class DrumScheduler {
     return {
       isPlaying: this.isPlaying,
       currentTick: this.currentTick,
-      bpm: this.bmp,
+      bpm: this.bpm,
       measureCount: this.TOTAL_MEASURES,
       trackSounds: this.trackSounds,
     };
