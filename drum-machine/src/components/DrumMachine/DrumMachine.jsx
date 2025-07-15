@@ -76,21 +76,20 @@ function DrumMachine({ roomId, userCount }) {
 
   const handlePlay = async () => {
     try {
-      console.log("🎵 PLAY CLICKED - Starting debug");
-      console.log("🎵 Transport state before:", { isPlaying, currentTick });
+      console.log("DrumMachine: Play requested");
 
+      // Ensure audio context is ready (user gesture requirement)
       await resumeAudioContext();
-      console.log("🎵 Audio context resumed");
 
+      // Update app state and sync to server
       playAndSync();
-      console.log("🎵 playAndSync called");
 
+      // Start audio playback
       await startScheduler(currentTick);
-      console.log("🎵 startScheduler called");
 
-      console.log("🎵 PLAY COMPLETED");
+      console.log("DrumMachine: Play completed");
     } catch (error) {
-      console.error("🎵 PLAY FAILED:", error);
+      console.error("DrumMachine: Play failed:", error);
     }
   };
 
