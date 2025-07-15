@@ -104,6 +104,9 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
 
+  // NEW: Ghost note state
+  const [ghostNote, setGhostNote] = useState(null); // { trackId, tick, position }
+
   // FIXED WIDTH CALCULATIONS
   const MEASURES_PER_PAGE = 4; // Always show 4 measures
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
@@ -118,6 +121,90 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
+
+  // NEW: Calculate ghost note position and tick
+  const calculateGhostNote = (e, trackId) => {
+    const track = e.currentTarget;
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    // Convert click position to tick with snap offset adjustment
+    const SNAP_OFFSET_PIXELS = -12; // Adjust this value to align with grid lines (negative to shift left)
+    const adjustedX = x + SNAP_OFFSET_PIXELS;
+    const clickTick = adjustedX / PIXELS_PER_TICK;
+
+    // Center the note (subtract half note width in ticks)
+    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const centeredTick = clickTick - noteWidthInTicks / 2;
+
+    // Apply snap-to-grid logic
+    let snappedTick;
+    if (snapToGrid) {
+      const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
+      snappedTick = eighthNoteIndex * (TICKS_PER_BEAT / 2);
+    } else {
+      snappedTick = Math.round(centeredTick);
+    }
+
+    const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
+
+    // Check if this position is in a disabled measure
+    const beatPosition = clampedTick / TICKS_PER_BEAT;
+    const measureIndex = Math.floor(beatPosition / 4);
+    const isInDisabledMeasure = measureIndex >= measureCount;
+
+    // Check if there's already a note at this position
+    const hasExistingNote = pattern[trackId]?.includes(clampedTick);
+
+    return {
+      trackId,
+      tick: clampedTick,
+      position: clampedTick * PIXELS_PER_TICK,
+      isInDisabledMeasure,
+      hasExistingNote,
+    };
+  };
+
+  // NEW: Handle mouse enter track
+  const handleTrackMouseEnter = (e, trackId) => {
+    // Only show ghost in free placement mode (not during drag)
+    if (isDragging) return;
+
+    const ghostData = calculateGhostNote(e, trackId);
+
+    // Only show ghost if it's valid (not in disabled measure, not over existing note)
+    if (!ghostData.isInDisabledMeasure && !ghostData.hasExistingNote) {
+      setGhostNote(ghostData);
+    }
+  };
+
+  // NEW: Handle mouse move on track
+  const handleTrackMouseMove = (e, trackId) => {
+    // Only update ghost in free placement mode
+    if (isDragging) return;
+
+    // Check if we're hovering over a real note
+    const target = e.target;
+    if (target.classList.contains("timeline-note")) {
+      // Hide ghost when hovering over a real note
+      setGhostNote(null);
+      return;
+    }
+
+    const ghostData = calculateGhostNote(e, trackId);
+
+    // Only show ghost if it's valid
+    if (!ghostData.isInDisabledMeasure && !ghostData.hasExistingNote) {
+      setGhostNote(ghostData);
+    } else {
+      setGhostNote(null);
+    }
+  };
+
+  // NEW: Handle mouse leave track
+  const handleTrackMouseLeave = () => {
+    setGhostNote(null);
+  };
 
   // Update playhead position when currentTick changes
   useEffect(() => {
@@ -164,6 +251,12 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     sendBpmChange(newBpm);
   };
 
+  // Handle measure changes
+  const handleMeasureChange = (newMeasureCount) => {
+    // Just notify server for sync - store is already updated by button handlers
+    sendMeasureCountChange(newMeasureCount);
+  };
+
   // Handle track management
   const handleAddTrack = () => {
     const trackData = {
@@ -185,8 +278,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    // Convert click position to tick
-    const clickTick = x / PIXELS_PER_TICK;
+    // Convert click position to tick with same snap offset as ghost note
+    const SNAP_OFFSET_PIXELS = -12; // Same offset as ghost note calculation (negative to shift left)
+    const adjustedX = x + SNAP_OFFSET_PIXELS;
+    const clickTick = adjustedX / PIXELS_PER_TICK;
 
     // STEP 1: Center the note (subtract half note width in ticks)
     const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
@@ -223,8 +318,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const handleNoteMouseDown = (e, trackId, tick) => {
     e.stopPropagation();
 
-    const noteRect = e.target.getBoundingClientRect();
-    const offsetX = e.clientX - noteRect.left;
+    // Clear ghost note when starting to drag
+    setGhostNote(null);
 
     setIsDragging(true);
     setHasDragged(false);
@@ -232,7 +327,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
       trackId,
       originalTick: tick,
       currentTick: tick,
-      offsetX,
     });
   };
 
@@ -243,9 +337,9 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     setHasDragged(true);
 
     const rect = gridRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - draggedNote.offsetX;
+    const x = e.clientX - rect.left;
 
-    // Convert position to tick
+    // Convert position to tick (now cursor will be centered on note)
     const dragTick = x / PIXELS_PER_TICK;
 
     // STEP 1: Center the note (subtract half note width in ticks)
@@ -283,6 +377,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     setIsDragging(false);
     setDraggedNote(null);
     setTimeout(() => setHasDragged(false), 10);
+
+    // Ghost note will reappear naturally on next mouse move
   };
 
   // Handle note click (delete if not dragged)
@@ -490,6 +586,9 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                   trackIndex % 2 === 0 ? "track-lane--even" : "track-lane--odd"
                 }`}
                 onMouseDown={(e) => handleTrackMouseDown(e, track.id)}
+                onMouseEnter={(e) => handleTrackMouseEnter(e, track.id)}
+                onMouseMove={(e) => handleTrackMouseMove(e, track.id)}
+                onMouseLeave={handleTrackMouseLeave}
               >
                 {/* Subdivision lines - 16th, 8th, and quarter notes */}
                 {Array.from(
@@ -543,7 +642,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                   />
                 )}
 
-                {/* Notes */}
+                {/* Real Notes */}
                 {pattern[track.id]?.map((tick) => {
                   const isBeingDragged =
                     draggedNote &&
@@ -571,6 +670,16 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                     />
                   );
                 })}
+
+                {/* Ghost Note */}
+                {ghostNote && ghostNote.trackId === track.id && (
+                  <div
+                    className="timeline-note timeline-note--ghost"
+                    style={{
+                      left: `${ghostNote.position}px`,
+                    }}
+                  />
+                )}
               </div>
             ))}
 

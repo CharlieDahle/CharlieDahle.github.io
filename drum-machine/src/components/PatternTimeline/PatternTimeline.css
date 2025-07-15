@@ -548,3 +548,12 @@
     border: 1px solid #000;
   }
 }
+
+/* Ghost Note Styling */
+.timeline-note--ghost {
+  background: #6c757d !important; /* Bootstrap gray */
+  opacity: 0.4;
+  pointer-events: none; /* Don't interfere with mouse events */
+  border: 2px solid rgba(108, 117, 125, 0.3) !important; /* Subtle border */
+  transition: none; /* No transitions for smooth following */
+}
