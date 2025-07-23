@@ -50,7 +50,7 @@ function SoundSelectorModal({ drumSounds }) {
 
     for (const sound of sounds) {
       try {
-        const response = await fetch(`/sounds/${sound.file}`);
+        const response = await fetch(`/${sound.file}`);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         loadedBuffers[sound.file] = audioBuffer;
@@ -101,10 +101,40 @@ function SoundSelectorModal({ drumSounds }) {
 
   // Load sounds for initial category when modal opens
   useEffect(() => {
-    if (soundModalOpen && selectedCategory) {
+    if (soundModalOpen && selectedCategory && audioContext) {
       loadCategorySounds(selectedCategory);
     }
-  }, [soundModalOpen, selectedCategory]);
+  }, [soundModalOpen, selectedCategory, audioContext]);
+
+  // Handle Escape key and click outside to close modal
+  useEffect(() => {
+    if (!soundModalOpen) return;
+
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault(); // Prevent browser default behavior
+        e.stopPropagation(); // Stop event from bubbling up
+        closeSoundModal();
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      // Check if click is on the backdrop (not on the modal content)
+      if (e.target.classList.contains("modal")) {
+        closeSoundModal();
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("keydown", handleEscape);
+    document.addEventListener("click", handleClickOutside);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [soundModalOpen, closeSoundModal]);
 
   if (!soundModalOpen) return null;
 
@@ -115,6 +145,12 @@ function SoundSelectorModal({ drumSounds }) {
     <div
       className="modal show d-block"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      onClick={(e) => {
+        // Close if clicking on backdrop
+        if (e.target === e.currentTarget) {
+          closeSoundModal();
+        }
+      }}
     >
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
@@ -155,21 +191,36 @@ function SoundSelectorModal({ drumSounds }) {
                   {selectedCategory.charAt(0).toUpperCase() +
                     selectedCategory.slice(1)}{" "}
                   Sounds
+                  <small className="text-info ms-2">
+                    ({Object.keys(loadedSounds[selectedCategory] || {}).length}{" "}
+                    loaded)
+                  </small>
                 </h6>
                 <div style={{ height: "300px", overflowY: "auto" }}>
                   <div className="list-group">
-                    {currentSounds.map((sound) => (
-                      <button
-                        key={sound.file}
-                        className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
-                          selectedSound === sound.file ? "active" : ""
-                        }`}
-                        onClick={() => handleSoundClick(sound.file)}
-                      >
-                        <span>{sound.name}</span>
-                        <span className="badge bg-secondary">♪</span>
-                      </button>
-                    ))}
+                    {currentSounds.map((sound) => {
+                      const isLoaded =
+                        loadedSounds[selectedCategory]?.[sound.file];
+                      return (
+                        <button
+                          key={sound.file}
+                          className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
+                            selectedSound === sound.file ? "active" : ""
+                          } ${!isLoaded ? "text-muted" : ""}`}
+                          onClick={() => handleSoundClick(sound.file)}
+                          disabled={!isLoaded}
+                        >
+                          <span>{sound.name}</span>
+                          <span
+                            className={`badge ${
+                              isLoaded ? "bg-secondary" : "bg-warning"
+                            }`}
+                          >
+                            {isLoaded ? "♪" : "..."}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

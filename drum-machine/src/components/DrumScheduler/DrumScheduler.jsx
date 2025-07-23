@@ -96,7 +96,8 @@ class DrumScheduler {
   // Load individual audio file into AudioBuffer
   async loadAudioFile(filePath) {
     try {
-      const response = await fetch(filePath);
+      // Try the direct path first (since files are in public/ root)
+      const response = await fetch(`/${filePath}`);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
       return audioBuffer;
