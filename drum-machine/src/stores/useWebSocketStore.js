@@ -179,7 +179,7 @@ export const useWebSocketStore = create((set, get) => ({
     });
   },
 
-  // Send pattern change to server
+  // Send pattern change to server (now handles velocity changes)
   sendPatternChange: (change) => {
     const { socket, isInRoom, roomId } = get();
     if (!socket || !isInRoom) return;

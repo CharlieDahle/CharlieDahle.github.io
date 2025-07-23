@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Settings } from "lucide-react";
 import { useUIStore } from "../../stores/useUIStore";
 import { usePatternStore } from "../../stores/usePatternStore";
 import { useTrackStore } from "../../stores/useTrackStore";
@@ -57,12 +58,20 @@ function TrackLabel({ track }) {
       {showControls && (
         <div className="ms-auto d-flex gap-1">
           <button
-            className="btn btn-sm btn-outline-secondary p-1"
-            style={{ fontSize: "12px", width: "24px", height: "24px" }}
+            className="btn btn-sm btn-outline-secondary"
+            style={{
+              fontSize: "12px",
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0",
+            }}
             onClick={() => openSoundModal(track)}
             title="Change sound"
           >
-            ⚙
+            <Settings size={16} />
           </button>
         </div>
       )}
@@ -72,8 +81,15 @@ function TrackLabel({ track }) {
 
 function PatternTimeline({ onPlay, onPause, onStop }) {
   // Get all state from stores
-  const { pattern, addNote, removeNote, moveNote, clearTrack } =
-    usePatternStore();
+  const {
+    pattern,
+    addNote,
+    removeNote,
+    moveNote,
+    clearTrack,
+    updateNoteVelocity,
+    getNoteAt,
+  } = usePatternStore();
   const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
   const {
     bpm,
@@ -104,7 +120,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
 
-  // NEW: Ghost note state
+  // Ghost note state
   const [ghostNote, setGhostNote] = useState(null); // { trackId, tick, position }
 
   // FIXED WIDTH CALCULATIONS
@@ -122,7 +138,22 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Calculate current position for display
   const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
 
-  // NEW: Calculate ghost note position and tick
+  // Helper function to get note height based on velocity
+  const getNoteHeight = (velocity) => {
+    const baseHeight = 40; // From CSS --note-height
+    const heightPercentage = velocity / 4; // velocity 1-4 maps to 25%-100%
+    return baseHeight * heightPercentage;
+  };
+
+  // Helper function to get note top position (for vertical centering)
+  const getNoteTop = (velocity) => {
+    const baseHeight = 40;
+    const actualHeight = getNoteHeight(velocity);
+    const baseTop = 10; // From CSS --note-margin
+    return baseTop + (baseHeight - actualHeight) / 2;
+  };
+
+  // Calculate ghost note position and tick
   const calculateGhostNote = (e, trackId) => {
     const track = e.currentTarget;
     const rect = track.getBoundingClientRect();
@@ -154,18 +185,18 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const isInDisabledMeasure = measureIndex >= measureCount;
 
     // Check if there's already a note at this position
-    const hasExistingNote = pattern[trackId]?.includes(clampedTick);
+    const existingNote = getNoteAt(trackId, clampedTick);
 
     return {
       trackId,
       tick: clampedTick,
       position: clampedTick * PIXELS_PER_TICK,
       isInDisabledMeasure,
-      hasExistingNote,
+      hasExistingNote: !!existingNote,
     };
   };
 
-  // NEW: Handle mouse enter track
+  // Handle mouse enter track
   const handleTrackMouseEnter = (e, trackId) => {
     // Only show ghost in free placement mode (not during drag)
     if (isDragging) return;
@@ -178,7 +209,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     }
   };
 
-  // NEW: Handle mouse move on track
+  // Handle mouse move on track
   const handleTrackMouseMove = (e, trackId) => {
     // Only update ghost in free placement mode
     if (isDragging) return;
@@ -201,7 +232,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     }
   };
 
-  // NEW: Handle mouse leave track
+  // Handle mouse leave track
   const handleTrackMouseLeave = () => {
     setGhostNote(null);
   };
@@ -226,13 +257,16 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     // Update store directly
     switch (change.type) {
       case "add-note":
-        addNote(change.trackId, change.tick);
+        addNote(change.trackId, change.tick, change.velocity);
         break;
       case "remove-note":
         removeNote(change.trackId, change.tick);
         break;
       case "move-note":
         moveNote(change.trackId, change.fromTick, change.toTick);
+        break;
+      case "update-note-velocity":
+        updateNoteVelocity(change.trackId, change.tick, change.velocity);
         break;
       case "clear-track":
         clearTrack(change.trackId);
@@ -297,7 +331,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     }
 
     const clampedTick = Math.max(0, Math.min(TOTAL_TICKS - 1, snappedTick));
-    const existingNote = pattern[trackId]?.includes(clampedTick);
+    const existingNote = getNoteAt(trackId, clampedTick);
 
     if (existingNote) {
       handlePatternChange({
@@ -310,6 +344,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         type: "add-note",
         trackId,
         tick: clampedTick,
+        velocity: 4, // Default to max velocity
       });
     }
   };
@@ -381,15 +416,30 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     // Ghost note will reappear naturally on next mouse move
   };
 
-  // Handle note click (delete if not dragged)
+  // Handle note click (delete if not dragged, velocity change if Ctrl+click)
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
-      handlePatternChange({
-        type: "remove-note",
-        trackId,
-        tick,
-      });
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl+click: cycle velocity down from max
+        const currentNote = getNoteAt(trackId, tick);
+        const currentVelocity = currentNote ? currentNote.velocity : 4;
+        const nextVelocity = currentVelocity === 1 ? 4 : currentVelocity - 1; // Cycle 4→3→2→1→4
+
+        handlePatternChange({
+          type: "update-note-velocity",
+          trackId,
+          tick,
+          velocity: nextVelocity,
+        });
+      } else {
+        // Regular click: delete note
+        handlePatternChange({
+          type: "remove-note",
+          trackId,
+          tick,
+        });
+      }
     }
   };
 
@@ -456,7 +506,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                 className="btn btn-sm btn-outline-secondary"
                 onClick={() => {
                   removeMeasure();
-                  sendMeasureCountChange(Math.max(1, measureCount - 1));
+                  handleMeasureChange(measureCount - 1);
                 }}
                 title="Remove measure"
               >
@@ -472,7 +522,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                 className="btn btn-sm btn-outline-secondary"
                 onClick={() => {
                   addMeasure();
-                  sendMeasureCountChange(measureCount + 1);
+                  handleMeasureChange(measureCount + 1);
                 }}
                 title="Add measure"
               >
@@ -643,30 +693,39 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                 )}
 
                 {/* Real Notes */}
-                {pattern[track.id]?.map((tick) => {
+                {pattern[track.id]?.map((noteData) => {
+                  // Handle both old format (numbers) and new format (objects)
+                  const note =
+                    typeof noteData === "number"
+                      ? { tick: noteData, velocity: 4 }
+                      : noteData;
+
                   const isBeingDragged =
                     draggedNote &&
                     draggedNote.trackId === track.id &&
-                    draggedNote.originalTick === tick;
+                    draggedNote.originalTick === note.tick;
 
                   const displayTick = isBeingDragged
                     ? draggedNote.currentTick
-                    : tick;
+                    : note.tick;
 
                   return (
                     <div
-                      key={`${track.id}-${tick}`}
+                      key={`${track.id}-${note.tick}`}
                       className={`timeline-note ${
                         isBeingDragged ? "timeline-note--dragging" : ""
                       }`}
                       style={{
                         left: `${displayTick * PIXELS_PER_TICK}px`,
+                        height: `${getNoteHeight(note.velocity)}px`,
+                        top: `${getNoteTop(note.velocity)}px`,
                         backgroundColor: track.color,
                       }}
                       onMouseDown={(e) =>
-                        handleNoteMouseDown(e, track.id, tick)
+                        handleNoteMouseDown(e, track.id, note.tick)
                       }
-                      onClick={(e) => handleNoteClick(e, track.id, tick)}
+                      onClick={(e) => handleNoteClick(e, track.id, note.tick)}
+                      title={`Velocity: ${note.velocity}/4 (Ctrl+click to change)`}
                     />
                   );
                 })}
@@ -677,6 +736,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                     className="timeline-note timeline-note--ghost"
                     style={{
                       left: `${ghostNote.position}px`,
+                      height: `${getNoteHeight(4)}px`, // Default velocity for ghost
+                      top: `${getNoteTop(4)}px`,
                     }}
                   />
                 )}

@@ -5,11 +5,6 @@ class DrumScheduler {
     this.onTickUpdate = onTickUpdate;
     this.transportStore = transportStore; // Reference to get dynamic constants
 
-    // Remove hardcoded constants - get from store instead
-    // this.TICKS_PER_BEAT = 480;
-    // this.BEATS_PER_LOOP = 16;
-    // this.TOTAL_TICKS = this.TICKS_PER_BEAT * this.BEATS_PER_LOOP;
-
     // Playback state
     this.isPlaying = false;
     this.currentTick = 0;
@@ -111,8 +106,8 @@ class DrumScheduler {
     }
   }
 
-  // Play a sound at a specific time
-  playSound(soundFile, when) {
+  // Play a sound at a specific time with velocity
+  playSound(soundFile, when, velocity = 4) {
     if (!this.audioContext || !this.audioBuffers[soundFile]) {
       return;
     }
@@ -120,7 +115,18 @@ class DrumScheduler {
     const audioBuffer = this.audioBuffers[soundFile];
     const source = this.audioContext.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(this.audioContext.destination);
+
+    // Create gain node for velocity control
+    const gainNode = this.audioContext.createGain();
+
+    // Convert velocity (1-4) to gain (0.25-1.0)
+    const velocityGain = velocity / 4;
+    gainNode.gain.value = velocityGain;
+
+    // Connect: source -> gain -> destination
+    source.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+
     source.start(when);
   }
 
@@ -224,18 +230,38 @@ class DrumScheduler {
     this.schedulerRAF = requestAnimationFrame(() => this.scheduler());
   }
 
+  // Helper to normalize note data (handles both old and new formats)
+  normalizeNote(noteData) {
+    if (typeof noteData === "number") {
+      // Old format: just a tick number
+      return { tick: noteData, velocity: 4 };
+    }
+    // New format: already an object with tick and velocity
+    return noteData;
+  }
+
   // Schedule any notes that should play at this tick
   scheduleNotesAtTick(tick, when) {
     // Check each track in the pattern
     Object.keys(this.pattern).forEach((trackId) => {
-      if (this.pattern[trackId]?.includes(tick)) {
-        const soundFile = this.trackSounds[trackId];
-        if (soundFile && this.audioBuffers[soundFile]) {
-          this.playSound(soundFile, when);
-          console.log(`Playing ${trackId} at tick ${tick}`);
-        } else {
-          console.warn(`No sound available for track ${trackId}`);
-        }
+      if (this.pattern[trackId]) {
+        // Find notes at this tick (handle both old and new formats)
+        const notesAtTick = this.pattern[trackId]
+          .map((noteData) => this.normalizeNote(noteData))
+          .filter((note) => note.tick === tick);
+
+        // Play each note found at this tick
+        notesAtTick.forEach((note) => {
+          const soundFile = this.trackSounds[trackId];
+          if (soundFile && this.audioBuffers[soundFile]) {
+            this.playSound(soundFile, when, note.velocity);
+            console.log(
+              `Playing ${trackId} at tick ${tick} with velocity ${note.velocity}`
+            );
+          } else {
+            console.warn(`No sound available for track ${trackId}`);
+          }
+        });
       }
     });
   }
