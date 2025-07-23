@@ -309,38 +309,6 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
           />
         </div>
       </div>
-
-      {/* Debug info */}
-      <div className="row mt-4">
-        <div className="col">
-          <div className="card border-0 shadow-sm">
-            <div className="card-header bg-light">
-              <h6 className="mb-0 text-muted">Debug Info</h6>
-            </div>
-            <div className="card-body">
-              <small className="text-muted">
-                <strong>Tracks:</strong> {tracks.map((t) => t.name).join(", ")}
-                <br />
-                <strong>Active Notes:</strong>{" "}
-                {Object.keys(pattern)
-                  .map(
-                    (trackId) =>
-                      `${
-                        tracks.find((t) => t.id === trackId)?.name || trackId
-                      }: ${pattern[trackId]?.length || 0}`
-                  )
-                  .join(", ")}
-                <br />
-                <strong>Playback:</strong> Playing: {isPlaying ? "Yes" : "No"},
-                Tick: {currentTick}, BPM: {bpm}
-                <br />
-                <strong>Grid:</strong> {measureCount} measures, {BEATS_PER_LOOP}{" "}
-                beats, {getTotalTicks()} total ticks
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

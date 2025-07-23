@@ -135,9 +135,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Use fixed values instead of dynamic ones
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE; // Fixed to 16 beats
 
-  // Calculate current position for display
-  const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
-
   // Helper function to get note height based on velocity
   const getNoteHeight = (velocity) => {
     const baseHeight = 40; // From CSS --note-height
@@ -484,16 +481,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               ⏹ Stop
             </button>
             <button className="btn btn-transport btn-loop">Loop</button>
-          </div>
-
-          {/* Position Display */}
-          <div className="position-display">
-            <span className="position-badge position-badge--beat">
-              Beat: {currentBeat}/{BEATS_PER_PAGE}
-            </span>
-            <span className="position-badge position-badge--tick">
-              Tick: {currentTick}
-            </span>
           </div>
 
           {/* Measure Controls */}
