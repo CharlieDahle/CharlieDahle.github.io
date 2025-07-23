@@ -264,10 +264,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
   };
 
   return (
-    <div
-      className="container-fluid py-4"
-      style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
-    >
+    <div className="container-fluid py-4 drum-machine-container">
       {/* Header */}
       <div className="row mb-4">
         <div className="col">
