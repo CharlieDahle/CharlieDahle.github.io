@@ -115,7 +115,10 @@ function DrumMachineApp() {
             minHeight: "100vh",
           }}
         >
-          <div className="container-fluid py-4 drum-machine-container">
+          <div
+            className="container-fluid py-4"
+            style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
+          >
             {error && (
               <div className="alert alert-danger text-center" role="alert">
                 {error}
