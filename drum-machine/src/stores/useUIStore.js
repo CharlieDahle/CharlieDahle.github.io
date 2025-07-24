@@ -19,6 +19,17 @@ export const useUIStore = create((set) => ({
       soundModalTrack: null,
     }),
 
+  // Recording modal state
+  recordingModalOpen: false,
+  openRecordingModal: () =>
+    set({
+      recordingModalOpen: true,
+    }),
+  closeRecordingModal: () =>
+    set({
+      recordingModalOpen: false,
+    }),
+
   // Error state for the app
   error: null,
   setError: (error) => set({ error }),

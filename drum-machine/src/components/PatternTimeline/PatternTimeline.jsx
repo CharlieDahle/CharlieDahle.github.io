@@ -111,8 +111,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     sendRemoveTrack,
   } = useWebSocketStore();
 
-  // Get snap state from UI store
-  const { snapToGrid, setSnapToGrid } = useUIStore();
+  // Get snap state and recording modal from UI store
+  const { snapToGrid, setSnapToGrid, openRecordingModal } = useUIStore();
 
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
@@ -481,6 +481,17 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               ⏹ Stop
             </button>
             <button className="btn btn-transport btn-loop">Loop</button>
+          </div>
+
+          {/* Trackpad Recording Button */}
+          <div className="recording-control">
+            <button
+              className="btn btn-outline-primary"
+              onClick={openRecordingModal}
+              title="Record drums with trackpad (Mac only)"
+            >
+              🥁 Trackpad Drums
+            </button>
           </div>
 
           {/* Measure Controls */}
