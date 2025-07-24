@@ -66,7 +66,7 @@ export const useWebSocketStore = create((set, get) => ({
       });
     });
 
-    newSocket.on("bmp-change", ({ bpm: newBpm }) => {
+    newSocket.on("bpm-change", ({ bpm: newBpm }) => {
       console.log("BPM changed to:", newBpm);
       // Import and call the store directly
       import("./useTransportStore").then(({ useTransportStore }) => {
