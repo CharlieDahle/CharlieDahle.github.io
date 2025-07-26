@@ -66,37 +66,33 @@ function DrumMachineApp() {
 
   // Room management handlers
   const handleCreateRoom = async () => {
-    try {
-      const roomState = await createRoom();
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
-    } catch (error) {
-      console.error("Failed to create room:", error);
+    // Only handle the success case - let errors bubble up to RoomInterface
+    const roomState = await createRoom();
+    // Sync all stores with room state
+    setPattern(roomState.pattern);
+    syncBpm(roomState.bpm);
+    if (roomState.measureCount) {
+      syncMeasureCount(roomState.measureCount);
     }
+    if (roomState.tracks) {
+      setTracks(roomState.tracks);
+    }
+    return roomState;
   };
 
   const handleJoinRoom = async (targetRoomId) => {
-    try {
-      const roomState = await joinRoom(targetRoomId);
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
-    } catch (error) {
-      console.error("Failed to join room:", error);
+    // Only handle the success case - let errors bubble up to RoomInterface
+    const roomState = await joinRoom(targetRoomId);
+    // Sync all stores with room state
+    setPattern(roomState.pattern);
+    syncBpm(roomState.bpm);
+    if (roomState.measureCount) {
+      syncMeasureCount(roomState.measureCount);
     }
+    if (roomState.tracks) {
+      setTracks(roomState.tracks);
+    }
+    return roomState;
   };
 
   // If not connected or not in room, show connection interface

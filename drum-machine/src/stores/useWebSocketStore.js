@@ -159,10 +159,24 @@ export const useWebSocketStore = create((set, get) => ({
     }
 
     return new Promise((resolve, reject) => {
-      console.log("Joining room:", targetRoomId);
+      console.log("WebSocketStore: Joining room:", targetRoomId);
+
+      // Add timeout to prevent hanging promises
+      const timeout = setTimeout(() => {
+        console.error("WebSocketStore: Join room timed out");
+        reject(new Error("Join room request timed out"));
+      }, 10000);
+
       socket.emit("join-room", { roomId: targetRoomId.trim() }, (response) => {
-        if (response.success) {
-          console.log("Joined room:", targetRoomId);
+        clearTimeout(timeout);
+
+        console.log("WebSocketStore: Received join-room response:", response);
+
+        if (response && response.success) {
+          console.log(
+            "WebSocketStore: Successfully joined room:",
+            targetRoomId
+          );
           set({
             roomId: targetRoomId.trim(),
             isInRoom: true,
@@ -171,9 +185,10 @@ export const useWebSocketStore = create((set, get) => ({
           });
           resolve(response.roomState);
         } else {
-          console.error("Failed to join room:", response.error);
-          set({ error: `Failed to join room: ${response.error}` });
-          reject(response.error);
+          const errorMsg = response?.error || "Unknown error";
+          console.error("WebSocketStore: Failed to join room:", errorMsg);
+          set({ error: `Failed to join room: ${errorMsg}` });
+          reject(new Error(errorMsg));
         }
       });
     });
