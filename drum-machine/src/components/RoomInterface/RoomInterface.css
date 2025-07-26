@@ -1,0 +1,314 @@
+/* RoomInterface.css */
+
+/* CSS Custom Properties for consistent theming */
+:root {
+  --room-card-bg: #ffffff;
+  --room-border-color: #dee2e6;
+  --room-header-bg: #ffffff;
+
+  /* Color palette inspired by POC */
+  --primary-blue: #5bc0eb;
+  --success-green: #9bc53d;
+  --text-primary: #333;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+
+  /* Effects */
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --transition: 0.15s ease;
+  --glow: 0 0 20px rgba(91, 192, 235, 0.3);
+}
+
+/* Main Room Card */
+.room-card {
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-lg);
+  border: none;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+/* Decorative elements for the card */
+.room-card::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 120px;
+  height: 120px;
+  background: var(--primary-blue);
+  opacity: 0.08;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.room-card::after {
+  content: "";
+  position: absolute;
+  bottom: -30px;
+  left: -30px;
+  width: 80px;
+  height: 80px;
+  background: var(--success-green);
+  opacity: 0.06;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Header Styling */
+.room-header {
+  background: var(--room-header-bg) !important;
+  border-bottom: 1px solid var(--room-border-color) !important;
+  padding: 32px 48px 24px !important;
+  position: relative;
+  z-index: 1;
+}
+
+.room-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Connection Status Badge */
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  transition: all var(--transition);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Body Styling */
+.room-body {
+  padding: 40px 48px !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Action Sections */
+.action-section {
+  margin-bottom: 32px;
+}
+
+.action-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.create-icon {
+  background: var(--primary-blue);
+}
+
+.join-icon {
+  background: var(--success-green);
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.section-description {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.room-btn {
+  width: 100%;
+  border-radius: 12px !important;
+  padding: 16px 24px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none !important;
+}
+
+.room-btn-primary {
+  background: var(--primary-blue) !important;
+  color: white !important;
+}
+
+.room-btn-primary:hover:not(:disabled) {
+  background: #4ba8cc !important;
+}
+
+.room-btn-secondary {
+  background: var(--success-green) !important;
+  color: white !important;
+}
+
+.room-btn-secondary:hover:not(:disabled) {
+  background: #88a834 !important;
+}
+
+.room-btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Input Styling */
+.room-input {
+  width: 100%;
+  padding: 16px 20px !important;
+  border: 2px solid var(--room-border-color) !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-weight: 500;
+  background: rgba(248, 249, 250, 0.5) !important;
+  color: var(--text-primary) !important;
+  transition: all var(--transition);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.room-input::placeholder {
+  color: var(--text-muted) !important;
+  letter-spacing: 1px;
+  text-transform: none;
+}
+
+.room-input:focus {
+  outline: none !important;
+  border-color: var(--success-green) !important;
+  background: white !important;
+  box-shadow: 0 0 0 3px rgba(155, 197, 61, 0.1) !important;
+}
+
+/* Join Form */
+.join-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section Divider */
+.section-divider {
+  position: relative;
+  text-align: center;
+  margin: 32px 0;
+}
+
+.section-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--room-border-color);
+}
+
+.divider-text {
+  background: var(--room-card-bg);
+  padding: 0 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .room-header {
+    padding: 24px 32px 20px !important;
+  }
+
+  .room-body {
+    padding: 32px 24px !important;
+  }
+
+  .room-title {
+    font-size: 28px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .section-description {
+    font-size: 14px;
+  }
+
+  .section-header {
+    gap: 12px;
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-section {
+    margin-bottom: 24px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .section-icon {
+    margin-top: 0;
+  }
+}
