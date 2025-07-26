@@ -55,7 +55,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
 
       {/* Main Room Card */}
       <div className="row justify-content-center">
-        <div className="col-md-6">
+        <div className="col-md-5">
           <div className="card room-card">
             <div className="card-header text-center room-header">
               <h2 className="room-title">Drum Machine</h2>
@@ -78,8 +78,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                   <div>
                     <h3 className="section-title">Create New Room</h3>
                     <p className="section-description">
-                      Start a new collaborative session and invite friends to
-                      join
+                      Start a new session and invite friends to join
                     </p>
                   </div>
                 </div>
