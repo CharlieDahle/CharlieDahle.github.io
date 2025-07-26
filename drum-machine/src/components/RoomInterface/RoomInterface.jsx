@@ -21,7 +21,6 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
         "#ff97c4",
       ];
 
-      // Your beautiful ShapeStack blob shapes
       const blobShapes = [
         `polygon(25% 3%, 16% 10%, 6% 18%, 2% 29%, 0% 46%, 0% 67%, 6% 79%, 16% 86%, 25% 93%, 38% 96%, 54% 96%, 69% 95%, 84% 89%, 97% 79%, 100% 62%, 100% 49%, 100% 33%, 97% 24%, 89% 18%, 79% 10%, 67% 8%, 54% 6%, 38% 3%)`,
         `polygon(28% 4%, 18% 11%, 8% 19%, 3% 31%, 1% 47%, 2% 69%, 8% 81%, 18% 87%, 28% 94%, 40% 97%, 55% 97%, 71% 95%, 85% 89%, 97% 80%, 100% 63%, 99% 50%, 98% 34%, 94% 25%, 86% 18%, 76% 11%, 64% 9%, 50% 7%, 35% 4%)`,
@@ -31,45 +30,40 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
         `polygon(26% 4%, 16% 11%, 7% 19%, 2% 31%, 0% 47%, 1% 69%, 8% 82%, 19% 88%, 30% 95%, 42% 98%, 58% 98%, 74% 96%, 87% 91%, 97% 82%, 100% 65%, 99% 52%, 98% 36%, 93% 27%, 84% 20%, 74% 13%, 61% 11%, 47% 9%, 33% 4%)`,
       ];
 
-      const blobCount = Math.floor(Math.random() * 4) + 2; // 2-5 blobs
+      const blobCount = Math.floor(Math.random() * 4) + 2;
       const blobs = [];
-
-      // Shuffle colors to ensure no repeats
       const shuffledColors = [...colors].sort(() => Math.random() - 0.5);
 
-      // Define card area to avoid (approximate center)
-      const cardArea = { top: 25, bottom: 75, left: 25, right: 75 }; // percentages
+      const cardArea = { top: 25, bottom: 75, left: 25, right: 75 };
 
       for (let i = 0; i < blobCount; i++) {
         let position;
         let attempts = 0;
 
-        // Try to find a good position
         do {
-          const size = Math.floor(Math.random() * 150) + 150; // 150-300px (was 150-400px)
+          const size = Math.floor(Math.random() * 150) + 150;
           const sizePercent = (size / window.innerWidth) * 100;
 
-          // Generate position in zones around the card
-          const zone = Math.floor(Math.random() * 4); // 0=top, 1=left, 2=right, 3=bottom
+          const zone = Math.floor(Math.random() * 4);
           let top, left;
 
           switch (zone) {
-            case 0: // Above card
+            case 0:
               top = Math.random() * (cardArea.top - 5) + 2;
               left = Math.random() * (90 - sizePercent) + 5;
               break;
-            case 1: // Left of card
+            case 1:
               top = Math.random() * 60 + 15;
               left = Math.random() * (cardArea.left - 5) + 2;
               break;
-            case 2: // Right of card
+            case 2:
               top = Math.random() * 60 + 15;
               left =
                 Math.random() * (90 - cardArea.right - sizePercent) +
                 cardArea.right +
                 5;
               break;
-            case 3: // Below card
+            case 3:
               top =
                 Math.random() * (90 - cardArea.bottom - sizePercent) +
                 cardArea.bottom +
@@ -82,27 +76,25 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
           attempts++;
         } while (isTooClose(position, blobs) && attempts < 50);
 
-        // Pick random blob shape and use shuffled color (no repeats)
         const randomShape =
           blobShapes[Math.floor(Math.random() * blobShapes.length)];
-        const uniqueColor = shuffledColors[i]; // Use shuffled color by index
+        const uniqueColor = shuffledColors[i];
 
         blobs.push({
           id: i,
           ...position,
           color: uniqueColor,
           clipPath: randomShape,
-          animationDelay: Math.random() * -20, // Random start time
-          animationDuration: 15 + Math.random() * 10, // 15-25s duration
+          animationDelay: Math.random() * -20,
+          animationDuration: 15 + Math.random() * 10,
         });
       }
 
       setBackgroundBlobs(blobs);
     };
 
-    // Check if blobs are too close
     const isTooClose = (newPos, existingBlobs) => {
-      const minDistance = 20; // Minimum distance in viewport %
+      const minDistance = 20;
       return existingBlobs.some((blob) => {
         const distance = Math.sqrt(
           Math.pow(newPos.top - blob.top, 2) +
@@ -116,13 +108,11 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   }, []);
 
   const handleCreateRoom = async () => {
-    // Clear any existing messages
     setCreateError("");
     setCreateSuccess("");
 
     try {
       const result = await onCreateRoom();
-      // Success message will be handled by the success of room creation
       setCreateSuccess("Room created successfully!");
     } catch (err) {
       setCreateError("Failed to create room. Please try again.");
@@ -130,7 +120,6 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   };
 
   const handleJoinRoom = async () => {
-    // Clear any existing messages
     setJoinError("");
     setJoinSuccess("");
 
@@ -152,7 +141,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   };
 
   return (
-    <div className="container-fluid">
+    <div className="room-interface">
       {/* Animated Background Blobs */}
       <div className="background-blobs">
         {backgroundBlobs.map((blob) => (
@@ -175,7 +164,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
 
       {/* Connection Status - Top Right of Screen */}
       <div
-        className={`connection-status-fixed ${
+        className={`connection-status ${
           isConnected ? "connected" : "disconnected"
         }`}
       >
@@ -184,26 +173,26 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
       </div>
 
       {/* Main Room Card */}
-      <div className="row justify-content-center">
-        <div className="col-md-5">
-          <div className="card room-card">
-            <div className="card-header text-center room-header">
+      <div className="room-layout">
+        <div className="room-content">
+          <div className="room-card">
+            <div className="room-card__header">
               <h2 className="room-title">Drum Machine</h2>
             </div>
-            <div className="card-body room-body">
+            <div className="room-card__body">
               {/* Create Room Section */}
               <div className="action-section">
-                <div className="section-header">
-                  <div className="section-icon create-icon">+</div>
+                <div className="action-header">
+                  <div className="action-icon action-icon--create">+</div>
                   <div>
-                    <h3 className="section-title">Create New Room</h3>
-                    <p className="section-description">
+                    <h3 className="action-title">Create New Room</h3>
+                    <p className="action-description">
                       Start a new session and invite friends to join
                     </p>
                   </div>
                 </div>
                 <button
-                  className="btn btn-primary room-btn room-btn-primary d-flex justify-content-center align-items-center"
+                  className="room-btn room-btn--primary"
                   onClick={handleCreateRoom}
                   disabled={!isConnected}
                 >
@@ -212,7 +201,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
 
                 {/* Create Room Messages */}
                 {createError && (
-                  <div className="alert alert-danger mt-3 mb-0" role="alert">
+                  <div className="message message--error">
                     <small>{createError}</small>
                   </div>
                 )}
@@ -225,11 +214,11 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
 
               {/* Join Room Section */}
               <div className="action-section">
-                <div className="section-header">
-                  <div className="section-icon join-icon">→</div>
+                <div className="action-header">
+                  <div className="action-icon action-icon--join">→</div>
                   <div>
-                    <h3 className="section-title">Join Existing Room</h3>
-                    <p className="section-description">
+                    <h3 className="action-title">Join Existing Room</h3>
+                    <p className="action-description">
                       Enter a room code to join an active session
                     </p>
                   </div>
@@ -237,7 +226,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                 <div className="join-form">
                   <input
                     type="text"
-                    className="form-control room-input"
+                    className="room-input"
                     placeholder="Enter room code"
                     value={joinRoomId}
                     onChange={(e) =>
@@ -247,7 +236,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                     maxLength="8"
                   />
                   <button
-                    className="btn btn-secondary room-btn room-btn-secondary d-flex justify-content-center align-items-center"
+                    className="room-btn room-btn--secondary"
                     onClick={handleJoinRoom}
                     disabled={!isConnected || !joinRoomId.trim()}
                   >
@@ -257,7 +246,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
 
                 {/* Join Room Messages */}
                 {joinError && (
-                  <div className="alert alert-danger mt-3 mb-0" role="alert">
+                  <div className="message message--error">
                     <small>{joinError}</small>
                   </div>
                 )}

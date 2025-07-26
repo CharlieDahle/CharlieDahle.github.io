@@ -108,17 +108,16 @@ function DrumMachineApp() {
           transition={pageTransition}
           style={{
             width: "100%",
-            minHeight: "100vh",
+            height: "100vh", // Changed from minHeight
           }}
         >
-          <div className="container-fluid py-4">
-            <RoomInterface
-              onCreateRoom={handleCreateRoom}
-              onJoinRoom={handleJoinRoom}
-              isConnected={isConnected}
-              error={error} // Pass error as prop instead of showing it above
-            />
-          </div>
+          {/* Remove container-fluid and padding */}
+          <RoomInterface
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            isConnected={isConnected}
+            error={error}
+          />
         </motion.div>
       </AnimatePresence>
     );
