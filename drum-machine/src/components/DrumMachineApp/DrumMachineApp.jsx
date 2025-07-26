@@ -116,15 +116,11 @@ function DrumMachineApp() {
           }}
         >
           <div className="container-fluid py-4">
-            {error && (
-              <div className="alert alert-danger text-center" role="alert">
-                {error}
-              </div>
-            )}
             <RoomInterface
               onCreateRoom={handleCreateRoom}
               onJoinRoom={handleJoinRoom}
               isConnected={isConnected}
+              error={error} // Pass error as prop instead of showing it above
             />
           </div>
         </motion.div>
