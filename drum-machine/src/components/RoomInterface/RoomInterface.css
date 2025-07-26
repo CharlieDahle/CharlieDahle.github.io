@@ -46,7 +46,7 @@
 
 .background-blob {
   position: absolute;
-  opacity: 0.18;
+  opacity: 0.5;
   animation: float infinite ease-in-out;
 }
 
