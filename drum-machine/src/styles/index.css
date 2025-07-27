@@ -1,7 +1,7 @@
 /* Global CSS Variables and Styles */
 
 :root {
-  --background-color: #fffaf0; /* Floral White - matches ShapeStack */
+  --background-color: #fffaf0;
   --text-color: #333;
   --card-background: #ffffff;
   --border-color: #dee2e6;
@@ -11,7 +11,8 @@ body {
   background-color: var(--background-color);
 }
 
-.drum-machine-container {
-  background-color: var(--background-color);
-  min-height: 100vh;
+.floating-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }

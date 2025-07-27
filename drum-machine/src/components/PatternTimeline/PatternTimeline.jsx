@@ -463,7 +463,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const TRACK_HEIGHT = 60;
 
   return (
-    <div className="pattern-timeline" style={{ width: `${TOTAL_WIDTH}px` }}>
+    <div
+      className="floating-card pattern-timeline"
+      style={{ maxWidth: `${TOTAL_WIDTH}px` }}
+    >
       {/* Transport Controls Bar */}
       <div className="timeline-controls">
         <div className="controls-section">

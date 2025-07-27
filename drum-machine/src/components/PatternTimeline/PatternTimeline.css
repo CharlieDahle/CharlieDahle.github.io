@@ -37,11 +37,9 @@
   --disabled-text: #adb5bd;
 }
 
-/* Main Timeline Container - FIXED WIDTH AND CENTERED */
+/* Main Timeline Container - Using shared floating-card class */
 .pattern-timeline {
-  background: var(--timeline-bg);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
+  /* Remove individual card styling - now using shared .floating-card class */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 0 auto; /* Center the component */
@@ -187,7 +185,7 @@
   margin: 0;
 }
 
-.bpm-value {
+.bmp-value {
   background: #007bff;
   color: white;
   padding: 4px 8px;
