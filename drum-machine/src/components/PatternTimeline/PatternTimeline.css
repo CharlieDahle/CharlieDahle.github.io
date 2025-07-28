@@ -1,4 +1,4 @@
-/* PatternTimeline.css */
+/* PatternTimeline.css - Fixed Grid Approach */
 
 /* CSS Custom Properties for easy theming and consistency */
 :root {
@@ -8,9 +8,11 @@
   --timeline-sidebar-bg: #f8f9fa;
   --timeline-header-bg: #ffffff;
 
+  /* FIXED DIMENSIONS - No more dynamic sizing! */
   --track-height: 60px;
   --sidebar-width: 170px;
   --header-height: 50px;
+  --grid-width: 1152px; /* Fixed grid width: 16 beats * 72px = 1152px */
 
   --playhead-color: #007bff;
   --playhead-shadow: rgba(0, 123, 255, 0.6);
@@ -31,22 +33,21 @@
   --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 
-  /* New: Disabled state colors */
+  /* Disabled state colors */
   --disabled-bg: rgba(248, 249, 250, 0.8);
   --disabled-border: rgba(173, 181, 189, 0.3);
   --disabled-text: #adb5bd;
 }
 
-/* Main Timeline Container - Using shared floating-card class */
+/* Main Timeline Container - Bootstrap responsive */
 .pattern-timeline {
-  /* Remove individual card styling - now using shared .floating-card class */
+  /* Uses shared .floating-card class */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  margin: 0 auto; /* Center the component */
-  /* Width is set dynamically in the component */
+  /* No fixed width - let Bootstrap handle responsiveness */
 }
 
-/* Controls Bar */
+/* Controls Bar - Same as before */
 .timeline-controls {
   background: var(--timeline-controls-bg);
   border-bottom: 1px solid var(--timeline-border);
@@ -64,7 +65,7 @@
   gap: 24px;
 }
 
-/* Transport Controls */
+/* Transport Controls - Same as before */
 .transport-controls {
   display: flex;
   gap: 8px;
@@ -185,7 +186,7 @@
   margin: 0;
 }
 
-.bmp-value {
+.bpm-value {
   background: #007bff;
   color: white;
   padding: 4px 8px;
@@ -196,19 +197,19 @@
   text-align: center;
 }
 
-/* Grid Container - FIXED WIDTH, NO SCROLLING */
+/* Grid Container - KEY CHANGE: Flexbox layout */
 .timeline-grid-container {
   display: flex;
-  overflow: hidden; /* No scrolling anymore */
+  overflow: hidden;
   position: relative;
 }
 
-/* Track Sidebar */
+/* Track Sidebar - Fixed width */
 .track-sidebar {
   width: var(--sidebar-width);
   background: var(--timeline-sidebar-bg);
   border-right: 1px solid var(--timeline-border);
-  flex-shrink: 0;
+  flex-shrink: 0; /* Never shrink */
   z-index: 20;
 }
 
@@ -273,10 +274,12 @@
   color: #495057;
 }
 
-/* Grid Area - FIXED WIDTH */
+/* Grid Area - KEY CHANGE: Flexible container with scroll */
 .timeline-grid-area {
+  flex: 1; /* Take remaining space after sidebar */
+  overflow-x: auto; /* Horizontal scroll when needed */
+  overflow-y: hidden; /* No vertical scroll */
   position: relative;
-  /* Width is set dynamically in the component */
 }
 
 /* Beat Header */
@@ -303,14 +306,10 @@
   font-size: 14px;
   color: #28a745;
   background: var(--downbeat-bg);
-  border-right: 2px solid var(--timeline-border);
+  /* No borders - beat lines handle visual separation */
+  /* Width will be calculated based on fixed grid */
 }
 
-.measure-cell:last-child {
-  border-right: none;
-}
-
-/* NEW: Disabled measure cells */
 .measure-cell--disabled {
   color: var(--disabled-text);
   background: var(--disabled-bg);
@@ -326,8 +325,9 @@
   justify-content: center;
   font-size: 10px;
   color: #6c757d;
-  border-right: 1px solid var(--beat-line-color);
+  /* No borders - beat lines handle visual separation */
   transition: background-color var(--transition-fast);
+  /* Width will be calculated based on fixed grid */
 }
 
 .beat-cell--downbeat {
@@ -335,15 +335,16 @@
   font-weight: 600;
 }
 
-/* NEW: Disabled beat cells */
 .beat-cell--disabled {
   color: var(--disabled-text);
   background: var(--disabled-bg);
 }
 
-/* Track Grid */
+/* Track Grid - KEY CHANGE: Fixed width */
 .track-grid {
   position: relative;
+  width: var(--grid-width); /* Fixed width! */
+  min-width: var(--grid-width); /* Never shrink */
   min-height: calc(100% - var(--header-height));
 }
 
@@ -368,7 +369,7 @@
   background: rgba(248, 249, 250, 0.5);
 }
 
-/* Beat Lines - All subdivisions */
+/* Beat Lines */
 .beat-line {
   position: absolute;
   top: 0;
@@ -389,7 +390,6 @@
   opacity: 1;
 }
 
-/* NEW: Subdivision lines */
 .beat-line--eighth {
   width: 1px;
   background: #dee2e6;
@@ -402,13 +402,12 @@
   opacity: 0.5;
 }
 
-/* NEW: Disabled beat lines */
 .beat-line--disabled {
   background: var(--disabled-border);
   opacity: 0.3;
 }
 
-/* NEW: Disabled measures overlay */
+/* Disabled measures overlay */
 .disabled-measures-overlay {
   position: absolute;
   top: 0;
@@ -448,6 +447,14 @@
   transform: scale(1.1);
   z-index: 10;
   box-shadow: var(--shadow-md);
+  transition: none;
+}
+
+.timeline-note--ghost {
+  background: #6c757d !important;
+  opacity: 0.4;
+  pointer-events: none;
+  border: 2px solid rgba(108, 117, 125, 0.3) !important;
   transition: none;
 }
 
@@ -501,29 +508,18 @@
     flex-wrap: wrap;
   }
 
-  .bpm-control {
+  .bmp-control {
     flex-direction: column;
     text-align: center;
   }
 
-  .track-sidebar {
-    width: 100px;
+  /* Sidebar becomes narrower on mobile */
+  :root {
+    --sidebar-width: 120px;
   }
 
   .track-name {
     font-size: 12px;
-  }
-
-  /* Adjust fixed width for mobile */
-  .pattern-timeline {
-    width: 100% !important;
-    max-width: 100vw;
-    margin: 0;
-  }
-
-  .timeline-grid-area {
-    width: calc(100vw - 100px) !important;
-    overflow-x: auto;
   }
 }
 
@@ -545,13 +541,4 @@
     box-shadow: none;
     border: 1px solid #000;
   }
-}
-
-/* Ghost Note Styling */
-.timeline-note--ghost {
-  background: #6c757d !important; /* Bootstrap gray */
-  opacity: 0.4;
-  pointer-events: none; /* Don't interfere with mouse events */
-  border: 2px solid rgba(108, 117, 125, 0.3) !important; /* Subtle border */
-  transition: none; /* No transitions for smooth following */
 }
