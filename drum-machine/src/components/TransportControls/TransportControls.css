@@ -1,0 +1,58 @@
+/* Transport Controls - Mockup Style */
+.transport-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-transport {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  color: white;
+}
+
+.btn-transport:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-transport:active {
+  transform: translateY(0);
+}
+
+/* Play/Pause Button - consistent width */
+.btn-play-pause {
+  background: #28a745;
+  min-width: 80px; /* Fixed width to prevent movement */
+}
+
+.btn-play-pause:hover {
+  background: #218838;
+}
+
+/* Stop Button */
+.btn-stop {
+  background: #dc3545;
+}
+
+.btn-stop:hover {
+  background: #c82333;
+}
+
+/* Loop Button - keep purple as requested */
+.btn-loop {
+  background: #6f42c1;
+}
+
+.btn-loop:hover {
+  background: #5a32a3;
+}

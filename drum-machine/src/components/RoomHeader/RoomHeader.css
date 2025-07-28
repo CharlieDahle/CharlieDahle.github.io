@@ -1,0 +1,49 @@
+/* Room Header Card - matching mockup design language */
+.room-header-card {
+  padding: 24px 32px;
+}
+
+/* Title Section - matching mockup typography */
+.title-section h1.room-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary, #333);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.room-info {
+  color: var(--text-secondary, #6c757d);
+  font-size: 14px;
+}
+
+/* User Badge Styles - refined to match mockup */
+.user-count-badge {
+  background: #28a745;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -38,7 +38,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     sendRemoveTrack,
     sendUpdateTrackSound,
     sendTransportCommand,
-    cleanup, // ADDED: Import cleanup function
+    leaveRoom, // UPDATED: Use leaveRoom instead of cleanup
   } = useWebSocketStore();
 
   // Scheduler instance
@@ -271,10 +271,9 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
         roomId={roomId}
         userCount={userCount}
         onLeaveRoom={() => {
-          // Clean WebSocket connection and reset state
-          cleanup();
-          // This will automatically trigger the transition back to RoomInterface
-          // because DrumMachineApp checks isInRoom from the WebSocket store
+          // Leave the room but keep WebSocket connection alive
+          leaveRoom();
+          // This will set isInRoom to false, triggering transition back to RoomInterface
         }}
       />
 

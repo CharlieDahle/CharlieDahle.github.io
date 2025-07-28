@@ -278,6 +278,24 @@ export const useWebSocketStore = create((set, get) => ({
     });
   },
 
+  leaveRoom: () => {
+    const { socket, isInRoom, roomId } = get();
+    if (!socket || !isInRoom) return;
+
+    console.log("Leaving room:", roomId);
+
+    // Emit leave-room event to server
+    socket.emit("leave-room", { roomId });
+
+    // Update local state immediately
+    set({
+      isInRoom: false,
+      roomId: null,
+      users: [],
+      lastRemoteTransportCommand: null,
+    });
+  },
+
   // Cleanup
   cleanup: () => {
     const { socket } = get();

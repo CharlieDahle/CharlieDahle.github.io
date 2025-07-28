@@ -123,12 +123,11 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Ghost note state
   const [ghostNote, setGhostNote] = useState(null);
 
-  // UPDATED CONSTANTS FOR FIXED 1200PX CARD WIDTH
   const MEASURES_PER_PAGE = 4;
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
-  const PIXELS_PER_TICK = 0.134; // UPDATED: was 0.15
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // ~64.32px per beat (was 72px)
-  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // ~1030px total (was 1152px)
+  const PIXELS_PER_TICK = 0.128906; // UPDATED: was 0.134, now calculated for 990px grid
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // ~61.88px per beat (was ~64px)
+  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 990px total (was 1030px)
 
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE;
 
@@ -454,36 +453,34 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
 
           {/* Measure Controls */}
-          <div className="measure-controls d-flex align-items-center gap-2">
-            <span className="text-muted fw-bold">Measures:</span>
+          <div className="measure-controls">
+            <span className="measure-label">Measures:</span>
 
-            {measureCount > 1 && (
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  removeMeasure();
-                  handleMeasureChange(measureCount - 1);
-                }}
-                title="Remove measure"
-              >
-                −
-              </button>
-            )}
+            <button
+              className="measure-btn"
+              disabled={measureCount <= 1}
+              onClick={() => {
+                removeMeasure();
+                handleMeasureChange(measureCount - 1);
+              }}
+              title="Remove measure"
+            >
+              −
+            </button>
 
-            <span className="badge bg-secondary">{measureCount}</span>
+            <span className="measure-count">{measureCount}</span>
 
-            {measureCount < 4 && (
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  addMeasure();
-                  handleMeasureChange(measureCount + 1);
-                }}
-                title="Add measure"
-              >
-                +
-              </button>
-            )}
+            <button
+              className="measure-btn"
+              disabled={measureCount >= 4}
+              onClick={() => {
+                addMeasure();
+                handleMeasureChange(measureCount + 1);
+              }}
+              title="Add measure"
+            >
+              +
+            </button>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-/* PatternTimeline.css - Updated for Fixed 1200px Card Width */
+/* PatternTimeline.css - Fixed Width Design (No Responsive) */
 
 /* CSS Custom Properties for easy theming and consistency */
 :root {
@@ -8,11 +8,11 @@
   --timeline-sidebar-bg: #f8f9fa;
   --timeline-header-bg: #ffffff;
 
-  /* UPDATED FIXED DIMENSIONS for 1200px card */
+  /* FIXED DIMENSIONS for 1160px card (updated to match mockup) */
   --track-height: 60px;
-  --sidebar-width: 170px; /* unchanged */
+  --sidebar-width: 170px;
   --header-height: 50px;
-  --grid-width: 1030px; /* UPDATED: was 1152px, now fits in 1200px card */
+  --grid-width: 990px; /* UPDATED: was 1030px, now 40px narrower */
 
   --playhead-color: #007bff;
   --playhead-shadow: rgba(0, 123, 255, 0.6);
@@ -23,7 +23,7 @@
   --downbeat-border: rgba(40, 167, 69, 0.1);
 
   --note-border-radius: 6px;
-  --note-width: 32px; /* UPDATED: eighth note width (240 ticks) */
+  --note-width: 32px;
   --note-height: 40px;
   --note-margin: 10px;
 
@@ -41,12 +41,12 @@
 
 /* Main Timeline Container */
 .pattern-timeline {
-  /* Uses shared .floating-card class - now fixed 1200px width */
+  /* Uses shared .floating-card class - fixed 1200px width */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Controls Bar - Same as before */
+/* Controls Bar */
 .timeline-controls {
   background: var(--timeline-controls-bg);
   border-bottom: 1px solid var(--timeline-border);
@@ -64,7 +64,7 @@
   gap: 24px;
 }
 
-/* Transport Controls - Same as before */
+/* Transport Controls */
 .transport-controls {
   display: flex;
   gap: 8px;
@@ -276,7 +276,7 @@
 /* Grid Area - Fixed width container */
 .timeline-grid-area {
   flex: 1; /* Take remaining space after sidebar */
-  overflow-x: auto; /* Horizontal scroll when needed */
+  overflow-x: hidden; /* No horizontal scroll */
   overflow-y: hidden; /* No vertical scroll */
   position: relative;
 }
@@ -340,7 +340,7 @@
 /* Track Grid - Fixed width using CSS variable */
 .track-grid {
   position: relative;
-  width: var(--grid-width); /* Now 1030px instead of 1152px */
+  width: var(--grid-width);
   min-width: var(--grid-width); /* Never shrink */
   min-height: calc(100% - var(--header-height));
 }
@@ -492,39 +492,10 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .timeline-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .controls-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .bpm-control {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  /* Sidebar becomes narrower on mobile */
-  :root {
-    --sidebar-width: 120px;
-    --grid-width: 910px; /* Adjust grid width accordingly */
-  }
-
-  .track-name {
-    font-size: 12px;
-  }
-}
-
 /* Focus states for accessibility */
 .btn:focus,
 .snap-checkbox:focus,
-.bpm-slider:focus {
+.bmp-slider:focus {
   outline: 2px solid var(--playhead-color);
   outline-offset: 2px;
 }
@@ -539,4 +510,65 @@
     box-shadow: none;
     border: 1px solid #000;
   }
+}
+
+/* Measure Controls - Mockup Style */
+.measure-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.measure-label {
+  color: var(--text-muted, #adb5bd);
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+}
+
+.measure-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #dee2e6);
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+  transition: all 0.15s ease;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.measure-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.measure-btn:active {
+  background: #e9ecef;
+}
+
+.measure-btn:disabled {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.measure-count {
+  background: var(--text-secondary, #6c757d);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -1,29 +1,20 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import "./RoomHeader.css";
 
-function RoomHeader({ roomId, userCount, onLeaveRoom }) {
+function RoomHeader({ roomId, userCount }) {
   return (
-    <div className="floating-card p-4">
+    <div className="floating-card room-header-card">
       <div className="d-flex justify-content-between align-items-center">
-        <div>
-          <h2 className="mb-1 fw-bold">Drum Machine</h2>
-          <small className="text-muted">Room: {roomId}</small>
+        <div className="title-section">
+          <h1 className="room-title">Drum Machine</h1>
+          <div className="room-info">Room: {roomId}</div>
         </div>
-        <div className="d-flex align-items-center gap-3">
-          <div>
-            <span className="badge bg-success me-2 fs-6">
-              {userCount} user{userCount !== 1 ? "s" : ""} online
-            </span>
-            <span className="badge bg-success fs-6">Connected</span>
-          </div>
-          <button
-            className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2"
-            onClick={onLeaveRoom}
-            title="Leave room and return to main menu"
-          >
-            <LogOut size={16} />
-            Leave Room
-          </button>
+        <div className="user-count-badge">
+          <div className="status-indicator"></div>
+          <span>
+            {userCount} user{userCount !== 1 ? "s" : ""} online
+          </span>
         </div>
       </div>
     </div>

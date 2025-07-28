@@ -1,4 +1,5 @@
 import React from "react";
+import "./TransportControls.css";
 
 function TransportControls({
   isPlaying,
@@ -19,23 +20,18 @@ function TransportControls({
 
   return (
     <div className="bg-light py-3 px-4 border-bottom d-flex justify-content-between align-items-center mb-4">
-      <div className="transport-controls d-flex gap-3">
+      {/* Transport Controls - Mockup Style */}
+      <div className="transport-controls">
         <button
-          className={`btn ${isPlaying ? "btn-warning" : "btn-success"}`}
+          className="btn-transport btn-play-pause"
           onClick={isPlaying ? onPause : onPlay}
         >
-          {isPlaying ? <>⏸ Pause</> : <>▶ Play</>}
+          {isPlaying ? "⏸ Pause" : "▶ Play"}
         </button>
-        <button className="btn btn-danger" onClick={onStop}>
+        <button className="btn-transport btn-stop" onClick={onStop}>
           ⏹ Stop
         </button>
-        <button
-          className="btn btn-warning"
-          // Loop functionality to be added later
-          onClick={() => console.log("Loop clicked - not implemented yet")}
-        >
-          Loop
-        </button>
+        <button className="btn-transport btn-loop">Loop</button>
       </div>
 
       {/* Position Display - We'll keep this for now */}
