@@ -1,10 +1,10 @@
-/* Transport Controls - Mockup Style */
+/* Transport Controls - Mockup Style (Bootstrap-safe class names) */
 .transport-controls {
   display: flex;
   gap: 8px;
 }
 
-.btn-transport {
+.transport-btn {
   border: none;
   border-radius: 12px;
   padding: 12px 20px;
@@ -20,39 +20,39 @@
   color: white;
 }
 
-.btn-transport:hover {
+.transport-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.btn-transport:active {
+.transport-btn:active {
   transform: translateY(0);
 }
 
 /* Play/Pause Button - consistent width */
-.btn-play-pause {
+.transport-btn--play-pause {
   background: #28a745;
   min-width: 80px; /* Fixed width to prevent movement */
 }
 
-.btn-play-pause:hover {
+.transport-btn--play-pause:hover {
   background: #218838;
 }
 
 /* Stop Button */
-.btn-stop {
+.transport-btn--stop {
   background: #dc3545;
 }
 
-.btn-stop:hover {
+.transport-btn--stop:hover {
   background: #c82333;
 }
 
 /* Loop Button - keep purple as requested */
-.btn-loop {
+.transport-btn--loop {
   background: #6f42c1;
 }
 
-.btn-loop:hover {
+.transport-btn--loop:hover {
   background: #5a32a3;
 }

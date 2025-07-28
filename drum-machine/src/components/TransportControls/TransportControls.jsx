@@ -23,15 +23,15 @@ function TransportControls({
       {/* Transport Controls - Mockup Style */}
       <div className="transport-controls">
         <button
-          className="btn-transport btn-play-pause"
+          className="transport-btn transport-btn--play-pause"
           onClick={isPlaying ? onPause : onPlay}
         >
           {isPlaying ? "⏸ Pause" : "▶ Play"}
         </button>
-        <button className="btn-transport btn-stop" onClick={onStop}>
+        <button className="transport-btn transport-btn--stop" onClick={onStop}>
           ⏹ Stop
         </button>
-        <button className="btn-transport btn-loop">Loop</button>
+        <button className="transport-btn transport-btn--loop">Loop</button>
       </div>
 
       {/* Position Display - We'll keep this for now */}
