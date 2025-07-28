@@ -123,12 +123,12 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Ghost note state
   const [ghostNote, setGhostNote] = useState(null);
 
-  // SIMPLIFIED CONSTANTS - Keep original working values!
+  // UPDATED CONSTANTS FOR FIXED 1200PX CARD WIDTH
   const MEASURES_PER_PAGE = 4;
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
-  const PIXELS_PER_TICK = 0.15; // ORIGINAL VALUE - don't change!
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // 72px per beat (480 * 0.15)
-  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 1152px total
+  const PIXELS_PER_TICK = 0.134; // UPDATED: was 0.15
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // ~64.32px per beat (was 72px)
+  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // ~1030px total (was 1152px)
 
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE;
 
@@ -153,13 +153,11 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    // Convert click position to tick with snap offset adjustment
-    const SNAP_OFFSET_PIXELS = -12;
-    const adjustedX = x + SNAP_OFFSET_PIXELS;
-    const clickTick = adjustedX / PIXELS_PER_TICK;
+    // Convert click position to tick
+    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
 
     // Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = clickTick - noteWidthInTicks / 2;
 
     // Apply snap-to-grid logic
@@ -296,11 +294,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    const SNAP_OFFSET_PIXELS = -12;
-    const adjustedX = x + SNAP_OFFSET_PIXELS;
-    const clickTick = adjustedX / PIXELS_PER_TICK;
+    // Convert click position to tick
+    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
 
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = clickTick - noteWidthInTicks / 2;
 
     let snappedTick;
@@ -353,7 +350,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const x = e.clientX - rect.left;
 
     const dragTick = x / PIXELS_PER_TICK;
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK; // UPDATED: 32px (eighth note width)
     const centeredTick = dragTick - noteWidthInTicks / 2;
 
     let snappedTick;
@@ -506,7 +503,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
 
           {/* BPM Control */}
-          <div className="bpm-control">
+          <div className="bmp-control">
             <label className="bpm-label">BPM</label>
             <input
               type="range"
@@ -593,24 +590,23 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               >
                 {/* Subdivision lines */}
                 {Array.from(
-                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 4) + 1 },
+                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 2) + 1 }, // UPDATED: Only eighth note divisions
                   (_, subdivisionIndex) => {
                     const tickPosition =
-                      subdivisionIndex * (TICKS_PER_BEAT / 4);
+                      subdivisionIndex * (TICKS_PER_BEAT / 2); // UPDATED: Eighth note intervals
                     const beatPosition = tickPosition / TICKS_PER_BEAT;
                     const measureIndex = Math.floor(beatPosition / 4);
 
-                    // Determine line type - NO visual offset for now
+                    // Determine line type - only beat, measure, and eighth
                     let lineType;
                     if (tickPosition % TICKS_PER_BEAT === 0) {
                       lineType =
                         beatPosition % 4 === 0
                           ? "beat-line--measure"
                           : "beat-line--beat";
-                    } else if (tickPosition % (TICKS_PER_BEAT / 2) === 0) {
-                      lineType = "beat-line--eighth";
                     } else {
-                      lineType = "beat-line--sixteenth";
+                      // All remaining lines are eighth notes
+                      lineType = "beat-line--eighth";
                     }
 
                     return (

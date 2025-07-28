@@ -38,6 +38,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     sendRemoveTrack,
     sendUpdateTrackSound,
     sendTransportCommand,
+    cleanup, // ADDED: Import cleanup function
   } = useWebSocketStore();
 
   // Scheduler instance
@@ -265,37 +266,36 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
   };
 
   return (
-    <div className="container py-4">
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col">
-          <RoomHeader roomId={roomId} userCount={userCount} />
-        </div>
-      </div>
+    <div className="drum-machine-layout">
+      <RoomHeader
+        roomId={roomId}
+        userCount={userCount}
+        onLeaveRoom={() => {
+          // Clean WebSocket connection and reset state
+          cleanup();
+          // This will automatically trigger the transition back to RoomInterface
+          // because DrumMachineApp checks isInRoom from the WebSocket store
+        }}
+      />
 
-      {/* Pattern Timeline */}
-      <div className="row">
-        <div className="col">
-          <PatternTimeline
-            onPatternChange={handlePatternChange}
-            onBpmChange={handleBpmChange}
-            onAddTrack={handleAddTrack}
-            onRemoveTrack={handleRemoveTrack}
-            onUpdateTrackSound={handleUpdateTrackSound}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onStop={handleStop}
-            onAddMeasure={() => {
-              addMeasure();
-              handleMeasureChange(measureCount + 1);
-            }}
-            onRemoveMeasure={() => {
-              removeMeasure();
-              handleMeasureChange(Math.max(1, measureCount - 1));
-            }}
-          />
-        </div>
-      </div>
+      <PatternTimeline
+        onPatternChange={handlePatternChange}
+        onBpmChange={handleBpmChange}
+        onAddTrack={handleAddTrack}
+        onRemoveTrack={handleRemoveTrack}
+        onUpdateTrackSound={handleUpdateTrackSound}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onStop={handleStop}
+        onAddMeasure={() => {
+          addMeasure();
+          handleMeasureChange(measureCount + 1);
+        }}
+        onRemoveMeasure={() => {
+          removeMeasure();
+          handleMeasureChange(Math.max(1, measureCount - 1));
+        }}
+      />
     </div>
   );
 }

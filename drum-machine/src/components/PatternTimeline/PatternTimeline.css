@@ -1,4 +1,4 @@
-/* PatternTimeline.css - Fixed Grid Approach */
+/* PatternTimeline.css - Updated for Fixed 1200px Card Width */
 
 /* CSS Custom Properties for easy theming and consistency */
 :root {
@@ -8,11 +8,11 @@
   --timeline-sidebar-bg: #f8f9fa;
   --timeline-header-bg: #ffffff;
 
-  /* FIXED DIMENSIONS - No more dynamic sizing! */
+  /* UPDATED FIXED DIMENSIONS for 1200px card */
   --track-height: 60px;
-  --sidebar-width: 170px;
+  --sidebar-width: 170px; /* unchanged */
   --header-height: 50px;
-  --grid-width: 1152px; /* Fixed grid width: 16 beats * 72px = 1152px */
+  --grid-width: 1030px; /* UPDATED: was 1152px, now fits in 1200px card */
 
   --playhead-color: #007bff;
   --playhead-shadow: rgba(0, 123, 255, 0.6);
@@ -23,7 +23,7 @@
   --downbeat-border: rgba(40, 167, 69, 0.1);
 
   --note-border-radius: 6px;
-  --note-width: 24px;
+  --note-width: 32px; /* UPDATED: eighth note width (240 ticks) */
   --note-height: 40px;
   --note-margin: 10px;
 
@@ -39,12 +39,11 @@
   --disabled-text: #adb5bd;
 }
 
-/* Main Timeline Container - Bootstrap responsive */
+/* Main Timeline Container */
 .pattern-timeline {
-  /* Uses shared .floating-card class */
+  /* Uses shared .floating-card class - now fixed 1200px width */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* No fixed width - let Bootstrap handle responsiveness */
 }
 
 /* Controls Bar - Same as before */
@@ -197,7 +196,7 @@
   text-align: center;
 }
 
-/* Grid Container - KEY CHANGE: Flexbox layout */
+/* Grid Container - Flexbox layout */
 .timeline-grid-container {
   display: flex;
   overflow: hidden;
@@ -274,7 +273,7 @@
   color: #495057;
 }
 
-/* Grid Area - KEY CHANGE: Flexible container with scroll */
+/* Grid Area - Fixed width container */
 .timeline-grid-area {
   flex: 1; /* Take remaining space after sidebar */
   overflow-x: auto; /* Horizontal scroll when needed */
@@ -306,8 +305,7 @@
   font-size: 14px;
   color: #28a745;
   background: var(--downbeat-bg);
-  /* No borders - beat lines handle visual separation */
-  /* Width will be calculated based on fixed grid */
+  /* Width calculated dynamically in JS based on BEAT_WIDTH */
 }
 
 .measure-cell--disabled {
@@ -325,9 +323,8 @@
   justify-content: center;
   font-size: 10px;
   color: #6c757d;
-  /* No borders - beat lines handle visual separation */
   transition: background-color var(--transition-fast);
-  /* Width will be calculated based on fixed grid */
+  /* Width calculated dynamically in JS based on BEAT_WIDTH */
 }
 
 .beat-cell--downbeat {
@@ -340,10 +337,10 @@
   background: var(--disabled-bg);
 }
 
-/* Track Grid - KEY CHANGE: Fixed width */
+/* Track Grid - Fixed width using CSS variable */
 .track-grid {
   position: relative;
-  width: var(--grid-width); /* Fixed width! */
+  width: var(--grid-width); /* Now 1030px instead of 1152px */
   min-width: var(--grid-width); /* Never shrink */
   min-height: calc(100% - var(--header-height));
 }
@@ -398,8 +395,8 @@
 
 .beat-line--sixteenth {
   width: 1px;
-  background: #f1f3f4;
-  opacity: 0.5;
+  background: #e9ecef;
+  opacity: 0.7;
 }
 
 .beat-line--disabled {
@@ -508,7 +505,7 @@
     flex-wrap: wrap;
   }
 
-  .bmp-control {
+  .bpm-control {
     flex-direction: column;
     text-align: center;
   }
@@ -516,6 +513,7 @@
   /* Sidebar becomes narrower on mobile */
   :root {
     --sidebar-width: 120px;
+    --grid-width: 910px; /* Adjust grid width accordingly */
   }
 
   .track-name {
