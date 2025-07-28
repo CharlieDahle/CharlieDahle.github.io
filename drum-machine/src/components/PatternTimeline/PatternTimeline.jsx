@@ -436,20 +436,23 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
       {/* Transport Controls Bar */}
       <div className="timeline-controls">
         <div className="controls-section">
-          {/* Transport Controls */}
+          {/* Transport Controls - UPDATED: using renamed CSS classes */}
           <div className="transport-controls">
             <button
-              className={`btn btn-transport ${
-                isPlaying ? "btn-pause" : "btn-play"
+              className={`transport-btn ${
+                isPlaying ? "transport-btn--pause" : "transport-btn--play"
               }`}
               onClick={isPlaying ? onPause : onPlay}
             >
               {isPlaying ? "⏸ Pause" : "▶ Play"}
             </button>
-            <button className="btn btn-transport btn-stop" onClick={onStop}>
+            <button
+              className="transport-btn transport-btn--stop"
+              onClick={onStop}
+            >
               ⏹ Stop
             </button>
-            <button className="btn btn-transport btn-loop">Loop</button>
+            <button className="transport-btn transport-btn--loop">Loop</button>
           </div>
 
           {/* Measure Controls */}
@@ -500,7 +503,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
 
           {/* BPM Control */}
-          <div className="bmp-control">
+          <div className="bpm-control">
             <label className="bpm-label">BPM</label>
             <input
               type="range"
@@ -526,7 +529,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           ))}
 
           <div className="add-track-container">
-            <button className="btn btn-add-track" onClick={handleAddTrack}>
+            <button className="add-track-btn" onClick={handleAddTrack}>
               + Add Track
             </button>
           </div>

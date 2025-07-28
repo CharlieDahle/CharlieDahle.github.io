@@ -64,66 +64,79 @@
   gap: 24px;
 }
 
-/* Transport Controls */
+/* Transport Controls - UPDATED to match mockup */
 .transport-controls {
   display: flex;
   gap: 8px;
 }
 
-.btn {
+.transport-btn {
   border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-weight: 500;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+  color: white;
 }
 
-.btn-transport {
+.transport-btn--base {
   background: #6c757d;
   color: white;
 }
 
-.btn-transport:hover {
+.transport-btn--base:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-play {
+.transport-btn--play {
   background: #28a745;
+  width: 95px; /* Fixed width to prevent button movement */
 }
 
-.btn-play:hover {
+.transport-btn--play:hover {
   background: #218838;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-pause {
+.transport-btn--pause {
   background: #ffc107;
   color: #212529;
+  width: 95px; /* Fixed width to prevent button movement */
 }
 
-.btn-pause:hover {
+.transport-btn--pause:hover {
   background: #e0a800;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-stop {
+.transport-btn--stop {
   background: #dc3545;
 }
 
-.btn-stop:hover {
+.transport-btn--stop:hover {
   background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-loop {
-  background: #6f42c1;
+.transport-btn--loop {
+  background: #6f42c1; /* Back to purple */
 }
 
-.btn-loop:hover {
-  background: #5a32a3;
+.transport-btn--loop:hover {
+  background: #5a32a3; /* Back to purple hover */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Position Display */
@@ -166,16 +179,20 @@
   cursor: pointer;
 }
 
-/* BPM Control */
+/* BPM Control - UPDATED to match mockup style */
 .bpm-control {
   display: flex;
   align-items: center;
   gap: 12px;
+  background: rgba(91, 192, 235, 0.1);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(91, 192, 235, 0.2);
 }
 
 .bpm-label {
   font-weight: 600;
-  color: #6c757d;
+  color: #5bc0eb;
   margin: 0;
   font-size: 14px;
 }
@@ -183,16 +200,17 @@
 .bpm-slider {
   width: 120px;
   margin: 0;
+  accent-color: #5bc0eb;
 }
 
 .bpm-value {
-  background: #007bff;
+  background: #5bc0eb;
   color: white;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
-  min-width: 40px;
+  min-width: 48px; /* Fixed width to prevent size changes */
   text-align: center;
 }
 
@@ -260,17 +278,21 @@
   border-bottom: 1px solid var(--timeline-border);
 }
 
-.btn-add-track {
-  background: transparent;
-  color: #6c757d;
-  border: 1px solid var(--timeline-border);
+.add-track-btn {
+  background: rgba(91, 192, 235, 0.1);
+  color: #5bc0eb;
+  border: 2px dashed #5bc0eb;
   font-size: 12px;
-  padding: 6px 12px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.btn-add-track:hover {
-  background: #e9ecef;
-  color: #495057;
+.add-track-btn:hover {
+  background: rgba(91, 192, 235, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Grid Area - Fixed width container */
@@ -493,7 +515,7 @@
 }
 
 /* Focus states for accessibility */
-.btn:focus,
+.transport-btn:focus,
 .snap-checkbox:focus,
 .bmp-slider:focus {
   outline: 2px solid var(--playhead-color);
