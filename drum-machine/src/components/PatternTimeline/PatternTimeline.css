@@ -366,9 +366,9 @@
 }
 
 .header-divider--measure {
+  top: 0; /* Measure dividers go all the way to the top */
   width: 3px;
   background: var(--measure-line-color);
-  z-index: 20; /* Higher z-index to appear on top of beat cells */
 }
 
 .measure-cell {
