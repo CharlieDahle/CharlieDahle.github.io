@@ -1,0 +1,122 @@
+/* Transport Controls Container - replaces Bootstrap utilities */
+.transport-container {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Left Section - Transport Buttons */
+.transport-left {
+  display: flex;
+  align-items: center;
+}
+
+.transport-controls {
+  display: flex;
+  gap: 8px;
+}
+
+/* Right Section - Position and BPM */
+.transport-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Position Display */
+.position-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* BPM Controls */
+.bpm-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bmp-label {
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.bpm-slider {
+  width: 120px;
+}
+
+/* Transport Buttons - Mockup Style */
+.transport-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  color: white;
+}
+
+.transport-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Play/Pause Button */
+.transport-btn--play-pause {
+  background: #28a745;
+  min-width: 80px;
+}
+
+.transport-btn--play-pause:hover {
+  background: #218838;
+}
+
+/* Stop Button */
+.transport-btn--stop {
+  background: #dc3545;
+}
+
+.transport-btn--stop:hover {
+  background: #c82333;
+}
+
+/* Loop Button */
+.transport-btn--loop {
+  background: #6f42c1;
+}
+
+.transport-btn--loop:hover {
+  background: #5a32a3;
+}
+
+/* Transport Badges - replaces Bootstrap badges */
+.transport-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.transport-badge--beat {
+  background: #17a2b8;
+}
+
+.transport-badge--tick {
+  background: #6c757d;
+}
+
+.transport-badge--bpm {
+  background: #007bff;
+}

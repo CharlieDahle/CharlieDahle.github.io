@@ -1,4 +1,4 @@
-/* PatternTimeline.css */
+/* PatternTimeline.css - Fixed Width Design (No Responsive) */
 
 /* CSS Custom Properties for easy theming and consistency */
 :root {
@@ -8,9 +8,11 @@
   --timeline-sidebar-bg: #f8f9fa;
   --timeline-header-bg: #ffffff;
 
+  /* FIXED DIMENSIONS for 1160px card (updated to match mockup) */
   --track-height: 60px;
   --sidebar-width: 170px;
   --header-height: 50px;
+  --grid-width: 990px; /* UPDATED: was 1030px, now 40px narrower */
 
   --playhead-color: #007bff;
   --playhead-shadow: rgba(0, 123, 255, 0.6);
@@ -21,7 +23,7 @@
   --downbeat-border: rgba(40, 167, 69, 0.1);
 
   --note-border-radius: 6px;
-  --note-width: 24px;
+  --note-width: 32px;
   --note-height: 40px;
   --note-margin: 10px;
 
@@ -31,21 +33,17 @@
   --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 
-  /* New: Disabled state colors */
+  /* Disabled state colors */
   --disabled-bg: rgba(248, 249, 250, 0.8);
   --disabled-border: rgba(173, 181, 189, 0.3);
   --disabled-text: #adb5bd;
 }
 
-/* Main Timeline Container - FIXED WIDTH AND CENTERED */
+/* Main Timeline Container */
 .pattern-timeline {
-  background: var(--timeline-bg);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
+  /* Uses shared .floating-card class - fixed 1200px width */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  margin: 0 auto; /* Center the component */
-  /* Width is set dynamically in the component */
 }
 
 /* Controls Bar */
@@ -66,66 +64,79 @@
   gap: 24px;
 }
 
-/* Transport Controls */
+/* Transport Controls - UPDATED to match mockup */
 .transport-controls {
   display: flex;
   gap: 8px;
 }
 
-.btn {
+.transport-btn {
   border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-weight: 500;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+  color: white;
 }
 
-.btn-transport {
+.transport-btn--base {
   background: #6c757d;
   color: white;
 }
 
-.btn-transport:hover {
+.transport-btn--base:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-play {
+.transport-btn--play {
   background: #28a745;
+  width: 95px; /* Fixed width to prevent button movement */
 }
 
-.btn-play:hover {
+.transport-btn--play:hover {
   background: #218838;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-pause {
+.transport-btn--pause {
   background: #ffc107;
   color: #212529;
+  width: 95px; /* Fixed width to prevent button movement */
 }
 
-.btn-pause:hover {
+.transport-btn--pause:hover {
   background: #e0a800;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-stop {
+.transport-btn--stop {
   background: #dc3545;
 }
 
-.btn-stop:hover {
+.transport-btn--stop:hover {
   background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
-.btn-loop {
-  background: #6f42c1;
+.transport-btn--loop {
+  background: #6f42c1; /* Back to purple */
 }
 
-.btn-loop:hover {
-  background: #5a32a3;
+.transport-btn--loop:hover {
+  background: #5a32a3; /* Back to purple hover */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Position Display */
@@ -168,16 +179,20 @@
   cursor: pointer;
 }
 
-/* BPM Control */
+/* BPM Control - UPDATED to match mockup style */
 .bpm-control {
   display: flex;
   align-items: center;
   gap: 12px;
+  background: rgba(91, 192, 235, 0.1);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(91, 192, 235, 0.2);
 }
 
 .bpm-label {
   font-weight: 600;
-  color: #6c757d;
+  color: #5bc0eb;
   margin: 0;
   font-size: 14px;
 }
@@ -185,32 +200,33 @@
 .bpm-slider {
   width: 120px;
   margin: 0;
+  accent-color: #5bc0eb;
 }
 
 .bpm-value {
-  background: #007bff;
+  background: #5bc0eb;
   color: white;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
-  min-width: 40px;
+  min-width: 48px; /* Fixed width to prevent size changes */
   text-align: center;
 }
 
-/* Grid Container - FIXED WIDTH, NO SCROLLING */
+/* Grid Container - Flexbox layout */
 .timeline-grid-container {
   display: flex;
-  overflow: hidden; /* No scrolling anymore */
+  overflow: hidden;
   position: relative;
 }
 
-/* Track Sidebar */
+/* Track Sidebar - Fixed width */
 .track-sidebar {
   width: var(--sidebar-width);
   background: var(--timeline-sidebar-bg);
   border-right: 1px solid var(--timeline-border);
-  flex-shrink: 0;
+  flex-shrink: 0; /* Never shrink */
   z-index: 20;
 }
 
@@ -255,6 +271,39 @@
   font-size: 14px;
 }
 
+/* Track Controls - replaces Bootstrap classes */
+.track-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.track-settings-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.15s ease;
+}
+
+.track-settings-btn:hover {
+  background: #495057;
+  color: white;
+}
+
+/* Settings icon - slightly bigger than default */
+.track-settings-btn .settings-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .add-track-container {
   padding: 16px;
   display: flex;
@@ -262,23 +311,29 @@
   border-bottom: 1px solid var(--timeline-border);
 }
 
-.btn-add-track {
-  background: transparent;
-  color: #6c757d;
-  border: 1px solid var(--timeline-border);
+.add-track-btn {
+  background: rgba(91, 192, 235, 0.1);
+  color: #5bc0eb;
+  border: 2px dashed #5bc0eb;
   font-size: 12px;
-  padding: 6px 12px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.btn-add-track:hover {
-  background: #e9ecef;
-  color: #495057;
+.add-track-btn:hover {
+  background: rgba(91, 192, 235, 0.2);
+  transform: translateY(-1px);
 }
 
-/* Grid Area - FIXED WIDTH */
+/* Grid Area - Fixed width container */
 .timeline-grid-area {
+  flex: 1; /* Take remaining space after sidebar */
+  overflow-x: hidden; /* No horizontal scroll */
+  overflow-y: hidden; /* No vertical scroll */
   position: relative;
-  /* Width is set dynamically in the component */
 }
 
 /* Beat Header */
@@ -289,12 +344,31 @@
   border-bottom: 1px solid var(--timeline-border);
   z-index: 10;
   height: var(--header-height);
+  position: relative;
 }
 
 .measure-row,
 .beat-row {
   display: flex;
   height: 50%;
+  position: relative;
+}
+
+/* Header Divider Lines - positioned to match grid exactly */
+.header-divider {
+  position: absolute;
+  top: 50%; /* Start from middle of header (bottom of measure row) */
+  bottom: 0; /* Only extend through beat row */
+  width: 2px;
+  background: var(--beat-line-color);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.header-divider--measure {
+  width: 3px;
+  background: var(--measure-line-color);
+  z-index: 20; /* Higher z-index to appear on top of beat cells */
 }
 
 .measure-cell {
@@ -305,14 +379,10 @@
   font-size: 14px;
   color: #28a745;
   background: var(--downbeat-bg);
-  border-right: 2px solid var(--timeline-border);
+  /* Width calculated dynamically in JS based on BEAT_WIDTH */
+  /* Removed border-right - using positioned dividers instead */
 }
 
-.measure-cell:last-child {
-  border-right: none;
-}
-
-/* NEW: Disabled measure cells */
 .measure-cell--disabled {
   color: var(--disabled-text);
   background: var(--disabled-bg);
@@ -328,8 +398,9 @@
   justify-content: center;
   font-size: 10px;
   color: #6c757d;
-  border-right: 1px solid var(--beat-line-color);
   transition: background-color var(--transition-fast);
+  /* Width calculated dynamically in JS based on BEAT_WIDTH */
+  /* Removed border-right - using positioned dividers instead */
 }
 
 .beat-cell--downbeat {
@@ -337,15 +408,16 @@
   font-weight: 600;
 }
 
-/* NEW: Disabled beat cells */
 .beat-cell--disabled {
   color: var(--disabled-text);
   background: var(--disabled-bg);
 }
 
-/* Track Grid */
+/* Track Grid - Fixed width using CSS variable */
 .track-grid {
   position: relative;
+  width: var(--grid-width);
+  min-width: var(--grid-width); /* Never shrink */
   min-height: calc(100% - var(--header-height));
 }
 
@@ -370,7 +442,7 @@
   background: rgba(248, 249, 250, 0.5);
 }
 
-/* Beat Lines - All subdivisions */
+/* Beat Lines */
 .beat-line {
   position: absolute;
   top: 0;
@@ -391,7 +463,6 @@
   opacity: 1;
 }
 
-/* NEW: Subdivision lines */
 .beat-line--eighth {
   width: 1px;
   background: #dee2e6;
@@ -400,17 +471,16 @@
 
 .beat-line--sixteenth {
   width: 1px;
-  background: #f1f3f4;
-  opacity: 0.5;
+  background: #e9ecef;
+  opacity: 0.7;
 }
 
-/* NEW: Disabled beat lines */
 .beat-line--disabled {
   background: var(--disabled-border);
   opacity: 0.3;
 }
 
-/* NEW: Disabled measures overlay */
+/* Disabled measures overlay */
 .disabled-measures-overlay {
   position: absolute;
   top: 0;
@@ -453,6 +523,14 @@
   transition: none;
 }
 
+.timeline-note--ghost {
+  background: #6c757d !important;
+  opacity: 0.4;
+  pointer-events: none;
+  border: 2px solid rgba(108, 117, 125, 0.3) !important;
+  transition: none;
+}
+
 /* Playhead */
 .playhead {
   position: absolute;
@@ -490,49 +568,10 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .timeline-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .controls-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .bpm-control {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .track-sidebar {
-    width: 100px;
-  }
-
-  .track-name {
-    font-size: 12px;
-  }
-
-  /* Adjust fixed width for mobile */
-  .pattern-timeline {
-    width: 100% !important;
-    max-width: 100vw;
-    margin: 0;
-  }
-
-  .timeline-grid-area {
-    width: calc(100vw - 100px) !important;
-    overflow-x: auto;
-  }
-}
-
 /* Focus states for accessibility */
-.btn:focus,
+.transport-btn:focus,
 .snap-checkbox:focus,
-.bpm-slider:focus {
+.bmp-slider:focus {
   outline: 2px solid var(--playhead-color);
   outline-offset: 2px;
 }
@@ -549,11 +588,63 @@
   }
 }
 
-/* Ghost Note Styling */
-.timeline-note--ghost {
-  background: #6c757d !important; /* Bootstrap gray */
-  opacity: 0.4;
-  pointer-events: none; /* Don't interfere with mouse events */
-  border: 2px solid rgba(108, 117, 125, 0.3) !important; /* Subtle border */
-  transition: none; /* No transitions for smooth following */
+/* Measure Controls - Mockup Style */
+.measure-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.measure-label {
+  color: var(--text-muted, #adb5bd);
+  font-weight: bold;
+  font-size: 14px;
+  margin: 0;
+}
+
+.measure-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #dee2e6);
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+  transition: all 0.15s ease;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.measure-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.measure-btn:active {
+  background: #e9ecef;
+}
+
+.measure-btn:disabled {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.measure-count {
+  background: var(--text-secondary, #6c757d);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

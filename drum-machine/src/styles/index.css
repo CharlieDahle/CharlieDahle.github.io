@@ -1,7 +1,5 @@
-/* Global CSS Variables and Styles */
-
 :root {
-  --background-color: #fffaf0; /* Floral White - matches ShapeStack */
+  --background-color: #fffaf0;
   --text-color: #333;
   --card-background: #ffffff;
   --border-color: #dee2e6;
@@ -9,9 +7,22 @@
 
 body {
   background-color: var(--background-color);
+  min-width: 1200px; /* Updated to match mockup */
 }
 
-.drum-machine-container {
-  background-color: var(--background-color);
-  min-height: 100vh;
+.floating-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  width: 1160px; /* Updated: was 1200px, now matches mockup proportions */
+  margin: 0px auto;
+}
+
+.drum-machine-layout {
+  width: 1200px; /* Updated: was 1400px, now matches mockup container */
+  margin: 0 auto;
+  padding: 20px; /* Updated: was 24px, now matches mockup */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }

@@ -56,18 +56,9 @@ function TrackLabel({ track }) {
       <span className="track-name">{getDisplayName()}</span>
 
       {showControls && (
-        <div className="ms-auto d-flex gap-1">
+        <div className="track-controls">
           <button
-            className="btn btn-sm btn-outline-secondary"
-            style={{
-              fontSize: "12px",
-              width: "24px",
-              height: "24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0",
-            }}
+            className="track-settings-btn"
             onClick={() => openSoundModal(track)}
             title="Change sound"
           >
@@ -121,24 +112,20 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const [hasDragged, setHasDragged] = useState(false);
 
   // Ghost note state
-  const [ghostNote, setGhostNote] = useState(null); // { trackId, tick, position }
+  const [ghostNote, setGhostNote] = useState(null);
 
-  // FIXED WIDTH CALCULATIONS
-  const MEASURES_PER_PAGE = 4; // Always show 4 measures
+  const MEASURES_PER_PAGE = 4;
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
-  const PIXELS_PER_TICK = 0.15;
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // 48px per beat
-  const FIXED_GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 768px total grid
-  const SIDEBAR_WIDTH = 170; // From CSS
-  const TOTAL_WIDTH = SIDEBAR_WIDTH + FIXED_GRID_WIDTH; // 938px total
+  const PIXELS_PER_TICK = 0.128906; // UPDATED: was 0.134, now calculated for 990px grid
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // ~61.88px per beat (was ~64px)
+  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 990px total (was 1030px)
 
-  // Use fixed values instead of dynamic ones
-  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE; // Fixed to 16 beats
+  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE;
 
   // Helper function to get note height based on velocity
   const getNoteHeight = (velocity) => {
-    const baseHeight = 40; // From CSS --note-height
-    const heightPercentage = velocity / 4; // velocity 1-4 maps to 25%-100%
+    const baseHeight = 40;
+    const heightPercentage = velocity / 4;
     return baseHeight * heightPercentage;
   };
 
@@ -146,7 +133,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const getNoteTop = (velocity) => {
     const baseHeight = 40;
     const actualHeight = getNoteHeight(velocity);
-    const baseTop = 10; // From CSS --note-margin
+    const baseTop = 10;
     return baseTop + (baseHeight - actualHeight) / 2;
   };
 
@@ -156,13 +143,11 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    // Convert click position to tick with snap offset adjustment
-    const SNAP_OFFSET_PIXELS = -12; // Adjust this value to align with grid lines (negative to shift left)
-    const adjustedX = x + SNAP_OFFSET_PIXELS;
-    const clickTick = adjustedX / PIXELS_PER_TICK;
+    // Convert click position to tick
+    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
 
     // Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK;
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = clickTick - noteWidthInTicks / 2;
 
     // Apply snap-to-grid logic
@@ -195,12 +180,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   // Handle mouse enter track
   const handleTrackMouseEnter = (e, trackId) => {
-    // Only show ghost in free placement mode (not during drag)
     if (isDragging) return;
 
     const ghostData = calculateGhostNote(e, trackId);
 
-    // Only show ghost if it's valid (not in disabled measure, not over existing note)
     if (!ghostData.isInDisabledMeasure && !ghostData.hasExistingNote) {
       setGhostNote(ghostData);
     }
@@ -208,20 +191,16 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   // Handle mouse move on track
   const handleTrackMouseMove = (e, trackId) => {
-    // Only update ghost in free placement mode
     if (isDragging) return;
 
-    // Check if we're hovering over a real note
     const target = e.target;
     if (target.classList.contains("timeline-note")) {
-      // Hide ghost when hovering over a real note
       setGhostNote(null);
       return;
     }
 
     const ghostData = calculateGhostNote(e, trackId);
 
-    // Only show ghost if it's valid
     if (!ghostData.isInDisabledMeasure && !ghostData.hasExistingNote) {
       setGhostNote(ghostData);
     } else {
@@ -244,14 +223,12 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   // Handle pattern changes
   const handlePatternChange = (change) => {
-    // Check if track still exists
     const trackExists = tracks.some((track) => track.id === change.trackId);
     if (!trackExists) {
       console.warn("Pattern change for non-existent track:", change.trackId);
       return;
     }
 
-    // Update store directly
     switch (change.type) {
       case "add-note":
         addNote(change.trackId, change.tick, change.velocity);
@@ -272,7 +249,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         console.warn("Unknown pattern change type:", change.type);
     }
 
-    // Send to server
     sendPatternChange(change);
   };
 
@@ -284,7 +260,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   // Handle measure changes
   const handleMeasureChange = (newMeasureCount) => {
-    // Just notify server for sync - store is already updated by button handlers
     sendMeasureCountChange(newMeasureCount);
   };
 
@@ -309,16 +284,12 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    // Convert click position to tick with same snap offset as ghost note
-    const SNAP_OFFSET_PIXELS = -12; // Same offset as ghost note calculation (negative to shift left)
-    const adjustedX = x + SNAP_OFFSET_PIXELS;
-    const clickTick = adjustedX / PIXELS_PER_TICK;
+    // Convert click position to tick
+    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
 
-    // STEP 1: Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = clickTick - noteWidthInTicks / 2;
 
-    // STEP 2: Apply snap-to-grid on the centered position
     let snappedTick;
     if (snapToGrid) {
       const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
@@ -341,7 +312,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         type: "add-note",
         trackId,
         tick: clampedTick,
-        velocity: 4, // Default to max velocity
+        velocity: 4,
       });
     }
   };
@@ -349,10 +320,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Handle note dragging start
   const handleNoteMouseDown = (e, trackId, tick) => {
     e.stopPropagation();
-
-    // Clear ghost note when starting to drag
     setGhostNote(null);
-
     setIsDragging(true);
     setHasDragged(false);
     setDraggedNote({
@@ -371,14 +339,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const rect = gridRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
 
-    // Convert position to tick (now cursor will be centered on note)
     const dragTick = x / PIXELS_PER_TICK;
-
-    // STEP 1: Center the note (subtract half note width in ticks)
-    const noteWidthInTicks = 24 / PIXELS_PER_TICK; // 24px converted to ticks
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK; // UPDATED: 32px (eighth note width)
     const centeredTick = dragTick - noteWidthInTicks / 2;
 
-    // STEP 2: Apply snap-to-grid on the centered position
     let snappedTick;
     if (snapToGrid) {
       const eighthNoteIndex = Math.round(centeredTick / (TICKS_PER_BEAT / 2));
@@ -409,19 +373,16 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     setIsDragging(false);
     setDraggedNote(null);
     setTimeout(() => setHasDragged(false), 10);
-
-    // Ghost note will reappear naturally on next mouse move
   };
 
-  // Handle note click (delete if not dragged, velocity change if Ctrl+click)
+  // Handle note click
   const handleNoteClick = (e, trackId, tick) => {
     e.stopPropagation();
     if (!hasDragged) {
       if (e.ctrlKey || e.metaKey) {
-        // Ctrl+click: cycle velocity down from max
         const currentNote = getNoteAt(trackId, tick);
         const currentVelocity = currentNote ? currentNote.velocity : 4;
-        const nextVelocity = currentVelocity === 1 ? 4 : currentVelocity - 1; // Cycle 4→3→2→1→4
+        const nextVelocity = currentVelocity === 1 ? 4 : currentVelocity - 1;
 
         handlePatternChange({
           type: "update-note-velocity",
@@ -430,7 +391,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           velocity: nextVelocity,
         });
       } else {
-        // Regular click: delete note
         handlePatternChange({
           type: "remove-note",
           trackId,
@@ -463,59 +423,58 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   const TRACK_HEIGHT = 60;
 
   return (
-    <div className="pattern-timeline" style={{ width: `${TOTAL_WIDTH}px` }}>
+    <div className="floating-card pattern-timeline">
       {/* Transport Controls Bar */}
       <div className="timeline-controls">
         <div className="controls-section">
-          {/* Transport Controls */}
+          {/* Transport Controls - UPDATED: using renamed CSS classes */}
           <div className="transport-controls">
             <button
-              className={`btn btn-transport ${
-                isPlaying ? "btn-pause" : "btn-play"
+              className={`transport-btn ${
+                isPlaying ? "transport-btn--pause" : "transport-btn--play"
               }`}
               onClick={isPlaying ? onPause : onPlay}
             >
               {isPlaying ? "⏸ Pause" : "▶ Play"}
             </button>
-            <button className="btn btn-transport btn-stop" onClick={onStop}>
+            <button
+              className="transport-btn transport-btn--stop"
+              onClick={onStop}
+            >
               ⏹ Stop
             </button>
-            <button className="btn btn-transport btn-loop">Loop</button>
+            <button className="transport-btn transport-btn--loop">Loop</button>
           </div>
 
           {/* Measure Controls */}
-          <div className="measure-controls d-flex align-items-center gap-2">
-            <span className="text-muted fw-bold">Measures:</span>
+          <div className="measure-controls">
+            <span className="measure-label">Measures:</span>
 
-            {/* Subtract button - only show if more than 1 measure */}
-            {measureCount > 1 && (
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  removeMeasure();
-                  handleMeasureChange(measureCount - 1);
-                }}
-                title="Remove measure"
-              >
-                −
-              </button>
-            )}
+            <button
+              className="measure-btn"
+              disabled={measureCount <= 1}
+              onClick={() => {
+                removeMeasure();
+                handleMeasureChange(measureCount - 1);
+              }}
+              title="Remove measure"
+            >
+              −
+            </button>
 
-            <span className="badge bg-secondary">{measureCount}</span>
+            <span className="measure-count">{measureCount}</span>
 
-            {/* Add button - only show if less than 4 measures */}
-            {measureCount < 4 && (
-              <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                  addMeasure();
-                  handleMeasureChange(measureCount + 1);
-                }}
-                title="Add measure"
-              >
-                +
-              </button>
-            )}
+            <button
+              className="measure-btn"
+              disabled={measureCount >= 4}
+              onClick={() => {
+                addMeasure();
+                handleMeasureChange(measureCount + 1);
+              }}
+              title="Add measure"
+            >
+              +
+            </button>
           </div>
         </div>
 
@@ -535,24 +494,24 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           </div>
 
           {/* BPM Control */}
-          <div className="bmp-control">
-            <label className="bmp-label">BPM</label>
+          <div className="bpm-control">
+            <label className="bpm-label">BPM</label>
             <input
               type="range"
-              className="bmp-slider"
+              className="bpm-slider"
               min="60"
               max="300"
               value={bpm}
               onChange={(e) => handleBpmChange(parseInt(e.target.value))}
             />
-            <span className="bmp-value">{bpm}</span>
+            <span className="bpm-value">{bpm}</span>
           </div>
         </div>
       </div>
 
-      {/* Grid Container - Fixed width, no scrolling */}
+      {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">
-        {/* Track Labels Sidebar */}
+        {/* Track Labels Sidebar - Fixed width */}
         <div className="track-sidebar">
           <div className="sidebar-header">TRACKS</div>
 
@@ -561,20 +520,38 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           ))}
 
           <div className="add-track-container">
-            <button className="btn btn-add-track" onClick={handleAddTrack}>
+            <button className="add-track-btn" onClick={handleAddTrack}>
               + Add Track
             </button>
           </div>
         </div>
 
-        {/* Grid Area - Fixed width */}
-        <div
-          className="timeline-grid-area"
-          style={{ width: `${FIXED_GRID_WIDTH}px` }}
-        >
+        {/* Grid Area - Flexible with scroll */}
+        <div className="timeline-grid-area">
           {/* Beat Header */}
           <div className="beat-header">
-            {/* Measure Numbers - Always show 4 measures */}
+            {/* Positioned Divider Lines - match grid exactly */}
+            {Array.from({ length: BEATS_PER_PAGE }, (_, i) => {
+              const tickPosition = (i + 1) * TICKS_PER_BEAT; // Position at end of each beat
+              const measureIndex = Math.floor(i / 4);
+              const isDisabled = measureIndex >= measureCount;
+
+              // Only show dividers that aren't at the very end
+              if (i < BEATS_PER_PAGE - 1 && !isDisabled) {
+                return (
+                  <div
+                    key={`header-divider-${i}`}
+                    className={`header-divider ${
+                      (i + 1) % 4 === 0 ? "header-divider--measure" : ""
+                    }`}
+                    style={{ left: `${tickPosition * PIXELS_PER_TICK}px` }}
+                  />
+                );
+              }
+              return null;
+            })}
+
+            {/* Measure Numbers */}
             <div className="measure-row">
               {Array.from({ length: MEASURES_PER_PAGE }, (_, i) => (
                 <div
@@ -589,7 +566,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               ))}
             </div>
 
-            {/* Beat Numbers - Always show 16 beats */}
+            {/* Beat Numbers */}
             <div className="beat-row">
               {Array.from({ length: BEATS_PER_PAGE }, (_, i) => (
                 <div
@@ -609,12 +586,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
             </div>
           </div>
 
-          {/* Track Grid */}
-          <div
-            ref={gridRef}
-            className="track-grid"
-            style={{ width: `${FIXED_GRID_WIDTH}px` }}
-          >
+          {/* Track Grid - Fixed width */}
+          <div ref={gridRef} className="track-grid">
             {/* Track Lanes */}
             {tracks.map((track, trackIndex) => (
               <div
@@ -627,29 +600,25 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                 onMouseMove={(e) => handleTrackMouseMove(e, track.id)}
                 onMouseLeave={handleTrackMouseLeave}
               >
-                {/* Subdivision lines - 16th, 8th, and quarter notes */}
+                {/* Subdivision lines */}
                 {Array.from(
-                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 4) + 1 },
+                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 2) + 1 }, // UPDATED: Only eighth note divisions
                   (_, subdivisionIndex) => {
                     const tickPosition =
-                      subdivisionIndex * (TICKS_PER_BEAT / 4); // Every 16th note
+                      subdivisionIndex * (TICKS_PER_BEAT / 2); // UPDATED: Eighth note intervals
                     const beatPosition = tickPosition / TICKS_PER_BEAT;
                     const measureIndex = Math.floor(beatPosition / 4);
 
-                    // Determine line type
+                    // Determine line type - only beat, measure, and eighth
                     let lineType;
                     if (tickPosition % TICKS_PER_BEAT === 0) {
-                      // Quarter note (beat)
                       lineType =
                         beatPosition % 4 === 0
                           ? "beat-line--measure"
                           : "beat-line--beat";
-                    } else if (tickPosition % (TICKS_PER_BEAT / 2) === 0) {
-                      // 8th note
-                      lineType = "beat-line--eighth";
                     } else {
-                      // 16th note
-                      lineType = "beat-line--sixteenth";
+                      // All remaining lines are eighth notes
+                      lineType = "beat-line--eighth";
                     }
 
                     return (
@@ -681,7 +650,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
                 {/* Real Notes */}
                 {pattern[track.id]?.map((noteData) => {
-                  // Handle both old format (numbers) and new format (objects)
                   const note =
                     typeof noteData === "number"
                       ? { tick: noteData, velocity: 4 }
@@ -723,7 +691,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
                     className="timeline-note timeline-note--ghost"
                     style={{
                       left: `${ghostNote.position}px`,
-                      height: `${getNoteHeight(4)}px`, // Default velocity for ghost
+                      height: `${getNoteHeight(4)}px`,
                       top: `${getNoteTop(4)}px`,
                     }}
                   />

@@ -66,37 +66,33 @@ function DrumMachineApp() {
 
   // Room management handlers
   const handleCreateRoom = async () => {
-    try {
-      const roomState = await createRoom();
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
-    } catch (error) {
-      console.error("Failed to create room:", error);
+    // Only handle the success case - let errors bubble up to RoomInterface
+    const roomState = await createRoom();
+    // Sync all stores with room state
+    setPattern(roomState.pattern);
+    syncBpm(roomState.bpm);
+    if (roomState.measureCount) {
+      syncMeasureCount(roomState.measureCount);
     }
+    if (roomState.tracks) {
+      setTracks(roomState.tracks);
+    }
+    return roomState;
   };
 
   const handleJoinRoom = async (targetRoomId) => {
-    try {
-      const roomState = await joinRoom(targetRoomId);
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
-    } catch (error) {
-      console.error("Failed to join room:", error);
+    // Only handle the success case - let errors bubble up to RoomInterface
+    const roomState = await joinRoom(targetRoomId);
+    // Sync all stores with room state
+    setPattern(roomState.pattern);
+    syncBpm(roomState.bpm);
+    if (roomState.measureCount) {
+      syncMeasureCount(roomState.measureCount);
     }
+    if (roomState.tracks) {
+      setTracks(roomState.tracks);
+    }
+    return roomState;
   };
 
   // If not connected or not in room, show connection interface
@@ -112,24 +108,16 @@ function DrumMachineApp() {
           transition={pageTransition}
           style={{
             width: "100%",
-            minHeight: "100vh",
+            height: "100vh", // Changed from minHeight
           }}
         >
-          <div
-            className="container-fluid py-4"
-            style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
-          >
-            {error && (
-              <div className="alert alert-danger text-center" role="alert">
-                {error}
-              </div>
-            )}
-            <RoomInterface
-              onCreateRoom={handleCreateRoom}
-              onJoinRoom={handleJoinRoom}
-              isConnected={isConnected}
-            />
-          </div>
+          {/* Remove container-fluid and padding */}
+          <RoomInterface
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            isConnected={isConnected}
+            error={error}
+          />
         </motion.div>
       </AnimatePresence>
     );

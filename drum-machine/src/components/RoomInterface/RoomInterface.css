@@ -1,0 +1,368 @@
+:root {
+  --primary-blue: #5bc0eb;
+  --success-green: #28a745;
+  --danger-red: #dc3545;
+  --text-primary: #333;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  --border-color: #dee2e6;
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --transition: 0.15s ease;
+}
+
+/* Base Layout */
+.room-interface {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.room-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+}
+
+.room-content {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Background Blobs */
+.background-blobs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.background-blob {
+  position: absolute;
+  opacity: 0.5;
+  animation: float infinite ease-in-out;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -30px) rotate(120deg);
+  }
+  66% {
+    transform: translate(-20px, 20px) rotate(240deg);
+  }
+}
+
+/* Connection Status */
+.connection-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.connection-status.connected {
+  background: rgba(40, 167, 69, 0.9);
+  color: white;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.connection-status.disconnected {
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Card Component */
+.room-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+}
+
+.room-card__header {
+  background: white;
+  padding: 32px 48px 24px;
+  text-align: center;
+}
+
+.room-card__body {
+  padding: 40px 48px;
+}
+
+.room-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Action Sections */
+.action-section {
+  margin-bottom: 32px;
+}
+
+.action-section:last-child {
+  margin-bottom: 0;
+}
+
+.action-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.action-icon--create {
+  background: var(--primary-blue);
+}
+
+.action-icon--join {
+  background: #9bc53d;
+}
+
+.action-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.action-description {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.room-btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.room-btn--primary {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.room-btn--primary:hover:not(:disabled) {
+  background: #4ba8cc;
+}
+
+.room-btn--secondary {
+  background: #9bc53d;
+  color: white;
+}
+
+.room-btn--secondary:hover:not(:disabled) {
+  background: #88a834;
+}
+
+.room-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Form Elements */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.room-input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  background: rgba(248, 249, 250, 0.5);
+  color: var(--text-primary);
+  transition: all var(--transition);
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.room-input::placeholder {
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: none;
+}
+
+.room-input:focus {
+  outline: none;
+  border-color: #9bc53d;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(155, 197, 61, 0.1);
+}
+
+/* Messages */
+.message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.message--error {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid var(--danger-red);
+  color: var(--danger-red);
+}
+
+/* Divider */
+.section-divider {
+  position: relative;
+  text-align: center;
+  margin: 32px 0;
+}
+
+.section-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.divider-text {
+  background: white;
+  padding: 0 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .room-layout {
+    padding: 16px;
+  }
+
+  .room-card__header {
+    padding: 24px 32px 20px;
+  }
+
+  .room-card__body {
+    padding: 32px 24px;
+  }
+
+  .room-title {
+    font-size: 28px;
+  }
+
+  .action-title {
+    font-size: 20px;
+  }
+
+  .action-description {
+    font-size: 14px;
+  }
+
+  .action-header {
+    gap: 12px;
+  }
+
+  .action-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .connection-status {
+    top: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-section {
+    margin-bottom: 24px;
+  }
+
+  .action-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .action-icon {
+    margin-top: 0;
+  }
+}

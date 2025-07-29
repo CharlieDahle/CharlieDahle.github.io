@@ -1,4 +1,5 @@
 import React from "react";
+import "./TransportControls.css";
 
 function TransportControls({
   isPlaying,
@@ -18,48 +19,48 @@ function TransportControls({
   const progress = (currentTick / TOTAL_TICKS) * 100;
 
   return (
-    <div className="bg-light py-3 px-4 border-bottom d-flex justify-content-between align-items-center mb-4">
-      <div className="transport-controls d-flex gap-3">
-        <button
-          className={`btn ${isPlaying ? "btn-warning" : "btn-success"}`}
-          onClick={isPlaying ? onPause : onPlay}
-        >
-          {isPlaying ? <>⏸ Pause</> : <>▶ Play</>}
-        </button>
-        <button className="btn btn-danger" onClick={onStop}>
-          ⏹ Stop
-        </button>
-        <button
-          className="btn btn-warning"
-          // Loop functionality to be added later
-          onClick={() => console.log("Loop clicked - not implemented yet")}
-        >
-          Loop
-        </button>
+    <div className="transport-container">
+      {/* Transport Controls */}
+      <div className="transport-left">
+        <div className="transport-controls">
+          <button
+            className="transport-btn transport-btn--play-pause"
+            onClick={isPlaying ? onPause : onPlay}
+          >
+            {isPlaying ? "⏸ Pause" : "▶ Play"}
+          </button>
+          <button
+            className="transport-btn transport-btn--stop"
+            onClick={onStop}
+          >
+            ⏹ Stop
+          </button>
+          <button className="transport-btn transport-btn--loop">Loop</button>
+        </div>
       </div>
 
-      {/* Position Display - We'll keep this for now */}
-      <div className="d-flex align-items-center">
-        <div className="d-flex align-items-center me-4">
-          <span className="badge bg-info me-2">
+      {/* Position Display and BPM */}
+      <div className="transport-right">
+        <div className="position-display">
+          <span className="transport-badge transport-badge--beat">
             Beat: {currentBeat}/{BEATS_PER_LOOP}
           </span>
-          <span className="badge bg-secondary">Tick: {currentTick}</span>
+          <span className="transport-badge transport-badge--tick">
+            Tick: {currentTick}
+          </span>
         </div>
 
-        {/* BPM Control */}
-        <div className="bpm-control d-flex align-items-center gap-2">
-          <span className="text-secondary fw-bold">BPM</span>
+        <div className="bpm-controls">
+          <span className="bpm-label">BPM</span>
           <input
             type="range"
-            className="form-range me-2"
-            style={{ width: "120px" }}
+            className="bpm-slider"
             min="60"
             max="300"
             value={bpm}
             onChange={(e) => onBpmChange(parseInt(e.target.value))}
           />
-          <span className="badge bg-primary">{bpm}</span>
+          <span className="transport-badge transport-badge--bpm">{bpm}</span>
         </div>
       </div>
     </div>

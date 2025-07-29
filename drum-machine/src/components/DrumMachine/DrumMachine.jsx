@@ -5,6 +5,7 @@ import { useTransportStore } from "../../stores/useTransportStore";
 import { useWebSocketStore } from "../../stores/useWebSocketStore";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
+import RoomHeader from "../RoomHeader/RoomHeader";
 
 function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
   // Get all state from stores directly
@@ -37,6 +38,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     sendRemoveTrack,
     sendUpdateTrackSound,
     sendTransportCommand,
+    leaveRoom, // UPDATED: Use leaveRoom instead of cleanup
   } = useWebSocketStore();
 
   // Scheduler instance
@@ -264,51 +266,35 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
   };
 
   return (
-    <div
-      className="container-fluid py-4"
-      style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}
-    >
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col">
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h2 className="mb-1 fw-bold">Drum Machine</h2>
-              <small className="text-muted">Room: {roomId}</small>
-            </div>
-            <div>
-              <span className="badge bg-success me-2 fs-6">
-                {userCount} user{userCount !== 1 ? "s" : ""} online
-              </span>
-              <span className="badge bg-success fs-6">Connected</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="drum-machine-layout">
+      <RoomHeader
+        roomId={roomId}
+        userCount={userCount}
+        onLeaveRoom={() => {
+          // Leave the room but keep WebSocket connection alive
+          leaveRoom();
+          // This will set isInRoom to false, triggering transition back to RoomInterface
+        }}
+      />
 
-      {/* Pattern Timeline */}
-      <div className="row">
-        <div className="col">
-          <PatternTimeline
-            onPatternChange={handlePatternChange}
-            onBpmChange={handleBpmChange}
-            onAddTrack={handleAddTrack}
-            onRemoveTrack={handleRemoveTrack}
-            onUpdateTrackSound={handleUpdateTrackSound}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onStop={handleStop}
-            onAddMeasure={() => {
-              addMeasure();
-              handleMeasureChange(measureCount + 1);
-            }}
-            onRemoveMeasure={() => {
-              removeMeasure();
-              handleMeasureChange(Math.max(1, measureCount - 1));
-            }}
-          />
-        </div>
-      </div>
+      <PatternTimeline
+        onPatternChange={handlePatternChange}
+        onBpmChange={handleBpmChange}
+        onAddTrack={handleAddTrack}
+        onRemoveTrack={handleRemoveTrack}
+        onUpdateTrackSound={handleUpdateTrackSound}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onStop={handleStop}
+        onAddMeasure={() => {
+          addMeasure();
+          handleMeasureChange(measureCount + 1);
+        }}
+        onRemoveMeasure={() => {
+          removeMeasure();
+          handleMeasureChange(Math.max(1, measureCount - 1));
+        }}
+      />
     </div>
   );
 }
