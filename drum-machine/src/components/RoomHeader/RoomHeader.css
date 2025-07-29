@@ -3,6 +3,13 @@
   padding: 24px 32px;
 }
 
+/* Header Content Layout - replaces Bootstrap d-flex utilities */
+.room-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* Title Section - matching mockup typography */
 .title-section h1.room-title {
   font-size: 28px;

@@ -1,9 +1,56 @@
-/* Transport Controls - Mockup Style (Bootstrap-safe class names) */
+/* Transport Controls Container - replaces Bootstrap utilities */
+.transport-container {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Left Section - Transport Buttons */
+.transport-left {
+  display: flex;
+  align-items: center;
+}
+
 .transport-controls {
   display: flex;
   gap: 8px;
 }
 
+/* Right Section - Position and BPM */
+.transport-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Position Display */
+.position-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* BPM Controls */
+.bpm-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bmp-label {
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.bpm-slider {
+  width: 120px;
+}
+
+/* Transport Buttons - Mockup Style */
 .transport-btn {
   border: none;
   border-radius: 12px;
@@ -25,14 +72,10 @@
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.transport-btn:active {
-  transform: translateY(0);
-}
-
-/* Play/Pause Button - consistent width */
+/* Play/Pause Button */
 .transport-btn--play-pause {
   background: #28a745;
-  min-width: 80px; /* Fixed width to prevent movement */
+  min-width: 80px;
 }
 
 .transport-btn--play-pause:hover {
@@ -48,11 +91,32 @@
   background: #c82333;
 }
 
-/* Loop Button - keep purple as requested */
+/* Loop Button */
 .transport-btn--loop {
   background: #6f42c1;
 }
 
 .transport-btn--loop:hover {
   background: #5a32a3;
+}
+
+/* Transport Badges - replaces Bootstrap badges */
+.transport-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.transport-badge--beat {
+  background: #17a2b8;
+}
+
+.transport-badge--tick {
+  background: #6c757d;
+}
+
+.transport-badge--bpm {
+  background: #007bff;
 }

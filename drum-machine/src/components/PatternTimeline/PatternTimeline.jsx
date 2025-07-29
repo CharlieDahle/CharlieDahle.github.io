@@ -56,22 +56,13 @@ function TrackLabel({ track }) {
       <span className="track-name">{getDisplayName()}</span>
 
       {showControls && (
-        <div className="ms-auto d-flex gap-1">
+        <div className="track-controls">
           <button
-            className="btn btn-sm btn-outline-secondary"
-            style={{
-              fontSize: "12px",
-              width: "24px",
-              height: "24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0",
-            }}
+            className="track-settings-btn"
             onClick={() => openSoundModal(track)}
             title="Change sound"
           >
-            <Settings size={16} />
+            <Settings size={18} className="settings-icon" />
           </button>
         </div>
       )}

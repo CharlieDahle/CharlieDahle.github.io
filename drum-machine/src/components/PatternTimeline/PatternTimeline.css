@@ -271,6 +271,39 @@
   font-size: 14px;
 }
 
+/* Track Controls - replaces Bootstrap classes */
+.track-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.track-settings-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.15s ease;
+}
+
+.track-settings-btn:hover {
+  background: #495057;
+  color: white;
+}
+
+/* Settings icon - slightly bigger than default */
+.track-settings-btn .settings-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .add-track-container {
   padding: 16px;
   display: flex;
