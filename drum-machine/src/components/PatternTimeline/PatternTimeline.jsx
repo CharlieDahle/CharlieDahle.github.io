@@ -534,10 +534,18 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
             {Array.from({ length: BEATS_PER_PAGE }, (_, i) => {
               const tickPosition = (i + 1) * TICKS_PER_BEAT; // Position at end of each beat
               const measureIndex = Math.floor(i / 4);
-              const isDisabled = measureIndex >= measureCount;
+              const nextMeasureIndex = Math.floor((i + 1) / 4);
 
-              // Only show dividers that aren't at the very end
-              if (i < BEATS_PER_PAGE - 1 && !isDisabled) {
+              // Don't show dividers if the current beat or next beat is disabled
+              const isCurrentDisabled = measureIndex >= measureCount;
+              const isNextDisabled = nextMeasureIndex >= measureCount;
+
+              // Only show dividers that aren't at the very end and aren't in disabled areas
+              if (
+                i < BEATS_PER_PAGE - 1 &&
+                !isCurrentDisabled &&
+                !isNextDisabled
+              ) {
                 return (
                   <div
                     key={`header-divider-${i}`}
