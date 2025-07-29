@@ -62,7 +62,7 @@ function TrackLabel({ track }) {
             onClick={() => openSoundModal(track)}
             title="Change sound"
           >
-            <Settings size={18} className="settings-icon" />
+            <Settings size={16} />
           </button>
         </div>
       )}
@@ -530,6 +530,27 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         <div className="timeline-grid-area">
           {/* Beat Header */}
           <div className="beat-header">
+            {/* Positioned Divider Lines - match grid exactly */}
+            {Array.from({ length: BEATS_PER_PAGE }, (_, i) => {
+              const tickPosition = (i + 1) * TICKS_PER_BEAT; // Position at end of each beat
+              const measureIndex = Math.floor(i / 4);
+              const isDisabled = measureIndex >= measureCount;
+
+              // Only show dividers that aren't at the very end
+              if (i < BEATS_PER_PAGE - 1 && !isDisabled) {
+                return (
+                  <div
+                    key={`header-divider-${i}`}
+                    className={`header-divider ${
+                      (i + 1) % 4 === 0 ? "header-divider--measure" : ""
+                    }`}
+                    style={{ left: `${tickPosition * PIXELS_PER_TICK}px` }}
+                  />
+                );
+              }
+              return null;
+            })}
+
             {/* Measure Numbers */}
             <div className="measure-row">
               {Array.from({ length: MEASURES_PER_PAGE }, (_, i) => (

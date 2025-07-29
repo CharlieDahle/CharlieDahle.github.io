@@ -344,12 +344,31 @@
   border-bottom: 1px solid var(--timeline-border);
   z-index: 10;
   height: var(--header-height);
+  position: relative;
 }
 
 .measure-row,
 .beat-row {
   display: flex;
   height: 50%;
+  position: relative;
+}
+
+/* Header Divider Lines - positioned to match grid exactly */
+.header-divider {
+  position: absolute;
+  top: 50%; /* Start from middle of header (bottom of measure row) */
+  bottom: 0; /* Only extend through beat row */
+  width: 2px;
+  background: var(--beat-line-color);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.header-divider--measure {
+  width: 3px;
+  background: var(--measure-line-color);
+  z-index: 20; /* Higher z-index to appear on top of beat cells */
 }
 
 .measure-cell {
@@ -361,6 +380,7 @@
   color: #28a745;
   background: var(--downbeat-bg);
   /* Width calculated dynamically in JS based on BEAT_WIDTH */
+  /* Removed border-right - using positioned dividers instead */
 }
 
 .measure-cell--disabled {
@@ -380,6 +400,7 @@
   color: #6c757d;
   transition: background-color var(--transition-fast);
   /* Width calculated dynamically in JS based on BEAT_WIDTH */
+  /* Removed border-right - using positioned dividers instead */
 }
 
 .beat-cell--downbeat {
