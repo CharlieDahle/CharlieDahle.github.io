@@ -1,8 +1,15 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import { useWebSocketStore } from "../../stores/useWebSocketStore";
 import "./RoomHeader.css";
 
 function RoomHeader({ roomId, userCount }) {
+  const { leaveRoom } = useWebSocketStore();
+
+  const handleLeaveRoom = () => {
+    leaveRoom();
+  };
+
   return (
     <div className="floating-card room-header-card">
       <div className="room-header-content">

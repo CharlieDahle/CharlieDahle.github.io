@@ -9,37 +9,23 @@ import RoomHeader from "../RoomHeader/RoomHeader";
 
 function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
   // Get all state from stores directly
-  const { pattern, addNote, removeNote, moveNote, clearTrack } =
-    usePatternStore();
-  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
+  const { pattern } = usePatternStore();
+  const { tracks } = useTrackStore();
   const {
     isPlaying,
     currentTick,
     bpm,
-    measureCount,
     play,
     pause,
     stop,
-    setBpm,
     setCurrentTick,
-    addMeasure,
-    removeMeasure,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
     getTotalTicks,
   } = useTransportStore();
 
-  // Get WebSocket methods
-  const {
-    sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
-    sendAddTrack,
-    sendRemoveTrack,
-    sendUpdateTrackSound,
-    sendTransportCommand,
-    leaveRoom, // UPDATED: Use leaveRoom instead of cleanup
-  } = useWebSocketStore();
+  // Get WebSocket methods for transport commands only
+  const { sendTransportCommand, leaveRoom } = useWebSocketStore();
 
   // Scheduler instance
   const schedulerRef = useRef(null);
@@ -136,72 +122,6 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     }
   }, [remoteTransportCommand, roomId, isPlaying, currentTick]);
 
-  // Handle pattern changes
-  const handlePatternChange = (change) => {
-    // Check if track still exists
-    const trackExists = tracks.some((track) => track.id === change.trackId);
-    if (!trackExists) {
-      console.warn("Pattern change for non-existent track:", change.trackId);
-      return;
-    }
-
-    // Update store directly
-    switch (change.type) {
-      case "add-note":
-        addNote(change.trackId, change.tick);
-        break;
-      case "remove-note":
-        removeNote(change.trackId, change.tick);
-        break;
-      case "move-note":
-        moveNote(change.trackId, change.fromTick, change.toTick);
-        break;
-      case "clear-track":
-        clearTrack(change.trackId);
-        break;
-      default:
-        console.warn("Unknown pattern change type:", change.type);
-    }
-
-    // Send to server
-    sendPatternChange(change);
-  };
-
-  // Handle BPM changes
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle measure changes
-  const handleMeasureChange = (newMeasureCount) => {
-    // Just notify server for sync - store is already updated by button handlers
-    sendMeasureCountChange(newMeasureCount);
-  };
-
-  // Handle track management
-  const handleAddTrack = () => {
-    const trackData = {
-      name: `Track ${tracks.length + 1}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      soundFile: null,
-      availableSounds: [], // Will be set by sound selector
-    };
-
-    const newTrack = addTrack(trackData);
-    sendAddTrack(newTrack);
-  };
-
-  const handleRemoveTrack = (trackId) => {
-    removeTrack(trackId);
-    sendRemoveTrack(trackId);
-  };
-
-  const handleUpdateTrackSound = (trackId, newSoundFile) => {
-    updateTrackSound(trackId, newSoundFile);
-    sendUpdateTrackSound(trackId, newSoundFile);
-  };
-
   // Transport control handlers
   const handlePlay = async () => {
     console.log("🎵 [" + roomId + "] LOCAL PLAY clicked - Current state:", {
@@ -278,22 +198,9 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
       />
 
       <PatternTimeline
-        onPatternChange={handlePatternChange}
-        onBpmChange={handleBpmChange}
-        onAddTrack={handleAddTrack}
-        onRemoveTrack={handleRemoveTrack}
-        onUpdateTrackSound={handleUpdateTrackSound}
         onPlay={handlePlay}
         onPause={handlePause}
         onStop={handleStop}
-        onAddMeasure={() => {
-          addMeasure();
-          handleMeasureChange(measureCount + 1);
-        }}
-        onRemoveMeasure={() => {
-          removeMeasure();
-          handleMeasureChange(Math.max(1, measureCount - 1));
-        }}
       />
     </div>
   );

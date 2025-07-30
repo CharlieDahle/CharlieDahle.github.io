@@ -100,6 +100,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     sendMeasureCountChange,
     sendAddTrack,
     sendRemoveTrack,
+    sendUpdateTrackSound,
   } = useWebSocketStore();
 
   // Get snap state from UI store
@@ -221,7 +222,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     }
   }, [currentTick, PIXELS_PER_TICK]);
 
-  // Handle pattern changes
+  // Handle pattern changes - now calls stores directly
   const handlePatternChange = (change) => {
     const trackExists = tracks.some((track) => track.id === change.trackId);
     if (!trackExists) {
@@ -229,6 +230,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
       return;
     }
 
+    // Update store directly
     switch (change.type) {
       case "add-note":
         addNote(change.trackId, change.tick, change.velocity);
@@ -249,21 +251,22 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         console.warn("Unknown pattern change type:", change.type);
     }
 
+    // Send to server
     sendPatternChange(change);
   };
 
-  // Handle BPM changes
+  // Handle BPM changes - now calls stores directly
   const handleBpmChange = (newBpm) => {
     setBpm(newBpm);
     sendBpmChange(newBpm);
   };
 
-  // Handle measure changes
+  // Handle measure changes - now calls stores directly
   const handleMeasureChange = (newMeasureCount) => {
     sendMeasureCountChange(newMeasureCount);
   };
 
-  // Handle track management
+  // Handle track management - now calls stores directly
   const handleAddTrack = () => {
     const trackData = {
       name: `Track ${tracks.length + 1}`,
@@ -274,6 +277,16 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
     const newTrack = addTrack(trackData);
     sendAddTrack(newTrack);
+  };
+
+  const handleRemoveTrack = (trackId) => {
+    removeTrack(trackId);
+    sendRemoveTrack(trackId);
+  };
+
+  const handleUpdateTrackSound = (trackId, newSoundFile) => {
+    updateTrackSound(trackId, newSoundFile);
+    sendUpdateTrackSound(trackId, newSoundFile);
   };
 
   // Handle track clicks for note placement
@@ -498,7 +511,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
             <label className="bpm-label">BPM</label>
             <input
               type="range"
-              className="bpm-slider"
+              className="bmp-slider"
               min="60"
               max="300"
               value={bpm}

@@ -88,7 +88,7 @@ function SoundSelectorModal({ drumSounds }) {
     playSound(soundFile);
   };
 
-  // Handle apply - use stores directly
+  // Handle apply - calls stores directly
   const handleApply = () => {
     if (selectedSound && soundModalTrack) {
       // Update store directly
