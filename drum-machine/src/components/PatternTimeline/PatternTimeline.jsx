@@ -5,6 +5,7 @@ import { usePatternStore } from "../../stores/usePatternStore";
 import { useTrackStore } from "../../stores/useTrackStore";
 import { useTransportStore } from "../../stores/useTransportStore";
 import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
@@ -70,7 +71,7 @@ function TrackLabel({ track }) {
   );
 }
 
-function PatternTimeline({ onPlay, onPause, onStop }) {
+function PatternTimeline() {
   // Get all state from stores
   const {
     pattern,
@@ -83,28 +84,22 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   } = usePatternStore();
   const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
   const {
-    bpm,
     currentTick,
     isPlaying,
     measureCount,
-    setBpm,
-    addMeasure,
-    removeMeasure,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
     getTotalTicks,
   } = useTransportStore();
   const {
     sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
     sendAddTrack,
     sendRemoveTrack,
     sendUpdateTrackSound,
   } = useWebSocketStore();
 
   // Get snap state from UI store
-  const { snapToGrid, setSnapToGrid } = useUIStore();
+  const { snapToGrid } = useUIStore();
 
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
@@ -253,17 +248,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
     // Send to server
     sendPatternChange(change);
-  };
-
-  // Handle BPM changes - now calls stores directly
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle measure changes - now calls stores directly
-  const handleMeasureChange = (newMeasureCount) => {
-    sendMeasureCountChange(newMeasureCount);
   };
 
   // Handle track management - now calls stores directly
@@ -437,90 +421,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   return (
     <div className="floating-card pattern-timeline">
-      {/* Transport Controls Bar */}
-      <div className="timeline-controls">
-        <div className="controls-section">
-          {/* Transport Controls - UPDATED: using renamed CSS classes */}
-          <div className="transport-controls">
-            <button
-              className={`transport-btn ${
-                isPlaying ? "transport-btn--pause" : "transport-btn--play"
-              }`}
-              onClick={isPlaying ? onPause : onPlay}
-            >
-              {isPlaying ? "⏸ Pause" : "▶ Play"}
-            </button>
-            <button
-              className="transport-btn transport-btn--stop"
-              onClick={onStop}
-            >
-              ⏹ Stop
-            </button>
-            <button className="transport-btn transport-btn--loop">Loop</button>
-          </div>
-
-          {/* Measure Controls */}
-          <div className="measure-controls">
-            <span className="measure-label">Measures:</span>
-
-            <button
-              className="measure-btn"
-              disabled={measureCount <= 1}
-              onClick={() => {
-                removeMeasure();
-                handleMeasureChange(measureCount - 1);
-              }}
-              title="Remove measure"
-            >
-              −
-            </button>
-
-            <span className="measure-count">{measureCount}</span>
-
-            <button
-              className="measure-btn"
-              disabled={measureCount >= 4}
-              onClick={() => {
-                addMeasure();
-                handleMeasureChange(measureCount + 1);
-              }}
-              title="Add measure"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className="controls-section">
-          {/* Snap Toggle */}
-          <div className="snap-control">
-            <input
-              className="snap-checkbox"
-              type="checkbox"
-              id="snapToggle"
-              checked={snapToGrid}
-              onChange={(e) => setSnapToGrid(e.target.checked)}
-            />
-            <label className="snap-label" htmlFor="snapToggle">
-              Snap to grid
-            </label>
-          </div>
-
-          {/* BPM Control */}
-          <div className="bpm-control">
-            <label className="bpm-label">BPM</label>
-            <input
-              type="range"
-              className="bmp-slider"
-              min="60"
-              max="300"
-              value={bpm}
-              onChange={(e) => handleBpmChange(parseInt(e.target.value))}
-            />
-            <span className="bpm-value">{bpm}</span>
-          </div>
-        </div>
-      </div>
+      {/* Transport Controls Bar - INSIDE the card */}
+      <TransportControls />
 
       {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">

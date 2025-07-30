@@ -1,54 +1,66 @@
 import React from "react";
 import { useTransportStore } from "../../stores/useTransportStore";
 import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useUIStore } from "../../stores/useUIStore";
 import "./TransportControls.css";
 
 function TransportControls() {
-  // Get transport state and actions directly from stores
+  // Get all state from stores directly
   const {
-    isPlaying,
-    currentTick,
     bpm,
+    measureCount,
     setBpm,
-    TICKS_PER_BEAT = 480,
-    BEATS_PER_LOOP = 16,
+    addMeasure,
+    removeMeasure,
+    TICKS_PER_BEAT,
+    BEATS_PER_LOOP,
+    getTotalTicks,
   } = useTransportStore();
 
-  const { sendBpmChange, sendTransportCommand } = useWebSocketStore();
+  const { sendBpmChange, sendMeasureCountChange } = useWebSocketStore();
 
-  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
+  // Get snap state from UI store
+  const { snapToGrid, setSnapToGrid } = useUIStore();
 
-  // Calculate current position for display
-  const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
-  const progress = (currentTick / TOTAL_TICKS) * 100;
-
-  // Handle transport actions directly
-  const handlePlay = () => {
-    // This component shouldn't directly control audio scheduling
-    // Just send the command - let DrumMachine handle audio coordination
-    sendTransportCommand({ type: "play" });
-  };
-
-  const handlePause = () => {
-    sendTransportCommand({ type: "pause" });
-  };
-
-  const handleStop = () => {
-    sendTransportCommand({ type: "stop" });
-  };
-
+  // Handle BPM changes - calls stores directly
   const handleBpmChange = (newBpm) => {
     setBpm(newBpm);
     sendBpmChange(newBpm);
   };
 
+  // Handle measure changes - calls stores directly
+  const handleMeasureChange = (newMeasureCount) => {
+    sendMeasureCountChange(newMeasureCount);
+  };
+
+  // Get the isPlaying state to show correct button
+  const { isPlaying, play, pause, stop } = useTransportStore();
+  const { sendTransportCommand } = useWebSocketStore();
+
+  const handlePlay = () => {
+    play(); // Update local store
+    sendTransportCommand({ type: "play" }); // Send to server
+  };
+
+  const handlePause = () => {
+    pause(); // Update local store
+    sendTransportCommand({ type: "pause" }); // Send to server
+  };
+
+  const handleStop = () => {
+    stop(); // Update local store
+    sendTransportCommand({ type: "stop" }); // Send to server
+  };
+
   return (
-    <div className="transport-container">
-      {/* Transport Controls */}
-      <div className="transport-left">
+    <div className="timeline-controls">
+      <div className="controls-section">
+        {/* Transport Controls */}
         <div className="transport-controls">
           <button
-            className="transport-btn transport-btn--play-pause"
+            className={`transport-btn ${
+              isPlaying ? "transport-btn--pause" : "transport-btn--play"
+            }`}
             onClick={isPlaying ? handlePause : handlePlay}
           >
             {isPlaying ? "⏸ Pause" : "▶ Play"}
@@ -61,30 +73,66 @@ function TransportControls() {
           </button>
           <button className="transport-btn transport-btn--loop">Loop</button>
         </div>
+
+        {/* Measure Controls */}
+        <div className="measure-controls">
+          <span className="measure-label">Measures:</span>
+
+          <button
+            className="measure-btn"
+            disabled={measureCount <= 1}
+            onClick={() => {
+              removeMeasure();
+              handleMeasureChange(measureCount - 1);
+            }}
+            title="Remove measure"
+          >
+            −
+          </button>
+
+          <span className="measure-count">{measureCount}</span>
+
+          <button
+            className="measure-btn"
+            disabled={measureCount >= 4}
+            onClick={() => {
+              addMeasure();
+              handleMeasureChange(measureCount + 1);
+            }}
+            title="Add measure"
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      {/* Position Display and BPM */}
-      <div className="transport-right">
-        <div className="position-display">
-          <span className="transport-badge transport-badge--beat">
-            Beat: {currentBeat}/{BEATS_PER_LOOP}
-          </span>
-          <span className="transport-badge transport-badge--tick">
-            Tick: {currentTick}
-          </span>
+      <div className="controls-section">
+        {/* Snap Toggle */}
+        <div className="snap-control">
+          <input
+            className="snap-checkbox"
+            type="checkbox"
+            id="snapToggle"
+            checked={snapToGrid}
+            onChange={(e) => setSnapToGrid(e.target.checked)}
+          />
+          <label className="snap-label" htmlFor="snapToggle">
+            Snap to grid
+          </label>
         </div>
 
-        <div className="bpm-controls">
-          <span className="bpm-label">BPM</span>
+        {/* BPM Control */}
+        <div className="bpm-control">
+          <label className="bmp-label">BPM</label>
           <input
             type="range"
-            className="bpm-slider"
+            className="bmp-slider"
             min="60"
             max="300"
             value={bpm}
             onChange={(e) => handleBpmChange(parseInt(e.target.value))}
           />
-          <span className="transport-badge transport-badge--bpm">{bpm}</span>
+          <span className="bpm-value">{bpm}</span>
         </div>
       </div>
     </div>

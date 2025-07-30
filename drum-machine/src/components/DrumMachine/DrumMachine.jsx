@@ -3,6 +3,7 @@ import { usePatternStore } from "../../stores/usePatternStore";
 import { useTrackStore } from "../../stores/useTrackStore";
 import { useTransportStore } from "../../stores/useTransportStore";
 import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import TransportControls from "../TransportControls/TransportControls";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 import RoomHeader from "../RoomHeader/RoomHeader";
@@ -15,9 +16,6 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     isPlaying,
     currentTick,
     bpm,
-    play,
-    pause,
-    stop,
     setCurrentTick,
     TICKS_PER_BEAT,
     BEATS_PER_LOOP,
@@ -62,6 +60,25 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     }
   }, [pattern, bpm, tracks]);
 
+  // Audio coordination - listen to store changes and handle audio
+  useEffect(() => {
+    if (!schedulerRef.current) return;
+
+    const handleAudioCoordination = async () => {
+      if (isPlaying && !schedulerRef.current.isPlaying) {
+        // Initialize audio context on first play
+        await schedulerRef.current.init();
+        console.log("🔊 Starting scheduler from store state change");
+        schedulerRef.current.start(currentTick);
+      } else if (!isPlaying && schedulerRef.current.isPlaying) {
+        console.log("🔊 Pausing scheduler from store state change");
+        schedulerRef.current.pause();
+      }
+    };
+
+    handleAudioCoordination();
+  }, [isPlaying, currentTick]);
+
   // Handle remote transport commands (from other users)
   useEffect(() => {
     if (!remoteTransportCommand || !schedulerRef.current) return;
@@ -84,106 +101,9 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
       currentTick,
     });
 
-    // Handle audio scheduling based on the remote command
     // The state is already updated by the WebSocket store
-    switch (remoteTransportCommand.type) {
-      case "play":
-        if (!schedulerRef.current.isPlaying) {
-          console.log(
-            "📡 [" + roomId + "] Starting scheduler from remote play"
-          );
-          schedulerRef.current.start(currentTick);
-        } else {
-          console.log(
-            "📡 [" +
-              roomId +
-              "] Scheduler already playing, ignoring remote play"
-          );
-        }
-        break;
-      case "pause":
-        if (schedulerRef.current.isPlaying) {
-          console.log(
-            "📡 [" + roomId + "] Pausing scheduler from remote pause"
-          );
-          schedulerRef.current.pause();
-        } else {
-          console.log(
-            "📡 [" +
-              roomId +
-              "] Scheduler already paused, ignoring remote pause"
-          );
-        }
-        break;
-      case "stop":
-        console.log("📡 [" + roomId + "] Stopping scheduler from remote stop");
-        schedulerRef.current.stop();
-        break;
-    }
+    // The audio coordination useEffect above will handle the scheduler
   }, [remoteTransportCommand, roomId, isPlaying, currentTick]);
-
-  // Transport control handlers
-  const handlePlay = async () => {
-    console.log("🎵 [" + roomId + "] LOCAL PLAY clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-      currentTick,
-    });
-
-    // Initialize audio context on first play
-    if (schedulerRef.current) {
-      await schedulerRef.current.init();
-    }
-
-    // Update store state
-    play();
-
-    // Start local playback
-    if (schedulerRef.current) {
-      await schedulerRef.current.start(currentTick);
-    }
-
-    // Notify server
-    sendTransportCommand({ type: "play" });
-
-    console.log("🎵 [" + roomId + "] LOCAL PLAY completed - Scheduler started");
-  };
-
-  const handlePause = () => {
-    console.log("⏸️ [" + roomId + "] LOCAL PAUSE clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-    });
-
-    // Update store state
-    pause();
-
-    // Pause local playback
-    if (schedulerRef.current) {
-      schedulerRef.current.pause();
-    }
-
-    // Notify server
-    sendTransportCommand({ type: "pause" });
-  };
-
-  const handleStop = () => {
-    console.log("⏹️ [" + roomId + "] LOCAL STOP clicked - Current state:", {
-      storeIsPlaying: isPlaying,
-      schedulerIsPlaying: schedulerRef.current?.isPlaying,
-    });
-
-    // Update store state
-    stop();
-
-    // Stop local playback
-    if (schedulerRef.current) {
-      schedulerRef.current.stop();
-    }
-
-    // Notify server
-    sendTransportCommand({ type: "stop" });
-  };
 
   return (
     <div className="drum-machine-layout">
@@ -197,11 +117,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
         }}
       />
 
-      <PatternTimeline
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onStop={handleStop}
-      />
+      <PatternTimeline />
     </div>
   );
 }
