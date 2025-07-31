@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useUIStore } from "../../stores/useUIStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useAppStore } from "../../stores";
 
 function SoundSelectorModal({ drumSounds }) {
-  const { soundModalOpen, soundModalTrack, closeSoundModal } = useUIStore();
-  const { updateTrackSound } = useTrackStore();
-  const { sendUpdateTrackSound } = useWebSocketStore();
+  // Get UI state and actions
+  const soundModalOpen = useAppStore((state) => state.ui.soundModalOpen);
+  const soundModalTrack = useAppStore((state) => state.ui.soundModalTrack);
+  const closeSoundModal = useAppStore((state) => state.ui.closeSoundModal);
+
+  // Get track action
+  const updateTrackSound = useAppStore(
+    (state) => state.tracks.updateTrackSound
+  );
 
   const [selectedCategory, setSelectedCategory] = useState("kicks");
   const [selectedSound, setSelectedSound] = useState(null);
@@ -88,13 +92,11 @@ function SoundSelectorModal({ drumSounds }) {
     playSound(soundFile);
   };
 
-  // Handle apply - calls stores directly
+  // Handle apply - now just calls the store action
   const handleApply = () => {
     if (selectedSound && soundModalTrack) {
-      // Update store directly
+      // This now handles both local state and WebSocket automatically
       updateTrackSound(soundModalTrack.id, selectedSound);
-      // Send to server
-      sendUpdateTrackSound(soundModalTrack.id, selectedSound);
     }
     closeSoundModal();
   };
@@ -112,24 +114,21 @@ function SoundSelectorModal({ drumSounds }) {
 
     const handleEscape = (e) => {
       if (e.key === "Escape") {
-        e.preventDefault(); // Prevent browser default behavior
-        e.stopPropagation(); // Stop event from bubbling up
+        e.preventDefault();
+        e.stopPropagation();
         closeSoundModal();
       }
     };
 
     const handleClickOutside = (e) => {
-      // Check if click is on the backdrop (not on the modal content)
       if (e.target.classList.contains("modal")) {
         closeSoundModal();
       }
     };
 
-    // Add event listeners
     document.addEventListener("keydown", handleEscape);
     document.addEventListener("click", handleClickOutside);
 
-    // Cleanup
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.removeEventListener("click", handleClickOutside);
@@ -146,7 +145,6 @@ function SoundSelectorModal({ drumSounds }) {
       className="modal show d-block"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
       onClick={(e) => {
-        // Close if clicking on backdrop
         if (e.target === e.currentTarget) {
           closeSoundModal();
         }

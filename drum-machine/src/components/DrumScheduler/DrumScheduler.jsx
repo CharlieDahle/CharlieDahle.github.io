@@ -33,9 +33,9 @@ class DrumScheduler {
     if (this.transportStore) {
       const state = this.transportStore.getState();
       return {
-        TICKS_PER_BEAT: state.TICKS_PER_BEAT,
-        BEATS_PER_LOOP: state.BEATS_PER_LOOP,
-        TOTAL_TICKS: state.getTotalTicks(),
+        TICKS_PER_BEAT: state.transport.TICKS_PER_BEAT,
+        BEATS_PER_LOOP: state.transport.BEATS_PER_LOOP,
+        TOTAL_TICKS: state.transport.getTotalTicks(),
       };
     }
     // Fallback to hardcoded values if no store

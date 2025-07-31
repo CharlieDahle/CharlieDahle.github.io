@@ -1,55 +1,46 @@
 import React from "react";
-import { useTransportStore } from "../../stores/useTransportStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
-import { useUIStore } from "../../stores/useUIStore";
+import { useAppStore } from "../../stores/useAppStore";
 import "./TransportControls.css";
 
 function TransportControls() {
-  // Get all state from stores directly
-  const {
-    bpm,
-    measureCount,
-    setBpm,
-    addMeasure,
-    removeMeasure,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
-    getTotalTicks,
-  } = useTransportStore();
+  // Get transport state and actions
+  const isPlaying = useAppStore((state) => state.transport.isPlaying);
+  const bpm = useAppStore((state) => state.transport.bpm);
+  const measureCount = useAppStore((state) => state.transport.measureCount);
 
-  const { sendBpmChange, sendMeasureCountChange } = useWebSocketStore();
+  const play = useAppStore((state) => state.transport.play);
+  const pause = useAppStore((state) => state.transport.pause);
+  const stop = useAppStore((state) => state.transport.stop);
+  const setBpm = useAppStore((state) => state.transport.setBpm);
+  const addMeasure = useAppStore((state) => state.transport.addMeasure);
+  const removeMeasure = useAppStore((state) => state.transport.removeMeasure);
 
-  // Get snap state from UI store
-  const { snapToGrid, setSnapToGrid } = useUIStore();
-
-  // Handle BPM changes - calls stores directly
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle measure changes - calls stores directly
-  const handleMeasureChange = (newMeasureCount) => {
-    sendMeasureCountChange(newMeasureCount);
-  };
-
-  // Get the isPlaying state to show correct button
-  const { isPlaying, play, pause, stop } = useTransportStore();
-  const { sendTransportCommand } = useWebSocketStore();
+  // Get UI state
+  const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
+  const setSnapToGrid = useAppStore((state) => state.ui.setSnapToGrid);
 
   const handlePlay = () => {
-    play(); // Update local store
-    sendTransportCommand({ type: "play" }); // Send to server
+    play(); // This now handles both local state and WebSocket automatically
   };
 
   const handlePause = () => {
-    pause(); // Update local store
-    sendTransportCommand({ type: "pause" }); // Send to server
+    pause(); // This now handles both local state and WebSocket automatically
   };
 
   const handleStop = () => {
-    stop(); // Update local store
-    sendTransportCommand({ type: "stop" }); // Send to server
+    stop(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleBpmChange = (newBpm) => {
+    setBpm(newBpm); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleAddMeasure = () => {
+    addMeasure(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleRemoveMeasure = () => {
+    removeMeasure(); // This now handles both local state and WebSocket automatically
   };
 
   return (
@@ -81,10 +72,7 @@ function TransportControls() {
           <button
             className="measure-btn"
             disabled={measureCount <= 1}
-            onClick={() => {
-              removeMeasure();
-              handleMeasureChange(measureCount - 1);
-            }}
+            onClick={handleRemoveMeasure}
             title="Remove measure"
           >
             −
@@ -95,10 +83,7 @@ function TransportControls() {
           <button
             className="measure-btn"
             disabled={measureCount >= 4}
-            onClick={() => {
-              addMeasure();
-              handleMeasureChange(measureCount + 1);
-            }}
+            onClick={handleAddMeasure}
             title="Add measure"
           >
             +

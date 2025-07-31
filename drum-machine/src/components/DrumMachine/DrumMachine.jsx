@@ -1,29 +1,20 @@
 import React, { useEffect, useRef } from "react";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { useTransportStore } from "../../stores/useTransportStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
-import TransportControls from "../TransportControls/TransportControls";
+import { useAppStore } from "../../stores";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 import RoomHeader from "../RoomHeader/RoomHeader";
 
-function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
-  // Get all state from stores directly
-  const { pattern } = usePatternStore();
-  const { tracks } = useTrackStore();
-  const {
-    isPlaying,
-    currentTick,
-    bpm,
-    setCurrentTick,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
-    getTotalTicks,
-  } = useTransportStore();
-
-  // Get WebSocket methods for transport commands only
-  const { sendTransportCommand, leaveRoom } = useWebSocketStore();
+function DrumMachine({ remoteTransportCommand }) {
+  // Get all state from the single store
+  const pattern = useAppStore((state) => state.pattern.data);
+  const tracks = useAppStore((state) => state.tracks.list);
+  const isPlaying = useAppStore((state) => state.transport.isPlaying);
+  const currentTick = useAppStore((state) => state.transport.currentTick);
+  const bpm = useAppStore((state) => state.transport.bpm);
+  const setCurrentTick = useAppStore((state) => state.transport.setCurrentTick);
+  const TICKS_PER_BEAT = useAppStore((state) => state.transport.TICKS_PER_BEAT);
+  const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
+  const getTotalTicks = useAppStore((state) => state.transport.getTotalTicks);
 
   // Scheduler instance
   const schedulerRef = useRef(null);
@@ -38,7 +29,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
       (tick) => {
         setCurrentTick(tick);
       },
-      useTransportStore
+      useAppStore
     );
 
     scheduler.init();
@@ -94,7 +85,7 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
     // Remember this command so we don't process it again
     lastProcessedCommandRef.current = remoteTransportCommand;
 
-    console.log("📡 [" + roomId + "] REMOTE COMMAND received:", {
+    console.log("📡 REMOTE COMMAND received:", {
       command: remoteTransportCommand,
       storeIsPlaying: isPlaying,
       schedulerIsPlaying: schedulerRef.current.isPlaying,
@@ -103,20 +94,11 @@ function DrumMachine({ roomId, userCount, remoteTransportCommand }) {
 
     // The state is already updated by the WebSocket store
     // The audio coordination useEffect above will handle the scheduler
-  }, [remoteTransportCommand, roomId, isPlaying, currentTick]);
+  }, [remoteTransportCommand, isPlaying, currentTick]);
 
   return (
     <div className="drum-machine-layout">
-      <RoomHeader
-        roomId={roomId}
-        userCount={userCount}
-        onLeaveRoom={() => {
-          // Leave the room but keep WebSocket connection alive
-          leaveRoom();
-          // This will set isInRoom to false, triggering transition back to RoomInterface
-        }}
-      />
-
+      <RoomHeader />
       <PatternTimeline />
     </div>
   );
