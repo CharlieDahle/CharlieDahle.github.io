@@ -110,11 +110,18 @@ class DrumScheduler {
         effects.filter.Q.value = effectsState.filter.Q;
       }
 
-      // Update Reverb
+      // Update Reverb - Tone.Reverb doesn't have roomSize, it has decay and wet
       if (effectsState.reverb) {
-        effects.reverb.roomSize.value = effectsState.reverb.roomSize;
-        effects.reverb.decay = effectsState.reverb.decay;
-        effects.reverb.wet.value = effectsState.reverb.wet;
+        // Map roomSize to decay (roomSize affects how long reverb lasts)
+        if (effectsState.reverb.roomSize !== undefined) {
+          effects.reverb.decay = effectsState.reverb.roomSize * 10; // Scale 0.1-0.9 to 1-9 seconds
+        }
+        if (effectsState.reverb.decay !== undefined) {
+          effects.reverb.decay = effectsState.reverb.decay;
+        }
+        if (effectsState.reverb.wet !== undefined) {
+          effects.reverb.wet.value = effectsState.reverb.wet;
+        }
       }
 
       // Update Delay

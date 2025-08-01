@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Sliders, BarChart3, Filter, Volume2, Repeat } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./EffectsModal.css";
@@ -353,6 +353,7 @@ function EffectsModal() {
 }
 
 // Knob Control Component
+// Simple Input Control Component - much easier!
 function KnobControl({
   label,
   value,
@@ -363,75 +364,48 @@ function KnobControl({
   logarithmic,
   onChange,
 }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [dragStartValue, setDragStartValue] = useState(0);
-
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStartY(e.clientY);
-    setDragStartValue(value);
-
-    // Add global mouse listeners
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-
-    const deltaY = dragStartY - e.clientY; // Inverted: up = positive
-    const sensitivity = 0.01; // Adjust this for sensitivity
-
-    let newValue;
-    if (logarithmic) {
-      // Logarithmic scaling for frequency
-      const logMin = Math.log(min);
-      const logMax = Math.log(max);
-      const logStartValue = Math.log(dragStartValue);
-      const logRange = logMax - logMin;
-      const newLogValue = logStartValue + deltaY * sensitivity * logRange;
-      newValue = Math.exp(Math.max(logMin, Math.min(logMax, newLogValue)));
-    } else {
-      const range = max - min;
-      newValue = dragStartValue + deltaY * sensitivity * range;
-      newValue = Math.max(min, Math.min(max, newValue));
-    }
-
-    // Round to reasonable precision
-    const precision = range < 10 ? 100 : range < 100 ? 10 : 1;
-    onChange(Math.round(newValue * precision) / precision);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-  };
-
-  // Cleanup event listeners on unmount
-  useEffect(() => {
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
   const formatValue = (val) => {
     if (percentage) {
-      return `${Math.round(val * 100)}%`;
+      return Math.round(val * 100);
     }
     if (unit === "Hz" && val >= 1000) {
-      return `${(val / 1000).toFixed(1)}kHz`;
+      return (val / 1000).toFixed(1);
     }
     if (unit === "dB") {
-      return `${val >= 0 ? "+" : ""}${val.toFixed(1)}dB`;
+      return val.toFixed(1);
     }
-    return `${val.toFixed(1)}${unit}`;
+    return val.toFixed(1);
   };
 
-  // Calculate rotation based on value
+  const parseValue = (inputVal) => {
+    let numValue = parseFloat(inputVal);
+
+    if (isNaN(numValue)) return value; // Keep current value if invalid
+
+    if (percentage) {
+      numValue = numValue / 100; // Convert percentage back to 0-1 range
+    }
+
+    if (unit === "Hz" && inputVal.includes("k")) {
+      numValue = numValue * 1000; // Convert kHz to Hz
+    }
+
+    // Clamp to min/max
+    return Math.max(min, Math.min(max, numValue));
+  };
+
+  const getUnit = () => {
+    if (percentage) return "%";
+    if (unit === "Hz" && value >= 1000) return "kHz";
+    return unit;
+  };
+
+  const handleInputChange = (e) => {
+    const newValue = parseValue(e.target.value);
+    onChange(newValue);
+  };
+
+  // Calculate rotation for visual knob (still show it, just not interactive)
   const getRotation = () => {
     let percentage;
     if (logarithmic) {
@@ -448,12 +422,26 @@ function KnobControl({
   return (
     <div className="knob-control">
       <div className="knob-label">{label}</div>
+
+      {/* Visual knob - not interactive, just shows the value */}
       <div
-        className={`knob ${isDragging ? "dragging" : ""}`}
-        onMouseDown={handleMouseDown}
+        className="knob knob--display-only"
         style={{ "--knob-rotation": `${getRotation()}deg` }}
       />
-      <div className="knob-value">{formatValue(value)}</div>
+
+      {/* Input field for actual control */}
+      <div className="knob-input-container">
+        <input
+          type="number"
+          className="knob-input"
+          value={formatValue(value)}
+          onChange={handleInputChange}
+          step={unit === "dB" ? "0.1" : "1"}
+          min={percentage ? 0 : min}
+          max={percentage ? 100 : max}
+        />
+        <span className="knob-unit">{getUnit()}</span>
+      </div>
     </div>
   );
 }
