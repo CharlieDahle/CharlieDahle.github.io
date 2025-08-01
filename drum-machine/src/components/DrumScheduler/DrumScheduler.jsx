@@ -1,6 +1,7 @@
+import * as Tone from "tone";
+
 class DrumScheduler {
   constructor(bpm = 120, onTickUpdate = null, transportStore = null) {
-    this.audioContext = null;
     this.bpm = bpm;
     this.onTickUpdate = onTickUpdate;
     this.transportStore = transportStore; // Reference to get dynamic constants
@@ -17,8 +18,8 @@ class DrumScheduler {
     // Pattern data
     this.pattern = {};
 
-    // Audio buffers for loaded sounds
-    this.audioBuffers = {};
+    // Tone.js Players for loaded sounds
+    this.tonePlayers = {};
     this.soundsLoaded = false;
 
     // Dynamic track to sound mapping
@@ -46,43 +47,38 @@ class DrumScheduler {
     };
   }
 
-  // Initialize audio context and load sounds
+  // Initialize Tone.js
   async init() {
-    if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
-
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume();
-      }
-
-      console.log("DrumScheduler: Audio context initialized");
+    try {
+      await Tone.start();
+      console.log("DrumScheduler: Tone.js initialized");
       return true;
+    } catch (error) {
+      console.error("DrumScheduler: Failed to initialize Tone.js", error);
+      return false;
     }
-    return true;
   }
 
   // Set tracks and load their sounds
   async setTracks(tracks) {
     console.log("DrumScheduler: Setting tracks", tracks);
 
+    // Clean up old players that are no longer needed
+    this.cleanupUnusedPlayers(tracks);
+
+    // Update track sounds mapping
     this.trackSounds = {};
 
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
 
-      if (track.soundFile && !this.audioBuffers[track.soundFile]) {
+      if (track.soundFile && !this.tonePlayers[track.soundFile]) {
         console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
 
-        if (!this.audioContext) {
-          console.log("No audio context yet, will load sounds later");
-          continue;
-        }
-
         try {
-          const audioBuffer = await this.loadAudioFile(track.soundFile);
-          if (audioBuffer) {
-            this.audioBuffers[track.soundFile] = audioBuffer;
+          const player = await this.loadAudioFile(track.soundFile);
+          if (player) {
+            this.tonePlayers[track.soundFile] = player;
           }
         } catch (error) {
           console.error(`Failed to load sound for track ${track.name}:`, error);
@@ -93,14 +89,33 @@ class DrumScheduler {
     console.log("DrumScheduler: Track sounds mapped:", this.trackSounds);
   }
 
-  // Load individual audio file into AudioBuffer
+  // Clean up Tone.Players that are no longer used by any track
+  cleanupUnusedPlayers(tracks) {
+    const currentSoundFiles = tracks
+      .map((track) => track.soundFile)
+      .filter(Boolean); // Remove null/undefined
+
+    // Dispose of players that are no longer used
+    Object.keys(this.tonePlayers).forEach((soundFile) => {
+      if (!currentSoundFiles.includes(soundFile)) {
+        console.log(`Cleaning up unused player: ${soundFile}`);
+        this.tonePlayers[soundFile].dispose();
+        delete this.tonePlayers[soundFile];
+      }
+    });
+  }
+
+  // Load individual audio file into Tone.Player
   async loadAudioFile(filePath) {
     try {
-      // Try the direct path first (since files are in public/ root)
-      const response = await fetch(`/${filePath}`);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-      return audioBuffer;
+      // Create a new Tone.Player and connect it to the destination
+      const player = new Tone.Player(`/${filePath}`).toDestination();
+
+      // Wait for the player to load
+      await Tone.loaded();
+
+      console.log(`Successfully loaded: ${filePath}`);
+      return player;
     } catch (error) {
       console.error(`Failed to load audio file: ${filePath}`, error);
       return null;
@@ -109,26 +124,20 @@ class DrumScheduler {
 
   // Play a sound at a specific time with velocity
   playSound(soundFile, when, velocity = 4) {
-    if (!this.audioContext || !this.audioBuffers[soundFile]) {
+    const player = this.tonePlayers[soundFile];
+    if (!player) {
+      console.warn(`No player found for sound: ${soundFile}`);
       return;
     }
 
-    const audioBuffer = this.audioBuffers[soundFile];
-    const source = this.audioContext.createBufferSource();
-    source.buffer = audioBuffer;
+    // Convert velocity (1-4) to volume in decibels
+    // velocity 1 = -12dB, velocity 4 = 0dB
+    const velocityGain = velocity / 4; // 0.25 to 1.0
+    const volumeDb = Tone.gainToDb(velocityGain);
 
-    // Create gain node for velocity control
-    const gainNode = this.audioContext.createGain();
-
-    // Convert velocity (1-4) to gain (0.25-1.0)
-    const velocityGain = velocity / 4;
-    gainNode.gain.value = velocityGain;
-
-    // Connect: source -> gain -> destination
-    source.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
-
-    source.start(when);
+    // Set volume and play
+    player.volume.value = volumeDb;
+    player.start(when);
   }
 
   // Update BPM
@@ -148,20 +157,17 @@ class DrumScheduler {
     console.log(`🔊 Scheduler.start() called:`, {
       currentlyPlaying: this.isPlaying,
       fromTick,
-      audioContextState: this.audioContext?.state,
+      toneContextState: Tone.context.state,
     });
 
-    if (!this.audioContext) {
-      await this.init();
-    }
-
-    if (this.audioContext.state === "suspended") {
-      await this.audioContext.resume();
+    // Ensure Tone.js is started
+    if (Tone.context.state !== "running") {
+      await Tone.start();
     }
 
     this.isPlaying = true;
     this.currentTick = fromTick;
-    this.nextNoteTime = this.audioContext.currentTime;
+    this.nextNoteTime = Tone.now();
 
     console.log("DrumScheduler: Starting from tick", fromTick);
     this.scheduler();
@@ -214,10 +220,7 @@ class DrumScheduler {
     const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
 
     // Look ahead and schedule any notes that need to play
-    while (
-      this.nextNoteTime <
-      this.audioContext.currentTime + this.scheduleAheadTime
-    ) {
+    while (this.nextNoteTime < Tone.now() + this.scheduleAheadTime) {
       this.scheduleNotesAtTick(this.currentTick, this.nextNoteTime);
       this.advanceTick();
     }
@@ -254,7 +257,7 @@ class DrumScheduler {
         // Play each note found at this tick
         notesAtTick.forEach((note) => {
           const soundFile = this.trackSounds[trackId];
-          if (soundFile && this.audioBuffers[soundFile]) {
+          if (soundFile && this.tonePlayers[soundFile]) {
             this.playSound(soundFile, when, note.velocity);
             console.log(
               `Playing ${trackId} at tick ${tick} with velocity ${note.velocity}`
@@ -291,10 +294,11 @@ class DrumScheduler {
   destroy() {
     this.stop();
 
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
+    // Dispose of all Tone.js players
+    Object.values(this.tonePlayers).forEach((player) => {
+      player.dispose();
+    });
+    this.tonePlayers = {};
 
     console.log("DrumScheduler: Destroyed");
   }
