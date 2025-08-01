@@ -1,0 +1,332 @@
+/* EffectsModal.css */
+:root {
+  --effects-primary-blue: #5bc0eb;
+  --effects-success-green: #28a745;
+  --effects-text-primary: #333;
+  --effects-text-secondary: #6c757d;
+  --effects-border-color: #dee2e6;
+  --effects-sidebar-bg: #f8f9fa;
+  --effects-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --effects-transition: 0.15s ease;
+}
+
+/* Modal Overlay */
+.effects-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.effects-modal {
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--effects-shadow-lg);
+  width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Header */
+.effects-modal-header {
+  background: var(--effects-sidebar-bg);
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--effects-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.effects-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--effects-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.effects-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--effects-text-secondary);
+  transition: color var(--effects-transition);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.effects-close-btn:hover {
+  color: var(--effects-text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Body */
+.effects-modal-body {
+  padding: 32px;
+}
+
+/* Effect Tabs */
+.effects-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 32px;
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.effects-tab {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--effects-text-secondary);
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.effects-tab.active {
+  background: white;
+  color: var(--effects-primary-blue);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.effects-tab:hover:not(.active) {
+  color: var(--effects-text-primary);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Effect Panels */
+.effects-panel {
+  animation: fadeInPanel 0.2s ease;
+}
+
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.effects-section {
+  margin-bottom: 32px;
+}
+
+.effects-section:last-child {
+  margin-bottom: 0;
+}
+
+.effects-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--effects-text-primary);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Knob Controls */
+.knob-row {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
+
+.knob-control {
+  text-align: center;
+  flex: 1;
+  max-width: 120px;
+}
+
+.knob-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--effects-text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.knob {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 3px solid var(--effects-border-color);
+  position: relative;
+  margin: 0 auto 12px;
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  transform-origin: center;
+}
+
+.knob:hover {
+  border-color: var(--effects-primary-blue);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.2);
+}
+
+.knob:active {
+  transform: scale(0.95);
+}
+
+.knob::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--effects-primary-blue);
+  border-radius: 2px;
+  transform-origin: 50% 24px;
+}
+
+.knob-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--effects-text-primary);
+  background: rgba(91, 192, 235, 0.1);
+  padding: 4px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  min-width: 50px;
+}
+
+/* Modal Footer */
+.effects-modal-footer {
+  background: var(--effects-sidebar-bg);
+  padding: 24px 32px;
+  border-top: 1px solid var(--effects-border-color);
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.effects-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  font-size: 14px;
+}
+
+.effects-btn--secondary {
+  background: var(--effects-border-color);
+  color: var(--effects-text-primary);
+}
+
+.effects-btn--secondary:hover {
+  background: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.effects-btn--primary {
+  background: var(--effects-primary-blue);
+  color: white;
+}
+
+.effects-btn--primary:hover {
+  background: #4ba8cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .effects-modal {
+    width: 90vw;
+    margin: 20px;
+  }
+
+  .effects-modal-header,
+  .effects-modal-body,
+  .effects-modal-footer {
+    padding: 20px;
+  }
+
+  .knob-row {
+    gap: 20px;
+  }
+
+  .knob {
+    width: 50px;
+    height: 50px;
+  }
+
+  .knob::after {
+    top: 5px;
+    height: 16px;
+    transform-origin: 50% 20px;
+  }
+}
+
+/* Focus states for accessibility */
+.effects-tab:focus,
+.effects-btn:focus,
+.knob:focus {
+  outline: 2px solid var(--effects-primary-blue);
+  outline-offset: 2px;
+}
+
+/* Animation for knob rotation */
+.knob {
+  transition: transform 0.1s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Ensure knob indicator rotates with the knob */
+.knob::after {
+  transition: none;
+}
