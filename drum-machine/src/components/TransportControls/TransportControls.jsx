@@ -1,66 +1,123 @@
 import React from "react";
+import { useAppStore } from "../../stores/useAppStore";
 import "./TransportControls.css";
 
-function TransportControls({
-  isPlaying,
-  currentTick,
-  bpm,
-  onPlay,
-  onPause,
-  onStop,
-  onBpmChange,
-  TICKS_PER_BEAT = 480,
-  BEATS_PER_LOOP = 16,
-}) {
-  const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_LOOP;
+function TransportControls() {
+  // Get transport state and actions
+  const isPlaying = useAppStore((state) => state.transport.isPlaying);
+  const bpm = useAppStore((state) => state.transport.bpm);
+  const measureCount = useAppStore((state) => state.transport.measureCount);
 
-  // Calculate current position for display
-  const currentBeat = Math.floor(currentTick / TICKS_PER_BEAT) + 1;
-  const progress = (currentTick / TOTAL_TICKS) * 100;
+  const play = useAppStore((state) => state.transport.play);
+  const pause = useAppStore((state) => state.transport.pause);
+  const stop = useAppStore((state) => state.transport.stop);
+  const setBpm = useAppStore((state) => state.transport.setBpm);
+  const addMeasure = useAppStore((state) => state.transport.addMeasure);
+  const removeMeasure = useAppStore((state) => state.transport.removeMeasure);
+
+  // Get UI state
+  const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
+  const setSnapToGrid = useAppStore((state) => state.ui.setSnapToGrid);
+
+  const handlePlay = () => {
+    play(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handlePause = () => {
+    pause(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleStop = () => {
+    stop(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleBpmChange = (newBpm) => {
+    setBpm(newBpm); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleAddMeasure = () => {
+    addMeasure(); // This now handles both local state and WebSocket automatically
+  };
+
+  const handleRemoveMeasure = () => {
+    removeMeasure(); // This now handles both local state and WebSocket automatically
+  };
 
   return (
-    <div className="transport-container">
-      {/* Transport Controls */}
-      <div className="transport-left">
+    <div className="timeline-controls">
+      <div className="controls-section">
+        {/* Transport Controls */}
         <div className="transport-controls">
           <button
-            className="transport-btn transport-btn--play-pause"
-            onClick={isPlaying ? onPause : onPlay}
+            className={`transport-btn ${
+              isPlaying ? "transport-btn--pause" : "transport-btn--play"
+            }`}
+            onClick={isPlaying ? handlePause : handlePlay}
           >
             {isPlaying ? "⏸ Pause" : "▶ Play"}
           </button>
           <button
             className="transport-btn transport-btn--stop"
-            onClick={onStop}
+            onClick={handleStop}
           >
             ⏹ Stop
           </button>
           <button className="transport-btn transport-btn--loop">Loop</button>
         </div>
+
+        {/* Measure Controls */}
+        <div className="measure-controls">
+          <span className="measure-label">Measures:</span>
+
+          <button
+            className="measure-btn"
+            disabled={measureCount <= 1}
+            onClick={handleRemoveMeasure}
+            title="Remove measure"
+          >
+            −
+          </button>
+
+          <span className="measure-count">{measureCount}</span>
+
+          <button
+            className="measure-btn"
+            disabled={measureCount >= 4}
+            onClick={handleAddMeasure}
+            title="Add measure"
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      {/* Position Display and BPM */}
-      <div className="transport-right">
-        <div className="position-display">
-          <span className="transport-badge transport-badge--beat">
-            Beat: {currentBeat}/{BEATS_PER_LOOP}
-          </span>
-          <span className="transport-badge transport-badge--tick">
-            Tick: {currentTick}
-          </span>
+      <div className="controls-section">
+        {/* Snap Toggle */}
+        <div className="snap-control">
+          <input
+            className="snap-checkbox"
+            type="checkbox"
+            id="snapToggle"
+            checked={snapToGrid}
+            onChange={(e) => setSnapToGrid(e.target.checked)}
+          />
+          <label className="snap-label" htmlFor="snapToggle">
+            Snap to grid
+          </label>
         </div>
 
-        <div className="bpm-controls">
-          <span className="bpm-label">BPM</span>
+        {/* BPM Control */}
+        <div className="bpm-control">
+          <label className="bmp-label">BPM</label>
           <input
             type="range"
-            className="bpm-slider"
+            className="bmp-slider"
             min="60"
             max="300"
             value={bpm}
-            onChange={(e) => onBpmChange(parseInt(e.target.value))}
+            onChange={(e) => handleBpmChange(parseInt(e.target.value))}
           />
-          <span className="transport-badge transport-badge--bpm">{bpm}</span>
+          <span className="bpm-value">{bpm}</span>
         </div>
       </div>
     </div>
