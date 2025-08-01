@@ -1,17 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
-import { useUIStore } from "../../stores/useUIStore";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { useTransportStore } from "../../stores/useTransportStore";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
+import { useAppStore } from "../../stores";
+import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
 // TrackLabel component with hover controls
 function TrackLabel({ track }) {
   const [showControls, setShowControls] = useState(false);
-  const { openSoundModal } = useUIStore();
+  const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
 
   // Get display name - either sound name or "Choose Sound..."
   const getDisplayName = () => {
@@ -70,40 +67,28 @@ function TrackLabel({ track }) {
   );
 }
 
-function PatternTimeline({ onPlay, onPause, onStop }) {
-  // Get all state from stores
-  const {
-    pattern,
-    addNote,
-    removeNote,
-    moveNote,
-    clearTrack,
-    updateNoteVelocity,
-    getNoteAt,
-  } = usePatternStore();
-  const { tracks, addTrack, removeTrack, updateTrackSound } = useTrackStore();
-  const {
-    bpm,
-    currentTick,
-    isPlaying,
-    measureCount,
-    setBpm,
-    addMeasure,
-    removeMeasure,
-    TICKS_PER_BEAT,
-    BEATS_PER_LOOP,
-    getTotalTicks,
-  } = useTransportStore();
-  const {
-    sendPatternChange,
-    sendBpmChange,
-    sendMeasureCountChange,
-    sendAddTrack,
-    sendRemoveTrack,
-  } = useWebSocketStore();
+function PatternTimeline() {
+  // Get all state from the single store
+  const pattern = useAppStore((state) => state.pattern.data);
+  const tracks = useAppStore((state) => state.tracks.list);
+  const currentTick = useAppStore((state) => state.transport.currentTick);
+  const isPlaying = useAppStore((state) => state.transport.isPlaying);
+  const measureCount = useAppStore((state) => state.transport.measureCount);
+  const TICKS_PER_BEAT = useAppStore((state) => state.transport.TICKS_PER_BEAT);
+  const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
+  const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
 
-  // Get snap state from UI store
-  const { snapToGrid, setSnapToGrid } = useUIStore();
+  // Get all pattern actions
+  const addNote = useAppStore((state) => state.pattern.addNote);
+  const removeNote = useAppStore((state) => state.pattern.removeNote);
+  const moveNote = useAppStore((state) => state.pattern.moveNote);
+  const updateNoteVelocity = useAppStore(
+    (state) => state.pattern.updateNoteVelocity
+  );
+  const getNoteAt = useAppStore((state) => state.pattern.getNoteAt);
+
+  // Get track actions
+  const addTrack = useAppStore((state) => state.tracks.addTrack);
 
   const gridRef = useRef(null);
   const playheadRef = useRef(null);
@@ -116,9 +101,9 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   const MEASURES_PER_PAGE = 4;
   const BEATS_PER_PAGE = MEASURES_PER_PAGE * 4; // 16 beats total
-  const PIXELS_PER_TICK = 0.128906; // UPDATED: was 0.134, now calculated for 990px grid
-  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK; // ~61.88px per beat (was ~64px)
-  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH; // 990px total (was 1030px)
+  const PIXELS_PER_TICK = 0.128906;
+  const BEAT_WIDTH = TICKS_PER_BEAT * PIXELS_PER_TICK;
+  const GRID_WIDTH = BEATS_PER_PAGE * BEAT_WIDTH;
 
   const TOTAL_TICKS = TICKS_PER_BEAT * BEATS_PER_PAGE;
 
@@ -144,7 +129,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const x = e.clientX - rect.left;
 
     // Convert click position to tick
-    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
+    const clickTick = x / PIXELS_PER_TICK;
 
     // Center the note (subtract half note width in ticks)
     const noteWidthInTicks = 32 / PIXELS_PER_TICK;
@@ -221,61 +206,6 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     }
   }, [currentTick, PIXELS_PER_TICK]);
 
-  // Handle pattern changes
-  const handlePatternChange = (change) => {
-    const trackExists = tracks.some((track) => track.id === change.trackId);
-    if (!trackExists) {
-      console.warn("Pattern change for non-existent track:", change.trackId);
-      return;
-    }
-
-    switch (change.type) {
-      case "add-note":
-        addNote(change.trackId, change.tick, change.velocity);
-        break;
-      case "remove-note":
-        removeNote(change.trackId, change.tick);
-        break;
-      case "move-note":
-        moveNote(change.trackId, change.fromTick, change.toTick);
-        break;
-      case "update-note-velocity":
-        updateNoteVelocity(change.trackId, change.tick, change.velocity);
-        break;
-      case "clear-track":
-        clearTrack(change.trackId);
-        break;
-      default:
-        console.warn("Unknown pattern change type:", change.type);
-    }
-
-    sendPatternChange(change);
-  };
-
-  // Handle BPM changes
-  const handleBpmChange = (newBpm) => {
-    setBpm(newBpm);
-    sendBpmChange(newBpm);
-  };
-
-  // Handle measure changes
-  const handleMeasureChange = (newMeasureCount) => {
-    sendMeasureCountChange(newMeasureCount);
-  };
-
-  // Handle track management
-  const handleAddTrack = () => {
-    const trackData = {
-      name: `Track ${tracks.length + 1}`,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-      soundFile: null,
-      availableSounds: [],
-    };
-
-    const newTrack = addTrack(trackData);
-    sendAddTrack(newTrack);
-  };
-
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
     if (e.target.classList.contains("timeline-note")) return;
@@ -285,7 +215,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const x = e.clientX - rect.left;
 
     // Convert click position to tick
-    const clickTick = x / PIXELS_PER_TICK; // UPDATED: Removed snap offset to center on cursor
+    const clickTick = x / PIXELS_PER_TICK;
 
     const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = clickTick - noteWidthInTicks / 2;
@@ -302,18 +232,11 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const existingNote = getNoteAt(trackId, clampedTick);
 
     if (existingNote) {
-      handlePatternChange({
-        type: "remove-note",
-        trackId,
-        tick: clampedTick,
-      });
+      // Remove existing note - store handles WebSocket automatically
+      removeNote(trackId, clampedTick);
     } else {
-      handlePatternChange({
-        type: "add-note",
-        trackId,
-        tick: clampedTick,
-        velocity: 4,
-      });
+      // Add new note - store handles WebSocket automatically
+      addNote(trackId, clampedTick, 4);
     }
   };
 
@@ -340,7 +263,7 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
     const x = e.clientX - rect.left;
 
     const dragTick = x / PIXELS_PER_TICK;
-    const noteWidthInTicks = 32 / PIXELS_PER_TICK; // UPDATED: 32px (eighth note width)
+    const noteWidthInTicks = 32 / PIXELS_PER_TICK;
     const centeredTick = dragTick - noteWidthInTicks / 2;
 
     let snappedTick;
@@ -362,12 +285,12 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
   // Handle mouse up - finish drag
   const handleMouseUp = () => {
     if (isDragging && draggedNote && hasDragged) {
-      handlePatternChange({
-        type: "move-note",
-        trackId: draggedNote.trackId,
-        fromTick: draggedNote.originalTick,
-        toTick: draggedNote.currentTick,
-      });
+      // Move note - store handles WebSocket automatically
+      moveNote(
+        draggedNote.trackId,
+        draggedNote.originalTick,
+        draggedNote.currentTick
+      );
     }
 
     setIsDragging(false);
@@ -384,20 +307,26 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
         const currentVelocity = currentNote ? currentNote.velocity : 4;
         const nextVelocity = currentVelocity === 1 ? 4 : currentVelocity - 1;
 
-        handlePatternChange({
-          type: "update-note-velocity",
-          trackId,
-          tick,
-          velocity: nextVelocity,
-        });
+        // Update velocity - store handles WebSocket automatically
+        updateNoteVelocity(trackId, tick, nextVelocity);
       } else {
-        handlePatternChange({
-          type: "remove-note",
-          trackId,
-          tick,
-        });
+        // Remove note - store handles WebSocket automatically
+        removeNote(trackId, tick);
       }
     }
+  };
+
+  // Handle track management
+  const handleAddTrack = () => {
+    const trackData = {
+      name: `Track ${tracks.length + 1}`,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      soundFile: null,
+      availableSounds: [],
+    };
+
+    // Add track - store handles WebSocket automatically
+    addTrack(trackData);
   };
 
   // Add global mouse event listeners for dragging
@@ -424,90 +353,8 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
 
   return (
     <div className="floating-card pattern-timeline">
-      {/* Transport Controls Bar */}
-      <div className="timeline-controls">
-        <div className="controls-section">
-          {/* Transport Controls - UPDATED: using renamed CSS classes */}
-          <div className="transport-controls">
-            <button
-              className={`transport-btn ${
-                isPlaying ? "transport-btn--pause" : "transport-btn--play"
-              }`}
-              onClick={isPlaying ? onPause : onPlay}
-            >
-              {isPlaying ? "⏸ Pause" : "▶ Play"}
-            </button>
-            <button
-              className="transport-btn transport-btn--stop"
-              onClick={onStop}
-            >
-              ⏹ Stop
-            </button>
-            <button className="transport-btn transport-btn--loop">Loop</button>
-          </div>
-
-          {/* Measure Controls */}
-          <div className="measure-controls">
-            <span className="measure-label">Measures:</span>
-
-            <button
-              className="measure-btn"
-              disabled={measureCount <= 1}
-              onClick={() => {
-                removeMeasure();
-                handleMeasureChange(measureCount - 1);
-              }}
-              title="Remove measure"
-            >
-              −
-            </button>
-
-            <span className="measure-count">{measureCount}</span>
-
-            <button
-              className="measure-btn"
-              disabled={measureCount >= 4}
-              onClick={() => {
-                addMeasure();
-                handleMeasureChange(measureCount + 1);
-              }}
-              title="Add measure"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className="controls-section">
-          {/* Snap Toggle */}
-          <div className="snap-control">
-            <input
-              className="snap-checkbox"
-              type="checkbox"
-              id="snapToggle"
-              checked={snapToGrid}
-              onChange={(e) => setSnapToGrid(e.target.checked)}
-            />
-            <label className="snap-label" htmlFor="snapToggle">
-              Snap to grid
-            </label>
-          </div>
-
-          {/* BPM Control */}
-          <div className="bpm-control">
-            <label className="bpm-label">BPM</label>
-            <input
-              type="range"
-              className="bpm-slider"
-              min="60"
-              max="300"
-              value={bpm}
-              onChange={(e) => handleBpmChange(parseInt(e.target.value))}
-            />
-            <span className="bpm-value">{bpm}</span>
-          </div>
-        </div>
-      </div>
+      {/* Transport Controls Bar - INSIDE the card */}
+      <TransportControls />
 
       {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">
@@ -532,15 +379,13 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
           <div className="beat-header">
             {/* Positioned Divider Lines - match grid exactly */}
             {Array.from({ length: BEATS_PER_PAGE }, (_, i) => {
-              const tickPosition = (i + 1) * TICKS_PER_BEAT; // Position at end of each beat
+              const tickPosition = (i + 1) * TICKS_PER_BEAT;
               const measureIndex = Math.floor(i / 4);
               const nextMeasureIndex = Math.floor((i + 1) / 4);
 
-              // Don't show dividers if the current beat or next beat is disabled
               const isCurrentDisabled = measureIndex >= measureCount;
               const isNextDisabled = nextMeasureIndex >= measureCount;
 
-              // Only show dividers that aren't at the very end and aren't in disabled areas
               if (
                 i < BEATS_PER_PAGE - 1 &&
                 !isCurrentDisabled &&
@@ -610,10 +455,10 @@ function PatternTimeline({ onPlay, onPause, onStop }) {
               >
                 {/* Subdivision lines */}
                 {Array.from(
-                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 2) + 1 }, // UPDATED: Only eighth note divisions
+                  { length: TOTAL_TICKS / (TICKS_PER_BEAT / 2) + 1 },
                   (_, subdivisionIndex) => {
                     const tickPosition =
-                      subdivisionIndex * (TICKS_PER_BEAT / 2); // UPDATED: Eighth note intervals
+                      subdivisionIndex * (TICKS_PER_BEAT / 2);
                     const beatPosition = tickPosition / TICKS_PER_BEAT;
                     const measureIndex = Math.floor(beatPosition / 4);
 

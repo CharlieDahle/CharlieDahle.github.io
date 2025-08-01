@@ -1,33 +1,36 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useWebSocketStore } from "../../stores/useWebSocketStore";
-import { useTrackStore } from "../../stores/useTrackStore";
-import { usePatternStore } from "../../stores/usePatternStore";
-import { useTransportStore } from "../../stores/useTransportStore";
+import { useAppStore } from "../../stores/useAppStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 function DrumMachineApp() {
-  // WebSocket store for connection and room management
-  const {
-    isConnected,
-    isInRoom,
-    roomId,
-    users,
-    error,
-    lastRemoteTransportCommand,
-    initializeConnection,
-    createRoom,
-    joinRoom,
-    cleanup,
-  } = useWebSocketStore();
+  // Get WebSocket state and actions
+  const isConnected = useAppStore((state) => state.websocket.isConnected);
+  const isInRoom = useAppStore((state) => state.websocket.isInRoom);
+  const roomId = useAppStore((state) => state.websocket.roomId);
+  const users = useAppStore((state) => state.websocket.users);
+  const error = useAppStore((state) => state.websocket.error);
+  const lastRemoteTransportCommand = useAppStore(
+    (state) => state.websocket.lastRemoteTransportCommand
+  );
 
-  // Other stores for room sync
-  const { setTracks } = useTrackStore();
-  const { setPattern } = usePatternStore();
-  const { syncBpm, syncMeasureCount } = useTransportStore();
+  const initializeConnection = useAppStore(
+    (state) => state.websocket.initializeConnection
+  );
+  const createRoom = useAppStore((state) => state.websocket.createRoom);
+  const joinRoom = useAppStore((state) => state.websocket.joinRoom);
+  const cleanup = useAppStore((state) => state.websocket.cleanup);
+
+  // Get store setters for room sync
+  const setTracks = useAppStore((state) => state.tracks.setTracks);
+  const setPattern = useAppStore((state) => state.pattern.setPattern);
+  const syncBpm = useAppStore((state) => state.transport.syncBpm);
+  const syncMeasureCount = useAppStore(
+    (state) => state.transport.syncMeasureCount
+  );
 
   // Animation variants
   const pageVariants = {
@@ -66,33 +69,41 @@ function DrumMachineApp() {
 
   // Room management handlers
   const handleCreateRoom = async () => {
-    // Only handle the success case - let errors bubble up to RoomInterface
-    const roomState = await createRoom();
-    // Sync all stores with room state
-    setPattern(roomState.pattern);
-    syncBpm(roomState.bpm);
-    if (roomState.measureCount) {
-      syncMeasureCount(roomState.measureCount);
+    try {
+      const roomState = await createRoom();
+      // Sync all stores with room state
+      setPattern(roomState.pattern);
+      syncBpm(roomState.bpm);
+      if (roomState.measureCount) {
+        syncMeasureCount(roomState.measureCount);
+      }
+      if (roomState.tracks) {
+        setTracks(roomState.tracks);
+      }
+      return roomState;
+    } catch (err) {
+      // Let errors bubble up to RoomInterface
+      throw err;
     }
-    if (roomState.tracks) {
-      setTracks(roomState.tracks);
-    }
-    return roomState;
   };
 
   const handleJoinRoom = async (targetRoomId) => {
-    // Only handle the success case - let errors bubble up to RoomInterface
-    const roomState = await joinRoom(targetRoomId);
-    // Sync all stores with room state
-    setPattern(roomState.pattern);
-    syncBpm(roomState.bpm);
-    if (roomState.measureCount) {
-      syncMeasureCount(roomState.measureCount);
+    try {
+      const roomState = await joinRoom(targetRoomId);
+      // Sync all stores with room state
+      setPattern(roomState.pattern);
+      syncBpm(roomState.bpm);
+      if (roomState.measureCount) {
+        syncMeasureCount(roomState.measureCount);
+      }
+      if (roomState.tracks) {
+        setTracks(roomState.tracks);
+      }
+      return roomState;
+    } catch (err) {
+      // Let errors bubble up to RoomInterface
+      throw err;
     }
-    if (roomState.tracks) {
-      setTracks(roomState.tracks);
-    }
-    return roomState;
   };
 
   // If not connected or not in room, show connection interface
@@ -108,10 +119,9 @@ function DrumMachineApp() {
           transition={pageTransition}
           style={{
             width: "100%",
-            height: "100vh", // Changed from minHeight
+            height: "100vh",
           }}
         >
-          {/* Remove container-fluid and padding */}
           <RoomInterface
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}
@@ -138,11 +148,7 @@ function DrumMachineApp() {
           minHeight: "100vh",
         }}
       >
-        <DrumMachine
-          roomId={roomId}
-          userCount={users.length}
-          remoteTransportCommand={lastRemoteTransportCommand}
-        />
+        <DrumMachine remoteTransportCommand={lastRemoteTransportCommand} />
 
         {/* Global Sound Selector Modal */}
         <SoundSelectorModal drumSounds={drumSounds} />

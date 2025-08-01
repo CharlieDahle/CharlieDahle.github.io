@@ -1,8 +1,20 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import { useAppStore } from "../../stores";
 import "./RoomHeader.css";
 
-function RoomHeader({ roomId, userCount }) {
+function RoomHeader() {
+  // Get room info from WebSocket slice
+  const roomId = useAppStore((state) => state.websocket.roomId);
+  const users = useAppStore((state) => state.websocket.users);
+  const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
+
+  const handleLeaveRoom = () => {
+    leaveRoom(); // This now handles both WebSocket and local state automatically
+  };
+
+  const userCount = users.length;
+
   return (
     <div className="floating-card room-header-card">
       <div className="room-header-content">
