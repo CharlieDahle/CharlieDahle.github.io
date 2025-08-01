@@ -16,6 +16,10 @@ function DrumMachine({ remoteTransportCommand }) {
   const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
   const getTotalTicks = useAppStore((state) => state.transport.getTotalTicks);
 
+  // Get effects state - ADD THIS
+  const trackEffects = useAppStore((state) => state.effects.trackEffects);
+  const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
+
   // Scheduler instance
   const schedulerRef = useRef(null);
 
@@ -50,6 +54,17 @@ function DrumMachine({ remoteTransportCommand }) {
       schedulerRef.current.setTracks(tracks);
     }
   }, [pattern, bpm, tracks]);
+
+  // NEW: Update effects when they change
+  useEffect(() => {
+    if (schedulerRef.current) {
+      // Update effects for each track
+      tracks.forEach((track) => {
+        const effects = getTrackEffects(track.id);
+        schedulerRef.current.updateTrackEffects(track.id, effects);
+      });
+    }
+  }, [trackEffects, tracks, getTrackEffects]);
 
   // Audio coordination - listen to store changes and handle audio
   useEffect(() => {

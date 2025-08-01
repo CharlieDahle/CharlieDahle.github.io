@@ -203,15 +203,23 @@
   border: 3px solid var(--effects-border-color);
   position: relative;
   margin: 0 auto 12px;
-  cursor: pointer;
+  cursor: grab;
   transition: all var(--effects-transition);
   transform-origin: center;
+  user-select: none;
 }
 
 .knob:hover {
   border-color: var(--effects-primary-blue);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(91, 192, 235, 0.2);
+}
+
+.knob.dragging {
+  cursor: grabbing;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(91, 192, 235, 0.4);
+  border-color: var(--effects-primary-blue);
 }
 
 .knob:active {
@@ -223,12 +231,13 @@
   position: absolute;
   top: 6px;
   left: 50%;
-  transform: translateX(-50%);
   width: 3px;
   height: 20px;
   background: var(--effects-primary-blue);
   border-radius: 2px;
   transform-origin: 50% 24px;
+  transform: translateX(-50%) rotate(var(--knob-rotation));
+  transition: transform 0.1s ease;
 }
 
 .knob-value {
@@ -324,9 +333,4 @@
 .knob {
   transition: transform 0.1s ease, border-color 0.15s ease,
     box-shadow 0.15s ease;
-}
-
-/* Ensure knob indicator rotates with the knob */
-.knob::after {
-  transition: none;
 }

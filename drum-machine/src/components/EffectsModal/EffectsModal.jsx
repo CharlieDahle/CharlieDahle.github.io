@@ -363,26 +363,60 @@ function KnobControl({
   logarithmic,
   onChange,
 }) {
-  const handleKnobClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerY = rect.top + rect.height / 2;
-    const mouseY = e.clientY;
-    const deltaY = centerY - mouseY;
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartValue, setDragStartValue] = useState(0);
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStartY(e.clientY);
+    setDragStartValue(value);
+
+    // Add global mouse listeners
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+
+    const deltaY = dragStartY - e.clientY; // Inverted: up = positive
+    const sensitivity = 0.01; // Adjust this for sensitivity
 
     let newValue;
     if (logarithmic) {
       // Logarithmic scaling for frequency
       const logMin = Math.log(min);
       const logMax = Math.log(max);
-      const percentage = Math.max(0, Math.min(1, (deltaY + 50) / 100));
-      newValue = Math.exp(logMin + percentage * (logMax - logMin));
+      const logStartValue = Math.log(dragStartValue);
+      const logRange = logMax - logMin;
+      const newLogValue = logStartValue + deltaY * sensitivity * logRange;
+      newValue = Math.exp(Math.max(logMin, Math.min(logMax, newLogValue)));
     } else {
-      const percentage = Math.max(0, Math.min(1, (deltaY + 50) / 100));
-      newValue = min + percentage * (max - min);
+      const range = max - min;
+      newValue = dragStartValue + deltaY * sensitivity * range;
+      newValue = Math.max(min, Math.min(max, newValue));
     }
 
-    onChange(Math.round(newValue * 100) / 100);
+    // Round to reasonable precision
+    const precision = range < 10 ? 100 : range < 100 ? 10 : 1;
+    onChange(Math.round(newValue * precision) / precision);
   };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+
+  // Cleanup event listeners on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const formatValue = (val) => {
     if (percentage) {
@@ -415,9 +449,9 @@ function KnobControl({
     <div className="knob-control">
       <div className="knob-label">{label}</div>
       <div
-        className="knob"
-        onClick={handleKnobClick}
-        style={{ transform: `rotate(${getRotation()}deg)` }}
+        className={`knob ${isDragging ? "dragging" : ""}`}
+        onMouseDown={handleMouseDown}
+        style={{ "--knob-rotation": `${getRotation()}deg` }}
       />
       <div className="knob-value">{formatValue(value)}</div>
     </div>

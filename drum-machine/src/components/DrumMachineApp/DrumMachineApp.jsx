@@ -5,6 +5,7 @@ import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
+import EffectsModal from "../EffectsModal/EffectsModal.jsx";
 
 function DrumMachineApp() {
   // Get WebSocket state and actions
@@ -152,6 +153,7 @@ function DrumMachineApp() {
 
         {/* Global Sound Selector Modal */}
         <SoundSelectorModal drumSounds={drumSounds} />
+        <EffectsModal />
       </motion.div>
     </AnimatePresence>
   );

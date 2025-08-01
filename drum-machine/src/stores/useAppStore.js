@@ -420,6 +420,9 @@ export const useAppStore = create((set, get) => ({
       // Clean up pattern
       get().pattern.removeTrackFromPattern(trackId);
 
+      // Clean up effects - ADD THIS LINE:
+      get().effects.removeTrackEffects(trackId);
+
       // Send to server
       get().websocket.sendRemoveTrack(trackId);
     },
@@ -503,6 +506,10 @@ export const useAppStore = create((set, get) => ({
     soundModalTrack: null,
     error: null,
     isLoading: false,
+    effectsModalOpen: false,
+    effectsModalTrack: null,
+    error: null,
+    isLoading: false,
 
     setSnapToGrid: (value) => {
       set((state) => ({ ui: { ...state.ui, snapToGrid: value } }));
@@ -524,6 +531,26 @@ export const useAppStore = create((set, get) => ({
           ...state.ui,
           soundModalOpen: false,
           soundModalTrack: null,
+        },
+      }));
+    },
+
+    openEffectsModal: (track) => {
+      set((state) => ({
+        ui: {
+          ...state.ui,
+          effectsModalOpen: true,
+          effectsModalTrack: track,
+        },
+      }));
+    },
+
+    closeEffectsModal: () => {
+      set((state) => ({
+        ui: {
+          ...state.ui,
+          effectsModalOpen: false,
+          effectsModalTrack: null,
         },
       }));
     },
@@ -606,6 +633,24 @@ export const useAppStore = create((set, get) => ({
             users: state.websocket.users.filter((id) => id !== userId),
           },
         }));
+      });
+
+      newSocket.on(
+        "effect-change",
+        ({ trackId, effectType, parameter, value }) => {
+          console.log("Effect change received:", {
+            trackId,
+            effectType,
+            parameter,
+            value,
+          });
+          get().effects.syncTrackEffect(trackId, effectType, parameter, value);
+        }
+      );
+
+      newSocket.on("effect-reset", ({ trackId }) => {
+        console.log("Effect reset received:", trackId);
+        get().effects.syncTrackEffectReset(trackId);
       });
 
       // Pattern events - direct store updates (no more dynamic imports!)
@@ -906,6 +951,33 @@ export const useAppStore = create((set, get) => ({
       socket.emit("update-track-sound", { roomId, trackId, soundFile });
     },
 
+    sendEffectChange: (trackId, effectType, parameter, value) => {
+      const { socket, isInRoom, roomId } = get().websocket;
+      if (!socket || !isInRoom) return;
+
+      console.log("Sending effect change:", {
+        trackId,
+        effectType,
+        parameter,
+        value,
+      });
+      socket.emit("effect-change", {
+        roomId,
+        trackId,
+        effectType,
+        parameter,
+        value,
+      });
+    },
+
+    sendEffectReset: (trackId) => {
+      const { socket, isInRoom, roomId } = get().websocket;
+      if (!socket || !isInRoom) return;
+
+      console.log("Sending effect reset:", trackId);
+      socket.emit("effect-reset", { roomId, trackId });
+    },
+
     cleanup: () => {
       const { socket } = get().websocket;
       if (socket) {
@@ -936,5 +1008,148 @@ export const useAppStore = create((set, get) => ({
     console.log(
       "applyPatternChange called - this should use websocket slice instead"
     );
+  },
+
+  // ============================================================================
+  // EFFECTS SLICE
+  // ============================================================================
+  effects: {
+    // Store effects state per track
+    trackEffects: {},
+
+    // Default effect settings
+    getDefaultEffects: () => ({
+      eq: {
+        high: 0, // -12 to +12 dB
+        mid: 0, // -12 to +12 dB
+        low: 0, // -12 to +12 dB
+      },
+      filter: {
+        frequency: 20000, // 100Hz to 20kHz
+        Q: 1, // 0.1 to 30
+      },
+      reverb: {
+        roomSize: 0.3, // 0.1 to 0.9
+        decay: 1.5, // 0.1s to 10s
+        wet: 0, // 0 to 1 (0% to 100%)
+      },
+      delay: {
+        delayTime: 0.25, // 0.01s to 1s
+        feedback: 0.3, // 0 to 0.95 (0% to 95%)
+        wet: 0, // 0 to 1 (0% to 100%)
+      },
+    }),
+
+    // Initialize effects for a track
+    initializeTrackEffects: (trackId) => {
+      set((state) => {
+        if (!state.effects.trackEffects[trackId]) {
+          return {
+            effects: {
+              ...state.effects,
+              trackEffects: {
+                ...state.effects.trackEffects,
+                [trackId]: state.effects.getDefaultEffects(),
+              },
+            },
+          };
+        }
+        return state;
+      });
+    },
+
+    // Update a specific effect parameter
+    updateTrackEffect: (trackId, effectType, parameter, value) => {
+      // Initialize if doesn't exist
+      get().effects.initializeTrackEffects(trackId);
+
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: {
+              ...state.effects.trackEffects[trackId],
+              [effectType]: {
+                ...state.effects.trackEffects[trackId][effectType],
+                [parameter]: value,
+              },
+            },
+          },
+        },
+      }));
+
+      // Send to WebSocket for collaboration
+      get().websocket.sendEffectChange(trackId, effectType, parameter, value);
+    },
+
+    // Reset track effects to defaults
+    resetTrackEffects: (trackId) => {
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: state.effects.getDefaultEffects(),
+          },
+        },
+      }));
+
+      // Send reset to WebSocket
+      get().websocket.sendEffectReset(trackId);
+    },
+
+    // Get effects for a specific track
+    getTrackEffects: (trackId) => {
+      const effects = get().effects.trackEffects[trackId];
+      return effects || get().effects.getDefaultEffects();
+    },
+
+    // Remove track effects when track is deleted
+    removeTrackEffects: (trackId) => {
+      set((state) => {
+        const newTrackEffects = { ...state.effects.trackEffects };
+        delete newTrackEffects[trackId];
+        return {
+          effects: {
+            ...state.effects,
+            trackEffects: newTrackEffects,
+          },
+        };
+      });
+    },
+
+    // Sync methods for WebSocket updates
+    syncTrackEffect: (trackId, effectType, parameter, value) => {
+      get().effects.initializeTrackEffects(trackId);
+
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: {
+              ...state.effects.trackEffects[trackId],
+              [effectType]: {
+                ...state.effects.trackEffects[trackId][effectType],
+                [parameter]: value,
+              },
+            },
+          },
+        },
+      }));
+    },
+
+    syncTrackEffectReset: (trackId) => {
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: state.effects.getDefaultEffects(),
+          },
+        },
+      }));
+    },
   },
 }));

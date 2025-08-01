@@ -18,8 +18,9 @@ class DrumScheduler {
     // Pattern data
     this.pattern = {};
 
-    // Tone.js Players for loaded sounds
+    // Tone.js Players and Effects for loaded sounds
     this.tonePlayers = {};
+    this.trackEffects = {}; // Store effect chains per track
     this.soundsLoaded = false;
 
     // Dynamic track to sound mapping
@@ -59,7 +60,77 @@ class DrumScheduler {
     }
   }
 
-  // Set tracks and load their sounds
+  // Create effect chain for a track
+  createEffectChain(trackId) {
+    console.log(`Creating effect chain for track: ${trackId}`);
+
+    // Create all effects
+    const eq = new Tone.EQ3(0, 0, 0); // high, mid, low (all 0dB initially)
+    const filter = new Tone.Filter(20000, "lowpass"); // 20kHz cutoff, lowpass
+    filter.Q.value = 1; // Default Q value
+    const reverb = new Tone.Reverb(1.5); // 1.5s decay time
+    const delay = new Tone.FeedbackDelay(0.25, 0.3); // 0.25s delay, 0.3 feedback
+
+    // Set initial wet/dry levels
+    reverb.wet.value = 0; // 0% wet initially
+    delay.wet.value = 0; // 0% wet initially
+
+    // Chain effects together: eq -> filter -> reverb -> delay -> destination
+    eq.chain(filter, reverb, delay, Tone.Destination);
+
+    // Store effect references
+    this.trackEffects[trackId] = {
+      input: eq, // This is where the player connects
+      eq,
+      filter,
+      reverb,
+      delay,
+    };
+
+    console.log(`Effect chain created for track: ${trackId}`);
+    return this.trackEffects[trackId];
+  }
+
+  // Update effect parameters for a track
+  updateTrackEffects(trackId, effectsState) {
+    const effects = this.trackEffects[trackId];
+    if (!effects) return;
+
+    try {
+      // Update EQ
+      if (effectsState.eq) {
+        effects.eq.high.value = effectsState.eq.high;
+        effects.eq.mid.value = effectsState.eq.mid;
+        effects.eq.low.value = effectsState.eq.low;
+      }
+
+      // Update Filter
+      if (effectsState.filter) {
+        effects.filter.frequency.value = effectsState.filter.frequency;
+        effects.filter.Q.value = effectsState.filter.Q;
+      }
+
+      // Update Reverb
+      if (effectsState.reverb) {
+        effects.reverb.roomSize.value = effectsState.reverb.roomSize;
+        effects.reverb.decay = effectsState.reverb.decay;
+        effects.reverb.wet.value = effectsState.reverb.wet;
+      }
+
+      // Update Delay
+      if (effectsState.delay) {
+        effects.delay.delayTime.value = effectsState.delay.delayTime;
+        effects.delay.feedback.value = effectsState.delay.feedback;
+        effects.delay.wet.value = effectsState.delay.wet;
+      }
+
+      console.log(`Updated effects for track ${trackId}:`, effectsState);
+    } catch (error) {
+      console.error(`Error updating effects for track ${trackId}:`, error);
+    }
+  }
+
+  // Set tracks and load their sounds with effects
   async setTracks(tracks) {
     console.log("DrumScheduler: Setting tracks", tracks);
 
@@ -72,16 +143,29 @@ class DrumScheduler {
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
 
+      // Create effect chain for this track if it doesn't exist
+      if (!this.trackEffects[track.id]) {
+        this.createEffectChain(track.id);
+      }
+
       if (track.soundFile && !this.tonePlayers[track.soundFile]) {
         console.log(`Loading sound for ${track.name}: ${track.soundFile}`);
 
         try {
-          const player = await this.loadAudioFile(track.soundFile);
+          const player = await this.loadAudioFile(track.soundFile, track.id);
           if (player) {
             this.tonePlayers[track.soundFile] = player;
           }
         } catch (error) {
           console.error(`Failed to load sound for track ${track.name}:`, error);
+        }
+      } else if (track.soundFile && this.tonePlayers[track.soundFile]) {
+        // Reconnect existing player to this track's effects
+        const player = this.tonePlayers[track.soundFile];
+        const effects = this.trackEffects[track.id];
+        if (effects) {
+          player.disconnect();
+          player.connect(effects.input);
         }
       }
     }
@@ -89,11 +173,13 @@ class DrumScheduler {
     console.log("DrumScheduler: Track sounds mapped:", this.trackSounds);
   }
 
-  // Clean up Tone.Players that are no longer used by any track
+  // Clean up Tone.Players and effects that are no longer used
   cleanupUnusedPlayers(tracks) {
     const currentSoundFiles = tracks
       .map((track) => track.soundFile)
       .filter(Boolean); // Remove null/undefined
+
+    const currentTrackIds = tracks.map((track) => track.id);
 
     // Dispose of players that are no longer used
     Object.keys(this.tonePlayers).forEach((soundFile) => {
@@ -103,18 +189,44 @@ class DrumScheduler {
         delete this.tonePlayers[soundFile];
       }
     });
+
+    // Dispose of effect chains that are no longer used
+    Object.keys(this.trackEffects).forEach((trackId) => {
+      if (!currentTrackIds.includes(trackId)) {
+        console.log(`Cleaning up unused effects for track: ${trackId}`);
+        const effects = this.trackEffects[trackId];
+
+        // Dispose of all effects in the chain
+        Object.values(effects).forEach((effect) => {
+          if (effect && typeof effect.dispose === "function") {
+            effect.dispose();
+          }
+        });
+
+        delete this.trackEffects[trackId];
+      }
+    });
   }
 
-  // Load individual audio file into Tone.Player
-  async loadAudioFile(filePath) {
+  // Load individual audio file into Tone.Player and connect to effects
+  async loadAudioFile(filePath, trackId) {
     try {
-      // Create a new Tone.Player and connect it to the destination
-      const player = new Tone.Player(`/${filePath}`).toDestination();
+      // Create a new Tone.Player
+      const player = new Tone.Player(`/${filePath}`);
+
+      // Connect to the track's effect chain
+      const effects = this.trackEffects[trackId];
+      if (effects) {
+        player.connect(effects.input);
+      } else {
+        // Fallback to direct connection if no effects
+        player.toDestination();
+      }
 
       // Wait for the player to load
       await Tone.loaded();
 
-      console.log(`Successfully loaded: ${filePath}`);
+      console.log(`Successfully loaded: ${filePath} for track: ${trackId}`);
       return player;
     } catch (error) {
       console.error(`Failed to load audio file: ${filePath}`, error);
@@ -299,6 +411,16 @@ class DrumScheduler {
       player.dispose();
     });
     this.tonePlayers = {};
+
+    // Dispose of all effect chains
+    Object.values(this.trackEffects).forEach((effects) => {
+      Object.values(effects).forEach((effect) => {
+        if (effect && typeof effect.dispose === "function") {
+          effect.dispose();
+        }
+      });
+    });
+    this.trackEffects = {};
 
     console.log("DrumScheduler: Destroyed");
   }

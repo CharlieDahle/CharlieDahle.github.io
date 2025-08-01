@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Sliders } from "lucide-react";
 import { useAppStore } from "../../stores";
 import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
@@ -9,6 +9,7 @@ import "./PatternTimeline.css";
 function TrackLabel({ track }) {
   const [showControls, setShowControls] = useState(false);
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
+  const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
 
   // Get display name - either sound name or "Choose Sound..."
   const getDisplayName = () => {
@@ -63,14 +64,7 @@ function TrackLabel({ track }) {
           </button>
           <button
             className="track-effects-btn"
-            onClick={() => console.log("Open effects for", track.id)}
-            title="Track effects"
-          >
-            <Sliders size={16} />
-          </button>
-          <button
-            className="track-effects-btn"
-            onClick={() => console.log("Open effects for", track.id)}
+            onClick={() => openEffectsModal(track)}
             title="Track effects"
           >
             <Sliders size={16} />
