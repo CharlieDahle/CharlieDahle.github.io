@@ -32,7 +32,6 @@ function EffectsModal() {
     }
   }, [effectsModalOpen, effectsModalTrack, getTrackEffects]);
 
-  // Handle knob changes (real-time updates)
   const handleEffectChange = (effectType, parameter, value) => {
     const newEffects = {
       ...tempEffects,
@@ -43,13 +42,33 @@ function EffectsModal() {
     };
     setTempEffects(newEffects);
 
-    // Apply change immediately for real-time feedback
+    // Apply change LOCALLY for real-time preview (no WebSocket broadcast)
     updateTrackEffect(effectsModalTrack.id, effectType, parameter, value);
   };
 
-  // Handle Apply - commit the changes
+  // Handle Apply - NOW we broadcast the changes
   const handleApply = () => {
-    // Changes are already applied in real-time, just close modal
+    // Send all the changes to WebSocket for collaboration
+    if (originalEffects && effectsModalTrack) {
+      Object.keys(tempEffects).forEach((effectType) => {
+        Object.keys(tempEffects[effectType]).forEach((parameter) => {
+          const newValue = tempEffects[effectType][parameter];
+          const originalValue = originalEffects[effectType][parameter];
+
+          // Only broadcast if the value actually changed
+          if (newValue !== originalValue) {
+            // This will broadcast to other users
+            get().websocket.sendEffectChange(
+              effectsModalTrack.id,
+              effectType,
+              parameter,
+              newValue
+            );
+          }
+        });
+      });
+    }
+
     closeEffectsModal();
   };
 
@@ -352,8 +371,7 @@ function EffectsModal() {
   );
 }
 
-// Knob Control Component
-// Simple Input Control Component - much easier!
+// Simple Slider Control Component
 function KnobControl({
   label,
   value,
@@ -366,43 +384,15 @@ function KnobControl({
 }) {
   const formatValue = (val) => {
     if (percentage) {
-      return Math.round(val * 100);
+      return `${Math.round(val * 100)}%`;
     }
     if (unit === "Hz" && val >= 1000) {
-      return (val / 1000).toFixed(1);
+      return `${(val / 1000).toFixed(1)}kHz`;
     }
     if (unit === "dB") {
-      return val.toFixed(1);
+      return `${val >= 0 ? "+" : ""}${val.toFixed(1)}dB`;
     }
-    return val.toFixed(1);
-  };
-
-  const parseValue = (inputVal) => {
-    let numValue = parseFloat(inputVal);
-
-    if (isNaN(numValue)) return value; // Keep current value if invalid
-
-    if (percentage) {
-      numValue = numValue / 100; // Convert percentage back to 0-1 range
-    }
-
-    if (unit === "Hz" && inputVal.includes("k")) {
-      numValue = numValue * 1000; // Convert kHz to Hz
-    }
-
-    // Clamp to min/max
-    return Math.max(min, Math.min(max, numValue));
-  };
-
-  const getUnit = () => {
-    if (percentage) return "%";
-    if (unit === "Hz" && value >= 1000) return "kHz";
-    return unit;
-  };
-
-  const handleInputChange = (e) => {
-    const newValue = parseValue(e.target.value);
-    onChange(newValue);
+    return `${val.toFixed(1)}${unit}`;
   };
 
   // Calculate rotation for visual knob (still show it, just not interactive)
@@ -419,6 +409,43 @@ function KnobControl({
     return (percentage - 0.5) * 270; // -135deg to +135deg
   };
 
+  // Convert value to slider range (0-100 for easier handling)
+  const getSliderValue = () => {
+    if (logarithmic) {
+      const logMin = Math.log(min);
+      const logMax = Math.log(max);
+      const logValue = Math.log(value);
+      return ((logValue - logMin) / (logMax - logMin)) * 100;
+    } else {
+      return ((value - min) / (max - min)) * 100;
+    }
+  };
+
+  // Convert slider value (0-100) back to actual value
+  const getActualValue = (sliderVal) => {
+    const normalizedVal = sliderVal / 100; // 0-1 range
+
+    if (logarithmic) {
+      const logMin = Math.log(min);
+      const logMax = Math.log(max);
+      return Math.exp(logMin + normalizedVal * (logMax - logMin));
+    } else {
+      return min + normalizedVal * (max - min);
+    }
+  };
+
+  const handleSliderChange = (e) => {
+    const sliderValue = parseFloat(e.target.value);
+    const actualValue = getActualValue(sliderValue);
+
+    // Round to reasonable precision
+    const range = max - min;
+    const precision = range < 10 ? 100 : range < 100 ? 10 : 1;
+    const roundedValue = Math.round(actualValue * precision) / precision;
+
+    onChange(roundedValue);
+  };
+
   return (
     <div className="knob-control">
       <div className="knob-label">{label}</div>
@@ -429,19 +456,19 @@ function KnobControl({
         style={{ "--knob-rotation": `${getRotation()}deg` }}
       />
 
-      {/* Input field for actual control */}
-      <div className="knob-input-container">
-        <input
-          type="number"
-          className="knob-input"
-          value={formatValue(value)}
-          onChange={handleInputChange}
-          step={unit === "dB" ? "0.1" : "1"}
-          min={percentage ? 0 : min}
-          max={percentage ? 100 : max}
-        />
-        <span className="knob-unit">{getUnit()}</span>
-      </div>
+      {/* Slider for actual control */}
+      <input
+        type="range"
+        className="knob-slider"
+        min="0"
+        max="100"
+        step="0.1"
+        value={getSliderValue()}
+        onChange={handleSliderChange}
+      />
+
+      {/* Value display */}
+      <div className="knob-value">{formatValue(value)}</div>
     </div>
   );
 }
