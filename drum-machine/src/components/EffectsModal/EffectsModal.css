@@ -34,17 +34,17 @@
   }
 }
 
-/* Modal Container */
+/* Modal Container - Make it wider */
 .effects-modal {
   background: white;
   border-radius: 24px;
   box-shadow: var(--effects-shadow-lg);
-  width: 600px;
-  max-height: 80vh;
+  width: 900px; /* Increased from 600px */
+  max-width: 95vw; /* Responsive max width */
+  max-height: 90vh; /* Increased from 80vh */
   overflow: hidden;
   animation: slideIn 0.3s ease;
 }
-
 @keyframes slideIn {
   from {
     transform: scale(0.9) translateY(20px);
@@ -99,23 +99,26 @@
 /* Modal Body */
 .effects-modal-body {
   padding: 32px;
+  max-height: calc(90vh - 200px); /* Account for header and footer */
+  overflow-y: auto; /* Allow scrolling if needed */
 }
 
 /* Effect Tabs */
 .effects-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px; /* Reduced from 4px */
   margin-bottom: 32px;
   background: #f8f9fa;
   padding: 4px;
   border-radius: 12px;
+  overflow-x: auto; /* Allow scrolling on small screens */
 }
 
 .effects-tab {
-  padding: 12px 20px;
+  padding: 8px 12px; /* Reduced padding */
   border: none;
   background: none;
-  border-radius: 8px;
+  border-radius: 6px; /* Slightly smaller radius */
   font-weight: 600;
   color: var(--effects-text-secondary);
   cursor: pointer;
@@ -124,8 +127,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 4px; /* Reduced gap */
+  font-size: 12px; /* Smaller font */
+  min-width: 80px; /* Minimum width to prevent squishing */
+  white-space: nowrap;
 }
 
 .effects-tab.active {
@@ -139,9 +144,33 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
+@media (max-width: 768px) {
+  .effects-tabs {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .effects-tab {
+    flex: none;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
 /* Effect Panels */
 .effects-panel {
   animation: fadeInPanel 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.effects-panel--multi {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  align-items: flex-start;
 }
 
 @keyframes fadeInPanel {
@@ -173,17 +202,23 @@
   gap: 8px;
 }
 
-/* Knob Controls */
+.effects-panel--multi .effects-section {
+  flex: 1;
+  min-width: 280px;
+}
+
 .knob-row {
   display: flex;
-  gap: 32px;
+  gap: 24px; /* Slightly reduced from 32px */
   justify-content: center;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .knob-control {
   text-align: center;
   flex: 1;
-  max-width: 120px;
+  max-width: 100px; /* Reduced from 120px */
+  min-width: 80px; /* Ensure minimum size */
 }
 
 .knob-label {
@@ -292,11 +327,21 @@
   box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .effects-modal {
     width: 90vw;
-    margin: 20px;
+  }
+
+  .effects-panel--multi {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .effects-modal {
+    width: 95vw;
+    margin: 10px;
   }
 
   .effects-modal-header,
@@ -306,7 +351,7 @@
   }
 
   .knob-row {
-    gap: 20px;
+    gap: 16px;
   }
 
   .knob {

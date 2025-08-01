@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Sliders, BarChart3, Filter, Volume2, Repeat } from "lucide-react";
+import {
+  Sliders,
+  BarChart3,
+  Filter,
+  Volume2,
+  Repeat,
+  Zap,
+  Waves,
+  Settings,
+} from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./EffectsModal.css";
 
@@ -57,8 +66,9 @@ function EffectsModal() {
 
           // Only broadcast if the value actually changed
           if (newValue !== originalValue) {
-            // This will broadcast to other users
-            get().websocket.sendEffectChange(
+            // Get the WebSocket store slice properly
+            const { websocket } = useAppStore.getState();
+            websocket.sendEffectChange(
               effectsModalTrack.id,
               effectType,
               parameter,
@@ -162,6 +172,24 @@ function EffectsModal() {
             </button>
             <button
               className={`effects-tab ${
+                activeTab === "dynamics" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("dynamics")}
+            >
+              <Zap size={16} />
+              Dynamics
+            </button>
+            <button
+              className={`effects-tab ${
+                activeTab === "modulation" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("modulation")}
+            >
+              <Waves size={16} />
+              Modulation
+            </button>
+            <button
+              className={`effects-tab ${
                 activeTab === "reverb" ? "active" : ""
               }`}
               onClick={() => setActiveTab("reverb")}
@@ -175,6 +203,15 @@ function EffectsModal() {
             >
               <Repeat size={16} />
               Delay
+            </button>
+            <button
+              className={`effects-tab ${
+                activeTab === "advanced" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("advanced")}
+            >
+              <Settings size={16} />
+              Advanced
             </button>
           </div>
 
@@ -338,6 +375,254 @@ function EffectsModal() {
                     percentage={true}
                     onChange={(value) =>
                       handleEffectChange("delay", "wet", value)
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dynamics Panel */}
+          {activeTab === "dynamics" && (
+            <div className="effects-panel">
+              <div className="effects-section">
+                <div className="effects-section-title">
+                  <Zap size={18} />
+                  Compressor
+                </div>
+                <div className="knob-row">
+                  <KnobControl
+                    label="Threshold"
+                    value={tempEffects.compressor.threshold}
+                    min={-60}
+                    max={0}
+                    unit="dB"
+                    onChange={(value) =>
+                      handleEffectChange("compressor", "threshold", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Ratio"
+                    value={tempEffects.compressor.ratio}
+                    min={1}
+                    max={20}
+                    unit=":1"
+                    onChange={(value) =>
+                      handleEffectChange("compressor", "ratio", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Attack"
+                    value={tempEffects.compressor.attack}
+                    min={0}
+                    max={0.1}
+                    unit="s"
+                    onChange={(value) =>
+                      handleEffectChange("compressor", "attack", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Release"
+                    value={tempEffects.compressor.release}
+                    min={0.01}
+                    max={1}
+                    unit="s"
+                    onChange={(value) =>
+                      handleEffectChange("compressor", "release", value)
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modulation Panel */}
+          {activeTab === "modulation" && (
+            <div className="effects-panel">
+              <div className="effects-section">
+                <div className="effects-section-title">
+                  <Waves size={18} />
+                  Chorus
+                </div>
+                <div className="knob-row">
+                  <KnobControl
+                    label="Rate"
+                    value={tempEffects.chorus.rate}
+                    min={0.1}
+                    max={10}
+                    unit="Hz"
+                    onChange={(value) =>
+                      handleEffectChange("chorus", "rate", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Depth"
+                    value={tempEffects.chorus.depth}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("chorus", "depth", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Wet Level"
+                    value={tempEffects.chorus.wet}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("chorus", "wet", value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="effects-section">
+                <div className="effects-section-title">
+                  <Waves size={18} />
+                  Vibrato
+                </div>
+                <div className="knob-row">
+                  <KnobControl
+                    label="Rate"
+                    value={tempEffects.vibrato.rate}
+                    min={0.1}
+                    max={20}
+                    unit="Hz"
+                    onChange={(value) =>
+                      handleEffectChange("vibrato", "rate", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Depth"
+                    value={tempEffects.vibrato.depth}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("vibrato", "depth", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Wet Level"
+                    value={tempEffects.vibrato.wet}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("vibrato", "wet", value)
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Advanced Panel */}
+          {activeTab === "advanced" && (
+            <div className="effects-panel">
+              {/* CPU Warning */}
+              <div className="effects-section">
+                <div
+                  style={{
+                    background: "rgba(255, 193, 7, 0.1)",
+                    border: "1px solid #ffc107",
+                    borderRadius: "8px",
+                    padding: "12px 16px",
+                    marginBottom: "24px",
+                    fontSize: "14px",
+                    color: "#856404",
+                  }}
+                >
+                  ⚠️ <strong>Performance Warning:</strong> These effects are CPU
+                  intensive and may cause audio dropouts on slower devices.
+                </div>
+              </div>
+
+              <div className="effects-section">
+                <div className="effects-section-title">
+                  <Zap size={18} />
+                  Distortion
+                </div>
+                <div className="knob-row">
+                  <KnobControl
+                    label="Drive"
+                    value={tempEffects.distortion.amount}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("distortion", "amount", value)
+                    }
+                  />
+                  <div className="knob-control">
+                    <div className="knob-label">Quality</div>
+                    <select
+                      value={tempEffects.distortion.oversample}
+                      onChange={(e) =>
+                        handleEffectChange(
+                          "distortion",
+                          "oversample",
+                          e.target.value
+                        )
+                      }
+                      style={{
+                        width: "80px",
+                        padding: "8px",
+                        borderRadius: "8px",
+                        border: "2px solid #dee2e6",
+                        fontSize: "12px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <option value="2x">2x</option>
+                      <option value="4x">4x</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="effects-section">
+                <div className="effects-section-title">
+                  <Settings size={18} />
+                  Pitch Shift
+                </div>
+                <div className="knob-row">
+                  <KnobControl
+                    label="Pitch"
+                    value={tempEffects.pitchShift.pitch}
+                    min={-12}
+                    max={12}
+                    unit=" st"
+                    onChange={(value) =>
+                      handleEffectChange("pitchShift", "pitch", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Window"
+                    value={tempEffects.pitchShift.windowSize}
+                    min={0.01}
+                    max={0.1}
+                    unit="s"
+                    onChange={(value) =>
+                      handleEffectChange("pitchShift", "windowSize", value)
+                    }
+                  />
+                  <KnobControl
+                    label="Wet Level"
+                    value={tempEffects.pitchShift.wet}
+                    min={0}
+                    max={1}
+                    unit="%"
+                    percentage={true}
+                    onChange={(value) =>
+                      handleEffectChange("pitchShift", "wet", value)
                     }
                   />
                 </div>

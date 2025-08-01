@@ -64,25 +64,55 @@ class DrumScheduler {
   createEffectChain(trackId) {
     console.log(`Creating effect chain for track: ${trackId}`);
 
-    // Create all effects
+    // Create all effects in chain order
     const eq = new Tone.EQ3(0, 0, 0); // high, mid, low (all 0dB initially)
     const filter = new Tone.Filter(20000, "lowpass"); // 20kHz cutoff, lowpass
     filter.Q.value = 1; // Default Q value
-    const reverb = new Tone.Reverb(1.5); // 1.5s decay time
-    const delay = new Tone.FeedbackDelay(0.25, 0.3); // 0.25s delay, 0.3 feedback
 
-    // Set initial wet/dry levels
+    const compressor = new Tone.Compressor(-24, 4); // threshold, ratio
+    compressor.attack.value = 0.01;
+    compressor.release.value = 0.1;
+
+    const chorus = new Tone.Chorus(2, 0.3, 0); // rate, depth, wet
+    const vibrato = new Tone.Vibrato(5, 0.1); // rate, depth
+    vibrato.wet.value = 0; // Start dry
+
+    const distortion = new Tone.Distortion(0); // amount (start clean)
+    distortion.oversample = "2x";
+
+    const pitchShift = new Tone.PitchShift(0); // pitch (no shift initially)
+    pitchShift.windowSize = 0.03;
+    pitchShift.wet.value = 0; // Start dry
+
+    const reverb = new Tone.Reverb(1.5); // 1.5s decay time
     reverb.wet.value = 0; // 0% wet initially
+
+    const delay = new Tone.FeedbackDelay(0.25, 0.3); // 0.25s delay, 0.3 feedback
     delay.wet.value = 0; // 0% wet initially
 
-    // Chain effects together: eq -> filter -> reverb -> delay -> destination
-    eq.chain(filter, reverb, delay, Tone.Destination);
+    // Chain effects together in the correct order
+    eq.chain(
+      filter,
+      compressor,
+      chorus,
+      vibrato,
+      distortion,
+      pitchShift,
+      reverb,
+      delay,
+      Tone.Destination
+    );
 
     // Store effect references
     this.trackEffects[trackId] = {
       input: eq, // This is where the player connects
       eq,
       filter,
+      compressor,
+      chorus,
+      vibrato,
+      distortion,
+      pitchShift,
       reverb,
       delay,
     };
@@ -110,7 +140,42 @@ class DrumScheduler {
         effects.filter.Q.value = effectsState.filter.Q;
       }
 
-      // Update Reverb - Tone.Reverb doesn't have roomSize, it has decay and wet
+      // Update Compressor
+      if (effectsState.compressor) {
+        effects.compressor.threshold.value = effectsState.compressor.threshold;
+        effects.compressor.ratio.value = effectsState.compressor.ratio;
+        effects.compressor.attack.value = effectsState.compressor.attack;
+        effects.compressor.release.value = effectsState.compressor.release;
+      }
+
+      // Update Chorus
+      if (effectsState.chorus) {
+        effects.chorus.frequency.value = effectsState.chorus.rate;
+        effects.chorus.depth = effectsState.chorus.depth;
+        effects.chorus.wet.value = effectsState.chorus.wet;
+      }
+
+      // Update Vibrato
+      if (effectsState.vibrato) {
+        effects.vibrato.frequency.value = effectsState.vibrato.rate;
+        effects.vibrato.depth.value = effectsState.vibrato.depth;
+        effects.vibrato.wet.value = effectsState.vibrato.wet;
+      }
+
+      // Update Distortion
+      if (effectsState.distortion) {
+        effects.distortion.distortion = effectsState.distortion.amount;
+        effects.distortion.oversample = effectsState.distortion.oversample;
+      }
+
+      // Update Pitch Shift
+      if (effectsState.pitchShift) {
+        effects.pitchShift.pitch = effectsState.pitchShift.pitch;
+        effects.pitchShift.windowSize = effectsState.pitchShift.windowSize;
+        effects.pitchShift.wet.value = effectsState.pitchShift.wet;
+      }
+
+      // Update Reverb
       if (effectsState.reverb) {
         // Map roomSize to decay (roomSize affects how long reverb lasts)
         if (effectsState.reverb.roomSize !== undefined) {

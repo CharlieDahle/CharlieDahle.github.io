@@ -1028,6 +1028,31 @@ export const useAppStore = create((set, get) => ({
         frequency: 20000, // 100Hz to 20kHz
         Q: 1, // 0.1 to 30
       },
+      compressor: {
+        threshold: -24, // -60 to 0 dB
+        ratio: 4, // 1 to 20
+        attack: 0.01, // 0 to 0.1 seconds
+        release: 0.1, // 0.01 to 1 seconds
+      },
+      chorus: {
+        rate: 2, // 0.1 to 10 Hz
+        depth: 0.3, // 0 to 1
+        wet: 0, // 0 to 1 (0% to 100%)
+      },
+      vibrato: {
+        rate: 5, // 0.1 to 20 Hz
+        depth: 0.1, // 0 to 1
+        wet: 0, // 0 to 1 (0% to 100%)
+      },
+      distortion: {
+        amount: 0, // 0 to 1
+        oversample: "2x", // '2x' or '4x'
+      },
+      pitchShift: {
+        pitch: 0, // -12 to +12 semitones
+        windowSize: 0.03, // 0.01 to 0.1 seconds
+        wet: 0, // 0 to 1 (0% to 100%)
+      },
       reverb: {
         roomSize: 0.3, // 0.1 to 0.9
         decay: 1.5, // 0.1s to 10s
