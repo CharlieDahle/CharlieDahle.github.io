@@ -68,6 +68,13 @@ function TrackLabel({ track }) {
           >
             <Sliders size={16} />
           </button>
+          <button
+            className="track-effects-btn"
+            onClick={() => console.log("Open effects for", track.id)}
+            title="Track effects"
+          >
+            <Sliders size={16} />
+          </button>
         </div>
       )}
     </div>
