@@ -1,12 +1,14 @@
-/* EffectsModal.css */
+/* EffectsModal.css - Compact, Timeline-Consistent Design */
 :root {
   --effects-primary-blue: #5bc0eb;
   --effects-success-green: #28a745;
+  --effects-danger-red: #dc3545;
   --effects-text-primary: #333;
   --effects-text-secondary: #6c757d;
   --effects-border-color: #dee2e6;
   --effects-sidebar-bg: #f8f9fa;
-  --effects-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+  --effects-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --effects-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   --effects-transition: 0.15s ease;
 }
 
@@ -34,17 +36,19 @@
   }
 }
 
-/* Modal Container - Make it wider */
+/* Modal Container - Fixed size with scrolling */
 .effects-modal {
   background: white;
   border-radius: 24px;
-  box-shadow: var(--effects-shadow-lg);
-  width: 900px; /* Increased from 600px */
-  max-width: 95vw; /* Responsive max width */
-  max-height: 90vh; /* Increased from 80vh */
+  box-shadow: var(--effects-shadow-md);
+  width: 800px; /* Fixed width - more compact */
+  height: 600px; /* Fixed height */
   overflow: hidden;
   animation: slideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
+
 @keyframes slideIn {
   from {
     transform: scale(0.9) translateY(20px);
@@ -56,14 +60,15 @@
   }
 }
 
-/* Modal Header */
+/* Modal Header - Compact padding */
 .effects-modal-header {
   background: var(--effects-sidebar-bg);
-  padding: 24px 32px;
+  padding: 16px 24px; /* Reduced from 24px 32px */
   border-bottom: 1px solid var(--effects-border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .effects-modal-title {
@@ -96,29 +101,31 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
-/* Modal Body */
+/* Modal Body - Compact padding with flex layout */
 .effects-modal-body {
-  padding: 32px;
-  max-height: calc(90vh - 200px); /* Account for header and footer */
-  overflow-y: auto; /* Allow scrolling if needed */
+  padding: 24px; /* Reduced from 32px */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* Effect Tabs */
+/* Effect Tabs - Compact spacing */
 .effects-tabs {
   display: flex;
-  gap: 2px; /* Reduced from 4px */
-  margin-bottom: 32px;
+  gap: 4px; /* Increased from 2px for usability */
+  margin-bottom: 24px; /* Consistent with timeline section gaps */
   background: #f8f9fa;
   padding: 4px;
   border-radius: 12px;
-  overflow-x: auto; /* Allow scrolling on small screens */
+  flex-shrink: 0;
 }
 
 .effects-tab {
-  padding: 8px 12px; /* Reduced padding */
+  padding: 8px 12px;
   border: none;
   background: none;
-  border-radius: 6px; /* Slightly smaller radius */
+  border-radius: 6px;
   font-weight: 600;
   color: var(--effects-text-secondary);
   cursor: pointer;
@@ -127,16 +134,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px; /* Reduced gap */
-  font-size: 12px; /* Smaller font */
-  min-width: 80px; /* Minimum width to prevent squishing */
+  gap: 4px;
+  font-size: 12px;
+  min-width: 80px;
   white-space: nowrap;
 }
 
 .effects-tab.active {
   background: white;
   color: var(--effects-primary-blue);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--effects-shadow-sm);
 }
 
 .effects-tab:hover:not(.active) {
@@ -144,18 +151,11 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-@media (max-width: 768px) {
-  .effects-tabs {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .effects-tab {
-    flex: none;
-    justify-content: flex-start;
-    padding: 12px 16px;
-    font-size: 14px;
-  }
+/* Scrollable Content Area */
+.effects-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px; /* Space for scrollbar */
 }
 
 /* Effect Panels */
@@ -163,14 +163,7 @@
   animation: fadeInPanel 0.2s ease;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-.effects-panel--multi {
-  display: flex;
-  flex-direction: row;
-  gap: 32px;
-  align-items: flex-start;
+  gap: 24px; /* Consistent with timeline */
 }
 
 @keyframes fadeInPanel {
@@ -185,7 +178,7 @@
 }
 
 .effects-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px; /* Reduced from 32px to match timeline */
 }
 
 .effects-section:last-child {
@@ -196,86 +189,110 @@
   font-size: 16px;
   font-weight: 700;
   color: var(--effects-text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 16px; /* Reduced from 20px */
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.effects-panel--multi .effects-section {
-  flex: 1;
-  min-width: 280px;
-}
-
-.knob-row {
+/* Slider Rows - More compact than knob rows */
+.slider-row {
   display: flex;
-  gap: 24px; /* Slightly reduced from 32px */
+  gap: 20px; /* Reduced from 24px */
   justify-content: center;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  flex-wrap: wrap;
 }
 
-.knob-control {
+.slider-control {
   text-align: center;
   flex: 1;
-  max-width: 100px; /* Reduced from 120px */
-  min-width: 80px; /* Ensure minimum size */
+  max-width: 120px;
+  min-width: 100px;
 }
 
-.knob-label {
+.slider-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--effects-text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 8px; /* Reduced from 12px */
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.knob {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 3px solid var(--effects-border-color);
-  position: relative;
-  margin: 0 auto 12px;
-  cursor: grab;
+/* Slider Styling - More prominent since no knobs */
+.effects-slider {
+  width: 100px; /* Wider than before */
+  height: 6px; /* Thicker track */
+  margin: 8px 0; /* Reduced margin */
+  background: var(--effects-border-color);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
   transition: all var(--effects-transition);
-  transform-origin: center;
-  user-select: none;
 }
 
-.knob:hover {
-  border-color: var(--effects-primary-blue);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.2);
+/* Slider track */
+.effects-slider::-webkit-slider-track {
+  height: 6px;
+  background: var(--effects-border-color);
+  border-radius: 3px;
 }
 
-.knob.dragging {
-  cursor: grabbing;
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(91, 192, 235, 0.4);
-  border-color: var(--effects-primary-blue);
+.effects-slider::-moz-range-track {
+  height: 6px;
+  background: var(--effects-border-color);
+  border-radius: 3px;
+  border: none;
 }
 
-.knob:active {
-  transform: scale(0.95);
-}
-
-.knob::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  width: 3px;
+/* Slider thumb */
+.effects-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
   height: 20px;
   background: var(--effects-primary-blue);
-  border-radius: 2px;
-  transform-origin: 50% 24px;
-  transform: translateX(-50%) rotate(var(--knob-rotation));
-  transition: transform 0.1s ease;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: var(--effects-shadow-sm);
+  transition: all 0.15s ease;
 }
 
-.knob-value {
+.effects-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--effects-primary-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: var(--effects-shadow-sm);
+  transition: all 0.15s ease;
+}
+
+/* Hover states */
+.effects-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
+}
+
+.effects-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
+}
+
+/* Focus states */
+.effects-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
+}
+
+.effects-slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
+}
+
+.slider-value {
   font-size: 11px;
   font-weight: 600;
   color: var(--effects-text-primary);
@@ -284,26 +301,66 @@
   border-radius: 8px;
   display: inline-block;
   min-width: 50px;
+  margin-top: 4px;
 }
 
-/* Modal Footer */
+/* Select Dropdown Styling */
+.effects-select {
+  width: 80px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid var(--effects-border-color);
+  fontsize: 12px;
+  text-align: center;
+  background: white;
+  cursor: pointer;
+  transition: border-color var(--effects-transition);
+}
+
+.effects-select:focus {
+  outline: none;
+  border-color: var(--effects-primary-blue);
+}
+
+/* Warning Box - No more inline styles */
+.effects-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #856404;
+}
+
+/* Modal Footer - Compact with new button layout */
 .effects-modal-footer {
   background: var(--effects-sidebar-bg);
-  padding: 24px 32px;
+  padding: 16px 24px; /* Reduced from 24px 32px */
   border-top: 1px solid var(--effects-border-color);
   display: flex;
-  gap: 16px;
-  justify-content: flex-end;
+  gap: 8px; /* Reduced from 16px to match timeline */
+  align-items: center;
+  flex-shrink: 0;
 }
 
+/* Button Spacer */
+.button-spacer {
+  flex: 1;
+}
+
+/* Buttons - Timeline-consistent styling */
 .effects-btn {
-  padding: 12px 24px;
+  padding: 12px 20px; /* Match timeline buttons */
   border: none;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--effects-transition);
   font-size: 14px;
+  box-shadow: var(--effects-shadow-sm); /* Add shadow like timeline */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .effects-btn--secondary {
@@ -314,6 +371,7 @@
 .effects-btn--secondary:hover {
   background: #adb5bd;
   transform: translateY(-1px);
+  box-shadow: var(--effects-shadow-md);
 }
 
 .effects-btn--primary {
@@ -327,139 +385,58 @@
   box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
 }
 
-@media (max-width: 1024px) {
-  .effects-modal {
-    width: 90vw;
-  }
-
-  .effects-panel--multi {
-    flex-direction: column;
-    gap: 24px;
-  }
+.effects-btn--danger {
+  background: var(--effects-danger-red);
+  color: white;
 }
 
-@media (max-width: 768px) {
-  .effects-modal {
-    width: 95vw;
-    margin: 10px;
-  }
-
-  .effects-modal-header,
-  .effects-modal-body,
-  .effects-modal-footer {
-    padding: 20px;
-  }
-
-  .knob-row {
-    gap: 16px;
-  }
-
-  .knob {
-    width: 50px;
-    height: 50px;
-  }
-
-  .knob::after {
-    top: 5px;
-    height: 16px;
-    transform-origin: 50% 20px;
-  }
+.effects-btn--danger:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 /* Focus states for accessibility */
 .effects-tab:focus,
 .effects-btn:focus,
-.knob:focus {
+.effects-slider:focus,
+.effects-select:focus {
   outline: 2px solid var(--effects-primary-blue);
   outline-offset: 2px;
 }
 
-/* Animation for knob rotation */
-.knob {
-  transition: transform 0.1s ease, border-color 0.15s ease,
-    box-shadow 0.15s ease;
+/* Scrollbar styling for content area */
+.effects-content::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Display-only knob (visual feedback) */
-.knob--display-only {
-  pointer-events: none;
-  cursor: default;
+.effects-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
 }
 
-.knob--display-only:hover {
-  transform: none;
-  border-color: var(--effects-border-color);
-  box-shadow: none;
+.effects-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
 }
 
-/* Slider styling */
-.knob-slider {
-  width: 80px;
-  height: 4px;
-  margin: 12px 0 8px 0;
-  background: var(--effects-border-color);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
+.effects-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
-/* Slider track */
-.knob-slider::-webkit-slider-track {
-  height: 4px;
-  background: var(--effects-border-color);
-  border-radius: 2px;
-}
+/* Responsive adjustments for smaller screens */
+@media (max-width: 900px) {
+  .effects-modal {
+    width: 90vw;
+    height: 80vh;
+    margin: 20px;
+  }
 
-.knob-slider::-moz-range-track {
-  height: 4px;
-  background: var(--effects-border-color);
-  border-radius: 2px;
-  border: none;
-}
+  .slider-row {
+    gap: 16px;
+  }
 
-/* Slider thumb */
-.knob-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  background: var(--effects-primary-blue);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.15s ease;
-}
-
-.knob-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  background: var(--effects-primary-blue);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.15s ease;
-}
-
-/* Hover states */
-.knob-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
-}
-
-.knob-slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
-}
-
-/* Focus states */
-.knob-slider:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
-}
-
-.knob-slider:focus::-moz-range-thumb {
-  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
+  .slider-control {
+    min-width: 80px;
+  }
 }

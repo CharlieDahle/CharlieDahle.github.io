@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sliders,
   BarChart3,
@@ -158,7 +158,7 @@ function EffectsModal() {
               className={`effects-tab ${activeTab === "eq" ? "active" : ""}`}
               onClick={() => setActiveTab("eq")}
             >
-              <BarChart3 size={16} />
+              <BarChart3 size={14} />
               EQ
             </button>
             <button
@@ -167,7 +167,7 @@ function EffectsModal() {
               }`}
               onClick={() => setActiveTab("filter")}
             >
-              <Filter size={16} />
+              <Filter size={14} />
               Filter
             </button>
             <button
@@ -176,7 +176,7 @@ function EffectsModal() {
               }`}
               onClick={() => setActiveTab("dynamics")}
             >
-              <Zap size={16} />
+              <Zap size={14} />
               Dynamics
             </button>
             <button
@@ -185,7 +185,7 @@ function EffectsModal() {
               }`}
               onClick={() => setActiveTab("modulation")}
             >
-              <Waves size={16} />
+              <Waves size={14} />
               Modulation
             </button>
             <button
@@ -194,14 +194,14 @@ function EffectsModal() {
               }`}
               onClick={() => setActiveTab("reverb")}
             >
-              <Volume2 size={16} />
+              <Volume2 size={14} />
               Reverb
             </button>
             <button
               className={`effects-tab ${activeTab === "delay" ? "active" : ""}`}
               onClick={() => setActiveTab("delay")}
             >
-              <Repeat size={16} />
+              <Repeat size={14} />
               Delay
             </button>
             <button
@@ -210,434 +210,423 @@ function EffectsModal() {
               }`}
               onClick={() => setActiveTab("advanced")}
             >
-              <Settings size={16} />
+              <Settings size={14} />
               Advanced
             </button>
           </div>
 
-          {/* EQ Panel */}
-          {activeTab === "eq" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <BarChart3 size={18} />
-                  3-Band EQ
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="High"
-                    value={tempEffects.eq.high}
-                    min={-12}
-                    max={12}
-                    unit="dB"
-                    onChange={(value) =>
-                      handleEffectChange("eq", "high", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Mid"
-                    value={tempEffects.eq.mid}
-                    min={-12}
-                    max={12}
-                    unit="dB"
-                    onChange={(value) => handleEffectChange("eq", "mid", value)}
-                  />
-                  <KnobControl
-                    label="Low"
-                    value={tempEffects.eq.low}
-                    min={-12}
-                    max={12}
-                    unit="dB"
-                    onChange={(value) => handleEffectChange("eq", "low", value)}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Filter Panel */}
-          {activeTab === "filter" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Filter size={18} />
-                  Low Pass Filter
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Cutoff"
-                    value={tempEffects.filter.frequency}
-                    min={100}
-                    max={20000}
-                    unit="Hz"
-                    logarithmic={true}
-                    onChange={(value) =>
-                      handleEffectChange("filter", "frequency", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Resonance"
-                    value={tempEffects.filter.Q}
-                    min={0.1}
-                    max={30}
-                    unit=""
-                    onChange={(value) =>
-                      handleEffectChange("filter", "Q", value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Reverb Panel */}
-          {activeTab === "reverb" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Volume2 size={18} />
-                  Reverb
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Room Size"
-                    value={tempEffects.reverb.roomSize}
-                    min={0.1}
-                    max={0.9}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("reverb", "roomSize", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Decay"
-                    value={tempEffects.reverb.decay}
-                    min={0.1}
-                    max={10}
-                    unit="s"
-                    onChange={(value) =>
-                      handleEffectChange("reverb", "decay", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Wet Level"
-                    value={tempEffects.reverb.wet}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("reverb", "wet", value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Delay Panel */}
-          {activeTab === "delay" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Repeat size={18} />
-                  Delay
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Time"
-                    value={tempEffects.delay.delayTime}
-                    min={0.01}
-                    max={1}
-                    unit="s"
-                    onChange={(value) =>
-                      handleEffectChange("delay", "delayTime", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Feedback"
-                    value={tempEffects.delay.feedback}
-                    min={0}
-                    max={0.95}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("delay", "feedback", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Wet Level"
-                    value={tempEffects.delay.wet}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("delay", "wet", value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Dynamics Panel */}
-          {activeTab === "dynamics" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Zap size={18} />
-                  Compressor
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Threshold"
-                    value={tempEffects.compressor.threshold}
-                    min={-60}
-                    max={0}
-                    unit="dB"
-                    onChange={(value) =>
-                      handleEffectChange("compressor", "threshold", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Ratio"
-                    value={tempEffects.compressor.ratio}
-                    min={1}
-                    max={20}
-                    unit=":1"
-                    onChange={(value) =>
-                      handleEffectChange("compressor", "ratio", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Attack"
-                    value={tempEffects.compressor.attack}
-                    min={0}
-                    max={0.1}
-                    unit="s"
-                    onChange={(value) =>
-                      handleEffectChange("compressor", "attack", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Release"
-                    value={tempEffects.compressor.release}
-                    min={0.01}
-                    max={1}
-                    unit="s"
-                    onChange={(value) =>
-                      handleEffectChange("compressor", "release", value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Modulation Panel */}
-          {activeTab === "modulation" && (
-            <div className="effects-panel">
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Waves size={18} />
-                  Chorus
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Rate"
-                    value={tempEffects.chorus.rate}
-                    min={0.1}
-                    max={10}
-                    unit="Hz"
-                    onChange={(value) =>
-                      handleEffectChange("chorus", "rate", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Depth"
-                    value={tempEffects.chorus.depth}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("chorus", "depth", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Wet Level"
-                    value={tempEffects.chorus.wet}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("chorus", "wet", value)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Waves size={18} />
-                  Vibrato
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Rate"
-                    value={tempEffects.vibrato.rate}
-                    min={0.1}
-                    max={20}
-                    unit="Hz"
-                    onChange={(value) =>
-                      handleEffectChange("vibrato", "rate", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Depth"
-                    value={tempEffects.vibrato.depth}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("vibrato", "depth", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Wet Level"
-                    value={tempEffects.vibrato.wet}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("vibrato", "wet", value)
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Advanced Panel */}
-          {activeTab === "advanced" && (
-            <div className="effects-panel">
-              {/* CPU Warning */}
-              <div className="effects-section">
-                <div
-                  style={{
-                    background: "rgba(255, 193, 7, 0.1)",
-                    border: "1px solid #ffc107",
-                    borderRadius: "8px",
-                    padding: "12px 16px",
-                    marginBottom: "24px",
-                    fontSize: "14px",
-                    color: "#856404",
-                  }}
-                >
-                  ⚠️ <strong>Performance Warning:</strong> These effects are CPU
-                  intensive and may cause audio dropouts on slower devices.
-                </div>
-              </div>
-
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Zap size={18} />
-                  Distortion
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Drive"
-                    value={tempEffects.distortion.amount}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("distortion", "amount", value)
-                    }
-                  />
-                  <div className="knob-control">
-                    <div className="knob-label">Quality</div>
-                    <select
-                      value={tempEffects.distortion.oversample}
-                      onChange={(e) =>
-                        handleEffectChange(
-                          "distortion",
-                          "oversample",
-                          e.target.value
-                        )
+          {/* Scrollable Content Area */}
+          <div className="effects-content">
+            {/* EQ Panel */}
+            {activeTab === "eq" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <BarChart3 size={18} />
+                    3-Band EQ
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="High"
+                      value={tempEffects.eq.high}
+                      min={-12}
+                      max={12}
+                      unit="dB"
+                      onChange={(value) =>
+                        handleEffectChange("eq", "high", value)
                       }
-                      style={{
-                        width: "80px",
-                        padding: "8px",
-                        borderRadius: "8px",
-                        border: "2px solid #dee2e6",
-                        fontSize: "12px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <option value="2x">2x</option>
-                      <option value="4x">4x</option>
-                    </select>
+                    />
+                    <SliderControl
+                      label="Mid"
+                      value={tempEffects.eq.mid}
+                      min={-12}
+                      max={12}
+                      unit="dB"
+                      onChange={(value) =>
+                        handleEffectChange("eq", "mid", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Low"
+                      value={tempEffects.eq.low}
+                      min={-12}
+                      max={12}
+                      unit="dB"
+                      onChange={(value) =>
+                        handleEffectChange("eq", "low", value)
+                      }
+                    />
                   </div>
                 </div>
               </div>
+            )}
 
-              <div className="effects-section">
-                <div className="effects-section-title">
-                  <Settings size={18} />
-                  Pitch Shift
-                </div>
-                <div className="knob-row">
-                  <KnobControl
-                    label="Pitch"
-                    value={tempEffects.pitchShift.pitch}
-                    min={-12}
-                    max={12}
-                    unit=" st"
-                    onChange={(value) =>
-                      handleEffectChange("pitchShift", "pitch", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Window"
-                    value={tempEffects.pitchShift.windowSize}
-                    min={0.01}
-                    max={0.1}
-                    unit="s"
-                    onChange={(value) =>
-                      handleEffectChange("pitchShift", "windowSize", value)
-                    }
-                  />
-                  <KnobControl
-                    label="Wet Level"
-                    value={tempEffects.pitchShift.wet}
-                    min={0}
-                    max={1}
-                    unit="%"
-                    percentage={true}
-                    onChange={(value) =>
-                      handleEffectChange("pitchShift", "wet", value)
-                    }
-                  />
+            {/* Filter Panel */}
+            {activeTab === "filter" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Filter size={18} />
+                    Low Pass Filter
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Cutoff"
+                      value={tempEffects.filter.frequency}
+                      min={100}
+                      max={20000}
+                      unit="Hz"
+                      logarithmic={true}
+                      onChange={(value) =>
+                        handleEffectChange("filter", "frequency", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Resonance"
+                      value={tempEffects.filter.Q}
+                      min={0.1}
+                      max={30}
+                      unit=""
+                      onChange={(value) =>
+                        handleEffectChange("filter", "Q", value)
+                      }
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Reverb Panel */}
+            {activeTab === "reverb" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Volume2 size={18} />
+                    Reverb
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Room Size"
+                      value={tempEffects.reverb.roomSize}
+                      min={0.1}
+                      max={0.9}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("reverb", "roomSize", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Decay"
+                      value={tempEffects.reverb.decay}
+                      min={0.1}
+                      max={10}
+                      unit="s"
+                      onChange={(value) =>
+                        handleEffectChange("reverb", "decay", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Wet Level"
+                      value={tempEffects.reverb.wet}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("reverb", "wet", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delay Panel */}
+            {activeTab === "delay" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Repeat size={18} />
+                    Delay
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Time"
+                      value={tempEffects.delay.delayTime}
+                      min={0.01}
+                      max={1}
+                      unit="s"
+                      onChange={(value) =>
+                        handleEffectChange("delay", "delayTime", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Feedback"
+                      value={tempEffects.delay.feedback}
+                      min={0}
+                      max={0.95}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("delay", "feedback", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Wet Level"
+                      value={tempEffects.delay.wet}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("delay", "wet", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Dynamics Panel */}
+            {activeTab === "dynamics" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Zap size={18} />
+                    Compressor
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Threshold"
+                      value={tempEffects.compressor.threshold}
+                      min={-60}
+                      max={0}
+                      unit="dB"
+                      onChange={(value) =>
+                        handleEffectChange("compressor", "threshold", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Ratio"
+                      value={tempEffects.compressor.ratio}
+                      min={1}
+                      max={20}
+                      unit=":1"
+                      onChange={(value) =>
+                        handleEffectChange("compressor", "ratio", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Attack"
+                      value={tempEffects.compressor.attack}
+                      min={0}
+                      max={0.1}
+                      unit="s"
+                      onChange={(value) =>
+                        handleEffectChange("compressor", "attack", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Release"
+                      value={tempEffects.compressor.release}
+                      min={0.01}
+                      max={1}
+                      unit="s"
+                      onChange={(value) =>
+                        handleEffectChange("compressor", "release", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modulation Panel */}
+            {activeTab === "modulation" && (
+              <div className="effects-panel">
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Waves size={18} />
+                    Chorus
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Rate"
+                      value={tempEffects.chorus.rate}
+                      min={0.1}
+                      max={10}
+                      unit="Hz"
+                      onChange={(value) =>
+                        handleEffectChange("chorus", "rate", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Depth"
+                      value={tempEffects.chorus.depth}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("chorus", "depth", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Wet Level"
+                      value={tempEffects.chorus.wet}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("chorus", "wet", value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Waves size={18} />
+                    Vibrato
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Rate"
+                      value={tempEffects.vibrato.rate}
+                      min={0.1}
+                      max={20}
+                      unit="Hz"
+                      onChange={(value) =>
+                        handleEffectChange("vibrato", "rate", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Depth"
+                      value={tempEffects.vibrato.depth}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("vibrato", "depth", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Wet Level"
+                      value={tempEffects.vibrato.wet}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("vibrato", "wet", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Advanced Panel */}
+            {activeTab === "advanced" && (
+              <div className="effects-panel">
+                {/* CPU Warning */}
+                <div className="effects-warning">
+                  ⚠️ <strong>Performance Warning:</strong> These effects are CPU
+                  intensive and may cause audio dropouts on slower devices.
+                </div>
+
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Zap size={18} />
+                    Distortion
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Drive"
+                      value={tempEffects.distortion.amount}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("distortion", "amount", value)
+                      }
+                    />
+                    <div className="slider-control">
+                      <div className="slider-label">Quality</div>
+                      <select
+                        className="effects-select"
+                        value={tempEffects.distortion.oversample}
+                        onChange={(e) =>
+                          handleEffectChange(
+                            "distortion",
+                            "oversample",
+                            e.target.value
+                          )
+                        }
+                      >
+                        <option value="2x">2x</option>
+                        <option value="4x">4x</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="effects-section">
+                  <div className="effects-section-title">
+                    <Settings size={18} />
+                    Pitch Shift
+                  </div>
+                  <div className="slider-row">
+                    <SliderControl
+                      label="Pitch"
+                      value={tempEffects.pitchShift.pitch}
+                      min={-12}
+                      max={12}
+                      unit=" st"
+                      onChange={(value) =>
+                        handleEffectChange("pitchShift", "pitch", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Window"
+                      value={tempEffects.pitchShift.windowSize}
+                      min={0.01}
+                      max={0.1}
+                      unit="s"
+                      onChange={(value) =>
+                        handleEffectChange("pitchShift", "windowSize", value)
+                      }
+                    />
+                    <SliderControl
+                      label="Wet Level"
+                      value={tempEffects.pitchShift.wet}
+                      min={0}
+                      max={1}
+                      unit="%"
+                      percentage={true}
+                      onChange={(value) =>
+                        handleEffectChange("pitchShift", "wet", value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="effects-modal-footer">
           <button
-            className="effects-btn effects-btn--secondary"
+            className="effects-btn effects-btn--danger"
             onClick={handleReset}
           >
             Reset
           </button>
+          <div className="button-spacer"></div>
           <button
             className="effects-btn effects-btn--secondary"
             onClick={handleCancel}
@@ -656,8 +645,8 @@ function EffectsModal() {
   );
 }
 
-// Simple Slider Control Component
-function KnobControl({
+// Simple Slider Control Component (no knobs)
+function SliderControl({
   label,
   value,
   min,
@@ -678,20 +667,6 @@ function KnobControl({
       return `${val >= 0 ? "+" : ""}${val.toFixed(1)}dB`;
     }
     return `${val.toFixed(1)}${unit}`;
-  };
-
-  // Calculate rotation for visual knob (still show it, just not interactive)
-  const getRotation = () => {
-    let percentage;
-    if (logarithmic) {
-      const logMin = Math.log(min);
-      const logMax = Math.log(max);
-      const logValue = Math.log(value);
-      percentage = (logValue - logMin) / (logMax - logMin);
-    } else {
-      percentage = (value - min) / (max - min);
-    }
-    return (percentage - 0.5) * 270; // -135deg to +135deg
   };
 
   // Convert value to slider range (0-100 for easier handling)
@@ -732,19 +707,13 @@ function KnobControl({
   };
 
   return (
-    <div className="knob-control">
-      <div className="knob-label">{label}</div>
+    <div className="slider-control">
+      <div className="slider-label">{label}</div>
 
-      {/* Visual knob - not interactive, just shows the value */}
-      <div
-        className="knob knob--display-only"
-        style={{ "--knob-rotation": `${getRotation()}deg` }}
-      />
-
-      {/* Slider for actual control */}
+      {/* Slider for control */}
       <input
         type="range"
-        className="knob-slider"
+        className="effects-slider"
         min="0"
         max="100"
         step="0.1"
@@ -753,7 +722,7 @@ function KnobControl({
       />
 
       {/* Value display */}
-      <div className="knob-value">{formatValue(value)}</div>
+      <div className="slider-value">{formatValue(value)}</div>
     </div>
   );
 }
