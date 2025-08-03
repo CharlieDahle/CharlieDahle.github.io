@@ -60,146 +60,199 @@ class DrumScheduler {
     }
   }
 
-  // Create effect chain for a track
-  createEffectChain(trackId) {
-    console.log(`Creating effect chain for track: ${trackId}`);
+  // Create a single effect instance based on type and settings
+  createEffect(effectType, settings) {
+    switch (effectType) {
+      case "eq":
+        return new Tone.EQ3(settings.high, settings.mid, settings.low);
 
-    // Create all effects in chain order
-    const eq = new Tone.EQ3(0, 0, 0); // high, mid, low (all 0dB initially)
-    const filter = new Tone.Filter(20000, "lowpass"); // 20kHz cutoff, lowpass
-    filter.Q.value = 1; // Default Q value
+      case "filter":
+        const filter = new Tone.Filter(settings.frequency, "lowpass");
+        filter.Q.value = settings.Q;
+        return filter;
 
-    const compressor = new Tone.Compressor(-24, 4); // threshold, ratio
-    compressor.attack.value = 0.01;
-    compressor.release.value = 0.1;
+      case "compressor":
+        const compressor = new Tone.Compressor(
+          settings.threshold,
+          settings.ratio
+        );
+        compressor.attack.value = settings.attack;
+        compressor.release.value = settings.release;
+        return compressor;
 
-    const chorus = new Tone.Chorus(2, 0.3, 0); // rate, depth, wet
-    const vibrato = new Tone.Vibrato(5, 0.1); // rate, depth
-    vibrato.wet.value = 0; // Start dry
+      case "chorus":
+        const chorus = new Tone.Chorus(
+          settings.rate,
+          settings.depth,
+          settings.wet
+        );
+        return chorus;
 
-    const distortion = new Tone.Distortion(0); // amount (start clean)
-    distortion.oversample = "2x";
+      case "vibrato":
+        const vibrato = new Tone.Vibrato(settings.rate, settings.depth);
+        vibrato.wet.value = settings.wet;
+        return vibrato;
 
-    const pitchShift = new Tone.PitchShift(0); // pitch (no shift initially)
-    pitchShift.windowSize = 0.03;
-    pitchShift.wet.value = 0; // Start dry
+      case "distortion":
+        const distortion = new Tone.Distortion(settings.amount);
+        distortion.oversample = settings.oversample;
+        return distortion;
 
-    const reverb = new Tone.Reverb(1.5); // 1.5s decay time
-    reverb.wet.value = 0; // 0% wet initially
+      case "pitchShift":
+        const pitchShift = new Tone.PitchShift(settings.pitch);
+        pitchShift.windowSize = settings.windowSize;
+        pitchShift.wet.value = settings.wet;
+        return pitchShift;
 
-    const delay = new Tone.FeedbackDelay(0.25, 0.3); // 0.25s delay, 0.3 feedback
-    delay.wet.value = 0; // 0% wet initially
+      case "reverb":
+        const reverb = new Tone.Reverb(settings.decay);
+        reverb.wet.value = settings.wet;
+        return reverb;
 
-    // Chain effects together in the correct order
-    eq.chain(
-      filter,
-      compressor,
-      chorus,
-      vibrato,
-      distortion,
-      pitchShift,
-      reverb,
-      delay,
-      Tone.Destination
-    );
+      case "delay":
+        const delay = new Tone.FeedbackDelay(
+          settings.delayTime,
+          settings.feedback
+        );
+        delay.wet.value = settings.wet;
+        return delay;
 
-    // Store effect references
-    this.trackEffects[trackId] = {
-      input: eq, // This is where the player connects
-      eq,
-      filter,
-      compressor,
-      chorus,
-      vibrato,
-      distortion,
-      pitchShift,
-      reverb,
-      delay,
-    };
-
-    console.log(`Effect chain created for track: ${trackId}`);
-    return this.trackEffects[trackId];
+      default:
+        console.warn(`Unknown effect type: ${effectType}`);
+        return null;
+    }
   }
 
-  // Update effect parameters for a track
-  updateTrackEffects(trackId, effectsState) {
-    const effects = this.trackEffects[trackId];
-    if (!effects) return;
-
-    try {
-      // Update EQ
-      if (effectsState.eq) {
-        effects.eq.high.value = effectsState.eq.high;
-        effects.eq.mid.value = effectsState.eq.mid;
-        effects.eq.low.value = effectsState.eq.low;
-      }
-
-      // Update Filter
-      if (effectsState.filter) {
-        effects.filter.frequency.value = effectsState.filter.frequency;
-        effects.filter.Q.value = effectsState.filter.Q;
-      }
-
-      // Update Compressor
-      if (effectsState.compressor) {
-        effects.compressor.threshold.value = effectsState.compressor.threshold;
-        effects.compressor.ratio.value = effectsState.compressor.ratio;
-        effects.compressor.attack.value = effectsState.compressor.attack;
-        effects.compressor.release.value = effectsState.compressor.release;
-      }
-
-      // Update Chorus
-      if (effectsState.chorus) {
-        effects.chorus.frequency.value = effectsState.chorus.rate;
-        effects.chorus.depth = effectsState.chorus.depth;
-        effects.chorus.wet.value = effectsState.chorus.wet;
-      }
-
-      // Update Vibrato
-      if (effectsState.vibrato) {
-        effects.vibrato.frequency.value = effectsState.vibrato.rate;
-        effects.vibrato.depth.value = effectsState.vibrato.depth;
-        effects.vibrato.wet.value = effectsState.vibrato.wet;
-      }
-
-      // Update Distortion
-      if (effectsState.distortion) {
-        effects.distortion.distortion = effectsState.distortion.amount;
-        effects.distortion.oversample = effectsState.distortion.oversample;
-      }
-
-      // Update Pitch Shift
-      if (effectsState.pitchShift) {
-        effects.pitchShift.pitch = effectsState.pitchShift.pitch;
-        effects.pitchShift.windowSize = effectsState.pitchShift.windowSize;
-        effects.pitchShift.wet.value = effectsState.pitchShift.wet;
-      }
-
-      // Update Reverb
-      if (effectsState.reverb) {
-        // Map roomSize to decay (roomSize affects how long reverb lasts)
-        if (effectsState.reverb.roomSize !== undefined) {
-          effects.reverb.decay = effectsState.reverb.roomSize * 10; // Scale 0.1-0.9 to 1-9 seconds
-        }
-        if (effectsState.reverb.decay !== undefined) {
-          effects.reverb.decay = effectsState.reverb.decay;
-        }
-        if (effectsState.reverb.wet !== undefined) {
-          effects.reverb.wet.value = effectsState.reverb.wet;
-        }
-      }
-
-      // Update Delay
-      if (effectsState.delay) {
-        effects.delay.delayTime.value = effectsState.delay.delayTime;
-        effects.delay.feedback.value = effectsState.delay.feedback;
-        effects.delay.wet.value = effectsState.delay.wet;
-      }
-
-      console.log(`Updated effects for track ${trackId}:`, effectsState);
-    } catch (error) {
-      console.error(`Error updating effects for track ${trackId}:`, error);
+  // Check if an effect should be considered "enabled" (non-default values)
+  isEffectEnabled(effectType, settings) {
+    switch (effectType) {
+      case "eq":
+        return settings.high !== 0 || settings.mid !== 0 || settings.low !== 0;
+      case "filter":
+        return settings.frequency !== 20000 || settings.Q !== 1;
+      case "compressor":
+        return (
+          settings.threshold !== -24 ||
+          settings.ratio !== 4 ||
+          settings.attack !== 0.01 ||
+          settings.release !== 0.1
+        );
+      case "chorus":
+        return settings.wet > 0;
+      case "vibrato":
+        return settings.wet > 0;
+      case "distortion":
+        return settings.amount > 0;
+      case "pitchShift":
+        return settings.wet > 0 || settings.pitch !== 0;
+      case "reverb":
+        return settings.wet > 0;
+      case "delay":
+        return settings.wet > 0;
+      default:
+        return false;
     }
+  }
+
+  // Rebuild the entire effect chain for a track
+  rebuildEffectChain(trackId, effectsState) {
+    console.log(`Rebuilding effect chain for track: ${trackId}`);
+
+    // 1. Dispose of old effect chain
+    if (this.trackEffects[trackId]) {
+      console.log(`Disposing old effects for track: ${trackId}`);
+      Object.values(this.trackEffects[trackId]).forEach((effect) => {
+        if (effect && typeof effect.dispose === "function") {
+          effect.dispose();
+        }
+      });
+    }
+
+    // 2. Determine which effects are enabled
+    const enabledEffects = [];
+    const effectOrder = [
+      "eq",
+      "filter",
+      "compressor",
+      "chorus",
+      "vibrato",
+      "distortion",
+      "pitchShift",
+      "reverb",
+      "delay",
+    ];
+
+    effectOrder.forEach((effectType) => {
+      if (
+        effectsState[effectType] &&
+        this.isEffectEnabled(effectType, effectsState[effectType])
+      ) {
+        enabledEffects.push({
+          type: effectType,
+          settings: effectsState[effectType],
+        });
+      }
+    });
+
+    console.log(
+      `Enabled effects for ${trackId}:`,
+      enabledEffects.map((e) => e.type)
+    );
+
+    // 3. Create new effect instances
+    const newEffects = {};
+    const effectInstances = [];
+
+    enabledEffects.forEach(({ type, settings }) => {
+      const effect = this.createEffect(type, settings);
+      if (effect) {
+        newEffects[type] = effect;
+        effectInstances.push(effect);
+      }
+    });
+
+    // 4. Chain effects together
+    if (effectInstances.length > 0) {
+      // Chain effects in reverse order (last effect connects to destination)
+      for (let i = effectInstances.length - 1; i >= 0; i--) {
+        effectInstances[i].connect(Tone.Destination);
+        if (i > 0) {
+          effectInstances[i - 1].connect(effectInstances[i]);
+        }
+      }
+      // The first effect in the chain becomes our input
+      newEffects.input = effectInstances[0];
+    } else {
+      // No effects - players should connect directly to destination
+      newEffects.input = null; // Signal that there are no effects
+    }
+
+    // 5. Store the new chain
+    this.trackEffects[trackId] = newEffects;
+
+    // 6. Reconnect the player to the new chain
+    const soundFile = this.trackSounds[trackId];
+    if (soundFile && this.tonePlayers[soundFile]) {
+      const player = this.tonePlayers[soundFile];
+      player.disconnect(); // Disconnect from old chain
+
+      if (newEffects.input) {
+        player.connect(newEffects.input); // Connect to effect chain
+        console.log(`Reconnected player for ${trackId} to effect chain`);
+      } else {
+        player.toDestination(); // Connect directly if no effects
+        console.log(
+          `Reconnected player for ${trackId} directly to destination`
+        );
+      }
+    }
+
+    console.log(`Effect chain rebuilt for track: ${trackId}`);
+  }
+
+  // Update effect parameters (now triggers a rebuild)
+  updateTrackEffects(trackId, effectsState) {
+    this.rebuildEffectChain(trackId, effectsState);
   }
 
   // Set tracks and load their sounds with effects
@@ -215,9 +268,10 @@ class DrumScheduler {
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
 
-      // Create effect chain for this track if it doesn't exist
+      // Initialize empty effect chain for this track if it doesn't exist
       if (!this.trackEffects[track.id]) {
-        this.createEffectChain(track.id);
+        console.log(`Initializing empty effect chain for ${track.id}`);
+        this.trackEffects[track.id] = { input: null }; // No effects initially
       }
 
       if (track.soundFile && !this.tonePlayers[track.soundFile]) {
@@ -235,9 +289,18 @@ class DrumScheduler {
         // Reconnect existing player to this track's effects
         const player = this.tonePlayers[track.soundFile];
         const effects = this.trackEffects[track.id];
-        if (effects) {
+        if (effects && effects.input) {
           player.disconnect();
           player.connect(effects.input);
+          console.log(
+            `Reconnected existing player for ${track.id} to effect chain`
+          );
+        } else {
+          player.disconnect();
+          player.toDestination();
+          console.log(
+            `Reconnected existing player for ${track.id} directly to destination`
+          );
         }
       }
     }
@@ -283,16 +346,20 @@ class DrumScheduler {
   // Load individual audio file into Tone.Player and connect to effects
   async loadAudioFile(filePath, trackId) {
     try {
+      console.log(`Attempting to load: /${filePath} for track: ${trackId}`);
+
       // Create a new Tone.Player
       const player = new Tone.Player(`/${filePath}`);
 
       // Connect to the track's effect chain
       const effects = this.trackEffects[trackId];
-      if (effects) {
+      if (effects && effects.input) {
         player.connect(effects.input);
+        console.log(`Connected player to effect chain for ${trackId}`);
       } else {
         // Fallback to direct connection if no effects
         player.toDestination();
+        console.log(`Connected player directly to destination for ${trackId}`);
       }
 
       // Wait for the player to load
@@ -314,6 +381,14 @@ class DrumScheduler {
       return;
     }
 
+    // Check if player is properly connected
+    console.log(`Playing ${soundFile} - Player state:`, {
+      loaded: player.loaded,
+      state: player.state,
+      connected: player.numberOfOutputs > 0,
+      velocity: velocity,
+    });
+
     // Convert velocity (1-4) to volume in decibels
     // velocity 1 = -12dB, velocity 4 = 0dB
     const velocityGain = velocity / 4; // 0.25 to 1.0
@@ -322,6 +397,10 @@ class DrumScheduler {
     // Set volume and play
     player.volume.value = volumeDb;
     player.start(when);
+
+    console.log(
+      `Triggered sound ${soundFile} at ${when} with volume ${volumeDb}dB`
+    );
   }
 
   // Update BPM

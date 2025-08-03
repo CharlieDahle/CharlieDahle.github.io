@@ -635,10 +635,25 @@ export const useAppStore = create((set, get) => ({
         }));
       });
 
+      // NEW: Effect chain events (replaces individual effect-change)
+      newSocket.on("effect-chain-update", ({ trackId, enabledEffects }) => {
+        console.log("Effect chain update received:", {
+          trackId,
+          enabledEffects,
+        });
+        get().effects.syncTrackEffectChain(trackId, enabledEffects);
+      });
+
+      newSocket.on("effect-reset", ({ trackId }) => {
+        console.log("Effect reset received:", trackId);
+        get().effects.syncTrackEffectReset(trackId);
+      });
+
+      // LEGACY: Keep for backward compatibility (can remove later)
       newSocket.on(
         "effect-change",
         ({ trackId, effectType, parameter, value }) => {
-          console.log("Effect change received:", {
+          console.log("Legacy effect change received:", {
             trackId,
             effectType,
             parameter,
@@ -648,12 +663,7 @@ export const useAppStore = create((set, get) => ({
         }
       );
 
-      newSocket.on("effect-reset", ({ trackId }) => {
-        console.log("Effect reset received:", trackId);
-        get().effects.syncTrackEffectReset(trackId);
-      });
-
-      // Pattern events - direct store updates (no more dynamic imports!)
+      // Pattern events - direct store updates
       newSocket.on("pattern-update", (change) => {
         console.log("Pattern update received:", change);
         const { pattern } = get();
@@ -661,7 +671,6 @@ export const useAppStore = create((set, get) => ({
         // Apply change directly to pattern slice
         switch (change.type) {
           case "add-note":
-            // Update pattern data directly without triggering WebSocket send
             set((state) => {
               const newData = { ...state.pattern.data };
               if (!newData[change.trackId]) {
@@ -951,11 +960,25 @@ export const useAppStore = create((set, get) => ({
       socket.emit("update-track-sound", { roomId, trackId, soundFile });
     },
 
+    // NEW: Send entire effect chain state
+    sendEffectChainUpdate: (trackId, enabledEffects) => {
+      const { socket, isInRoom, roomId } = get().websocket;
+      if (!socket || !isInRoom) return;
+
+      console.log("Sending effect chain update:", { trackId, enabledEffects });
+      socket.emit("effect-chain-update", {
+        roomId,
+        trackId,
+        enabledEffects,
+      });
+    },
+
+    // LEGACY: Keep individual effect changes for backward compatibility (can remove later)
     sendEffectChange: (trackId, effectType, parameter, value) => {
       const { socket, isInRoom, roomId } = get().websocket;
       if (!socket || !isInRoom) return;
 
-      console.log("Sending effect change:", {
+      console.log("Sending legacy effect change:", {
         trackId,
         effectType,
         parameter,
@@ -1065,6 +1088,53 @@ export const useAppStore = create((set, get) => ({
       },
     }),
 
+    // Check if an effect is enabled (has non-default values)
+    isEffectEnabled: (effectType, settings) => {
+      const defaults = get().effects.getDefaultEffects()[effectType];
+      if (!defaults || !settings) return false;
+
+      switch (effectType) {
+        case "eq":
+          return (
+            settings.high !== 0 || settings.mid !== 0 || settings.low !== 0
+          );
+        case "filter":
+          return settings.frequency !== 20000 || settings.Q !== 1;
+        case "compressor":
+          return (
+            settings.threshold !== -24 ||
+            settings.ratio !== 4 ||
+            settings.attack !== 0.01 ||
+            settings.release !== 0.1
+          );
+        case "chorus":
+        case "vibrato":
+        case "reverb":
+        case "delay":
+          return settings.wet > 0;
+        case "distortion":
+          return settings.amount > 0;
+        case "pitchShift":
+          return settings.wet > 0 || settings.pitch !== 0;
+        default:
+          return false;
+      }
+    },
+
+    // Get enabled effects for a track (only non-default effects)
+    getEnabledEffects: (trackId) => {
+      const allEffects = get().effects.getTrackEffects(trackId);
+      const enabledEffects = {};
+
+      Object.keys(allEffects).forEach((effectType) => {
+        if (get().effects.isEffectEnabled(effectType, allEffects[effectType])) {
+          enabledEffects[effectType] = allEffects[effectType];
+        }
+      });
+
+      return enabledEffects;
+    },
+
     // Initialize effects for a track
     initializeTrackEffects: (trackId) => {
       set((state) => {
@@ -1083,7 +1153,7 @@ export const useAppStore = create((set, get) => ({
       });
     },
 
-    // Update a specific effect parameter
+    // Update a specific effect parameter (triggers rebuild)
     updateTrackEffect: (trackId, effectType, parameter, value) => {
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
@@ -1104,11 +1174,57 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
-      // Send to WebSocket for collaboration
-      get().websocket.sendEffectChange(trackId, effectType, parameter, value);
+      // Send the ENTIRE enabled effects state to WebSocket for collaboration
+      const enabledEffects = get().effects.getEnabledEffects(trackId);
+      get().websocket.sendEffectChainUpdate(trackId, enabledEffects);
     },
 
-    // Reset track effects to defaults
+    // Enable an effect with specific settings
+    enableEffect: (trackId, effectType, settings) => {
+      get().effects.initializeTrackEffects(trackId);
+
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: {
+              ...state.effects.trackEffects[trackId],
+              [effectType]: { ...settings },
+            },
+          },
+        },
+      }));
+
+      // Send enabled effects state
+      const enabledEffects = get().effects.getEnabledEffects(trackId);
+      get().websocket.sendEffectChainUpdate(trackId, enabledEffects);
+    },
+
+    // Disable a specific effect (reset to defaults)
+    disableEffect: (trackId, effectType) => {
+      get().effects.initializeTrackEffects(trackId);
+      const defaults = get().effects.getDefaultEffects();
+
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: {
+              ...state.effects.trackEffects[trackId],
+              [effectType]: { ...defaults[effectType] },
+            },
+          },
+        },
+      }));
+
+      // Send updated enabled effects state
+      const enabledEffects = get().effects.getEnabledEffects(trackId);
+      get().websocket.sendEffectChainUpdate(trackId, enabledEffects);
+    },
+
+    // Reset track effects to defaults (disables all effects)
     resetTrackEffects: (trackId) => {
       set((state) => ({
         effects: {
@@ -1120,8 +1236,32 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
-      // Send reset to WebSocket
-      get().websocket.sendEffectReset(trackId);
+      // Send empty enabled effects (all disabled)
+      get().websocket.sendEffectChainUpdate(trackId, {});
+    },
+
+    // Set entire effect chain state (used for WebSocket sync)
+    setTrackEffectChain: (trackId, enabledEffects) => {
+      get().effects.initializeTrackEffects(trackId);
+      const defaults = get().effects.getDefaultEffects();
+
+      // Merge enabled effects with defaults
+      const fullEffects = { ...defaults };
+      Object.keys(enabledEffects).forEach((effectType) => {
+        if (fullEffects[effectType]) {
+          fullEffects[effectType] = { ...enabledEffects[effectType] };
+        }
+      });
+
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: fullEffects,
+          },
+        },
+      }));
     },
 
     // Get effects for a specific track
@@ -1163,6 +1303,12 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
+    },
+
+    // Sync entire effect chain from WebSocket
+    syncTrackEffectChain: (trackId, enabledEffects) => {
+      console.log(`Syncing effect chain for ${trackId}:`, enabledEffects);
+      get().effects.setTrackEffectChain(trackId, enabledEffects);
     },
 
     syncTrackEffectReset: (trackId) => {

@@ -57,26 +57,62 @@ function EffectsModal() {
 
   // Handle Apply - NOW we broadcast the changes
   const handleApply = () => {
-    // Send all the changes to WebSocket for collaboration
-    if (originalEffects && effectsModalTrack) {
-      Object.keys(tempEffects).forEach((effectType) => {
-        Object.keys(tempEffects[effectType]).forEach((parameter) => {
-          const newValue = tempEffects[effectType][parameter];
-          const originalValue = originalEffects[effectType][parameter];
+    if (effectsModalTrack && tempEffects) {
+      // Get the enabled effects (non-default values only)
+      const enabledEffects = {};
 
-          // Only broadcast if the value actually changed
-          if (newValue !== originalValue) {
-            // Get the WebSocket store slice properly
-            const { websocket } = useAppStore.getState();
-            websocket.sendEffectChange(
-              effectsModalTrack.id,
-              effectType,
-              parameter,
-              newValue
-            );
-          }
-        });
+      Object.keys(tempEffects).forEach((effectType) => {
+        const settings = tempEffects[effectType];
+
+        // Check if this effect is enabled (has non-default values)
+        let isEnabled = false;
+        switch (effectType) {
+          case "eq":
+            isEnabled =
+              settings.high !== 0 || settings.mid !== 0 || settings.low !== 0;
+            break;
+          case "filter":
+            isEnabled = settings.frequency !== 20000 || settings.Q !== 1;
+            break;
+          case "compressor":
+            isEnabled =
+              settings.threshold !== -24 ||
+              settings.ratio !== 4 ||
+              settings.attack !== 0.01 ||
+              settings.release !== 0.1;
+            break;
+          case "chorus":
+          case "vibrato":
+          case "reverb":
+          case "delay":
+            isEnabled = settings.wet > 0;
+            break;
+          case "distortion":
+            isEnabled = settings.amount > 0;
+            break;
+          case "pitchShift":
+            isEnabled = settings.wet > 0 || settings.pitch !== 0;
+            break;
+        }
+
+        // Only include enabled effects
+        if (isEnabled) {
+          enabledEffects[effectType] = settings;
+        }
       });
+
+      console.log(
+        `Applying effects for ${effectsModalTrack.name}:`,
+        enabledEffects
+      );
+
+      // Send the enabled effects chain to trigger rebuild
+      const { websocket } = useAppStore.getState();
+      websocket.sendEffectChainUpdate(effectsModalTrack.id, enabledEffects);
+
+      // Also update local state for immediate feedback
+      const { effects } = useAppStore.getState();
+      effects.setTrackEffectChain(effectsModalTrack.id, enabledEffects);
     }
 
     closeEffectsModal();
