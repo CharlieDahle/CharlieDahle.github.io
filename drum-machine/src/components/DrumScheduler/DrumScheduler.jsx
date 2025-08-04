@@ -158,17 +158,47 @@ class DrumScheduler {
   rebuildEffectChain(trackId, effectsState) {
     console.log(`Rebuilding effect chain for track: ${trackId}`);
 
-    // 1. Dispose of old effect chain
+    // 1. First, disconnect the player from the old chain
+    const soundFile = this.trackSounds[trackId];
+    if (soundFile && this.tonePlayers[soundFile]) {
+      const player = this.tonePlayers[soundFile];
+      player.disconnect(); // Disconnect player from old chain first
+      console.log(`Disconnected player for ${trackId} from old chain`);
+    }
+
+    // 2. Properly dispose of old effect chain
     if (this.trackEffects[trackId]) {
       console.log(`Disposing old effects for track: ${trackId}`);
-      Object.values(this.trackEffects[trackId]).forEach((effect) => {
-        if (effect && typeof effect.dispose === "function") {
-          effect.dispose();
+
+      // Get all effects as an array to handle them properly
+      const oldEffects = Object.values(this.trackEffects[trackId]).filter(
+        (effect) => effect && typeof effect.disconnect === "function"
+      );
+
+      // First pass: disconnect all effects from each other and destination
+      oldEffects.forEach((effect) => {
+        try {
+          effect.disconnect(); // This is the key fix!
+          console.log(`Disconnected effect:`, effect.constructor.name);
+        } catch (error) {
+          console.warn(`Failed to disconnect effect:`, error);
+        }
+      });
+
+      // Second pass: dispose of all disconnected effects
+      oldEffects.forEach((effect) => {
+        try {
+          if (typeof effect.dispose === "function") {
+            effect.dispose();
+            console.log(`Disposed effect:`, effect.constructor.name);
+          }
+        } catch (error) {
+          console.warn(`Failed to dispose effect:`, error);
         }
       });
     }
 
-    // 2. Determine which effects are enabled
+    // 3. Determine which effects are enabled (same as before)
     const enabledEffects = [];
     const effectOrder = [
       "eq",
@@ -199,7 +229,7 @@ class DrumScheduler {
       enabledEffects.map((e) => e.type)
     );
 
-    // 3. Create new effect instances
+    // 4. Create new effect instances (same as before)
     const newEffects = {};
     const effectInstances = [];
 
@@ -208,39 +238,41 @@ class DrumScheduler {
       if (effect) {
         newEffects[type] = effect;
         effectInstances.push(effect);
+        console.log(`Created new ${type} effect`);
       }
     });
 
-    // 4. Chain effects together
+    // 5. Chain effects together (same as before)
     if (effectInstances.length > 0) {
-      // Chain effects in reverse order (last effect connects to destination)
-      for (let i = effectInstances.length - 1; i >= 0; i--) {
-        effectInstances[i].connect(Tone.Destination);
-        if (i > 0) {
-          effectInstances[i - 1].connect(effectInstances[i]);
+      // Chain effects in series: first -> second -> ... -> last -> destination
+      for (let i = 0; i < effectInstances.length; i++) {
+        if (i === effectInstances.length - 1) {
+          // Last effect connects to destination
+          effectInstances[i].toDestination();
+        } else {
+          // Connect to next effect in chain
+          effectInstances[i].connect(effectInstances[i + 1]);
         }
       }
-      // The first effect in the chain becomes our input
+      // The first effect becomes our input point
       newEffects.input = effectInstances[0];
     } else {
       // No effects - players should connect directly to destination
-      newEffects.input = null; // Signal that there are no effects
+      newEffects.input = null;
     }
 
-    // 5. Store the new chain
+    // 6. Store the new chain
     this.trackEffects[trackId] = newEffects;
 
-    // 6. Reconnect the player to the new chain
-    const soundFile = this.trackSounds[trackId];
+    // 7. Reconnect the player to the new chain (or destination)
     if (soundFile && this.tonePlayers[soundFile]) {
       const player = this.tonePlayers[soundFile];
-      player.disconnect(); // Disconnect from old chain
 
       if (newEffects.input) {
-        player.connect(newEffects.input); // Connect to effect chain
+        player.connect(newEffects.input);
         console.log(`Reconnected player for ${trackId} to effect chain`);
       } else {
-        player.toDestination(); // Connect directly if no effects
+        player.toDestination();
         console.log(
           `Reconnected player for ${trackId} directly to destination`
         );
