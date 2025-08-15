@@ -47,7 +47,7 @@
   transition: all 0.15s ease;
 }
 
-.leave-room-badge:hover {
+.leave-room-badge:hover:not(:disabled) {
   background: #d14d2f; /* Slightly darker red on hover */
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(229, 89, 52, 0.3);
@@ -57,10 +57,15 @@
   transform: translateY(0);
 }
 
-/* User Badge Styles - refined to match mockup */
+.leave-room-badge:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Base User Badge Styles */
 .user-count-badge {
-  background: #28a745;
-  color: white;
   padding: 6px 14px;
   border-radius: 20px;
   font-size: 16px;
@@ -68,6 +73,31 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Connected State - Green */
+.user-count-badge--connected {
+  background: #28a745;
+  color: white;
+}
+
+/* Syncing State - Yellow (same as pause button) */
+.user-count-badge--syncing {
+  background: #ffc107;
+  color: #212529; /* Dark text for better contrast on yellow */
+}
+
+/* Disconnected State - Red */
+.user-count-badge--disconnected {
+  background: #e55934;
+  color: white;
+}
+
+/* Failed State - Darker Red */
+.user-count-badge--failed {
+  background: #dc3545;
+  color: white;
 }
 
 .status-indicator {

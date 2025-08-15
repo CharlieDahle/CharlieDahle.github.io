@@ -1,0 +1,131 @@
+/* RoomNotFoundModal.css */
+.room-not-found-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.room-not-found-modal {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.room-not-found-header {
+  padding: 40px 32px 32px;
+  text-align: center;
+}
+
+.warning-icon {
+  color: #ffc107;
+  margin-bottom: 20px;
+}
+
+.room-not-found-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.room-not-found-message {
+  font-size: 16px;
+  color: #6c757d;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.room-not-found-actions {
+  padding: 0 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-not-found-btn {
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.room-not-found-btn--primary {
+  background: #5bc0eb;
+  color: white;
+}
+
+.room-not-found-btn--primary:hover {
+  background: #4ba8cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
+}
+
+.room-not-found-btn--secondary {
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.room-not-found-btn--secondary:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .room-not-found-modal {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .room-not-found-header {
+    padding: 32px 24px 24px;
+  }
+
+  .room-not-found-actions {
+    padding: 0 24px 32px;
+  }
+
+  .room-not-found-title {
+    font-size: 20px;
+  }
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./RoomHeader.css";
 
@@ -7,6 +7,9 @@ function RoomHeader() {
   // Get room info from WebSocket slice
   const roomId = useAppStore((state) => state.websocket.roomId);
   const users = useAppStore((state) => state.websocket.users);
+  const connectionState = useAppStore(
+    (state) => state.websocket.connectionState
+  );
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
   const handleLeaveRoom = () => {
@@ -14,6 +17,45 @@ function RoomHeader() {
   };
 
   const userCount = users.length;
+
+  // Determine badge content and styling based on connection state
+  const getBadgeConfig = () => {
+    switch (connectionState) {
+      case "connected":
+        return {
+          className: "user-count-badge user-count-badge--connected",
+          text: `${userCount} user${userCount !== 1 ? "s" : ""} online`,
+          showIndicator: true,
+        };
+      case "syncing":
+        return {
+          className: "user-count-badge user-count-badge--syncing",
+          text: "Syncing...",
+          showIndicator: false,
+        };
+      case "disconnected":
+        return {
+          className: "user-count-badge user-count-badge--disconnected",
+          text: "Disconnected",
+          showIndicator: false,
+        };
+      case "failed":
+        return {
+          className: "user-count-badge user-count-badge--failed",
+          text: "Connection Failed",
+          showIndicator: false,
+        };
+      default:
+        return {
+          className: "user-count-badge user-count-badge--disconnected",
+          text: "Connecting...",
+          showIndicator: false,
+        };
+    }
+  };
+
+  const badgeConfig = getBadgeConfig();
+  const isConnected = connectionState === "connected";
 
   return (
     <div className="floating-card room-header-card">
@@ -24,16 +66,20 @@ function RoomHeader() {
         </div>
 
         <div className="header-badges">
-          <button className="leave-room-badge" onClick={handleLeaveRoom}>
+          <button
+            className="leave-room-badge"
+            onClick={handleLeaveRoom}
+            disabled={!isConnected}
+          >
             <ChevronLeft size={16} />
-            <span>leave room</span>
+            <span>Leave Room</span>
           </button>
 
-          <div className="user-count-badge">
-            <div className="status-indicator"></div>
-            <span>
-              {userCount} user{userCount !== 1 ? "s" : ""} online
-            </span>
+          <div className={badgeConfig.className}>
+            {badgeConfig.showIndicator && (
+              <div className="status-indicator"></div>
+            )}
+            <span>{badgeConfig.text}</span>
           </div>
         </div>
       </div>

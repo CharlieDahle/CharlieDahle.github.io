@@ -5,19 +5,23 @@ import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import EffectsModal from "../EffectsModal/EffectsModal.jsx";
+import RoomNotFoundModal from "../RoomNotFoundModal/RoomNotFoundModal.jsx";
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 // Define these outside the component to prevent recreating arrays on every render
-const DRUM_MACHINE_BLOB_COUNT = [4, 6];
+const DRUM_MACHINE_BLOB_COUNT = [4, 8];
 
 function DrumMachineApp() {
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const isInRoom = useAppStore((state) => state.websocket.isInRoom);
+  const connectionState = useAppStore(
+    (state) => state.websocket.connectionState
+  );
+  const error = useAppStore((state) => state.websocket.error);
   const roomId = useAppStore((state) => state.websocket.roomId);
   const users = useAppStore((state) => state.websocket.users);
-  const error = useAppStore((state) => state.websocket.error);
   const lastRemoteTransportCommand = useAppStore(
     (state) => state.websocket.lastRemoteTransportCommand
   );
@@ -30,11 +34,11 @@ function DrumMachineApp() {
   const cleanup = useAppStore((state) => state.websocket.cleanup);
 
   // Get store setters for room sync
-  const setTracks = useAppStore((state) => state.tracks.setTracks);
-  const setPattern = useAppStore((state) => state.pattern.setPattern);
-  const syncBpm = useAppStore((state) => state.transport.syncBpm);
+  const setTracks = useAppStore((state) => state.tracks?.setTracks);
+  const setPattern = useAppStore((state) => state.pattern?.setPattern);
+  const syncBpm = useAppStore((state) => state.transport?.syncBpm);
   const syncMeasureCount = useAppStore(
-    (state) => state.transport.syncMeasureCount
+    (state) => state.transport?.syncMeasureCount
   );
 
   // Animation variants
@@ -111,6 +115,76 @@ function DrumMachineApp() {
     }
   };
 
+  // Handle room not found modal actions
+  const handleCreateNewRoomFromCurrent = async () => {
+    try {
+      // Capture current local state before creating room
+      const currentPattern = useAppStore.getState().pattern.data;
+      const currentBpm = useAppStore.getState().transport.bpm;
+      const currentMeasureCount = useAppStore.getState().transport.measureCount;
+      const currentTracks = useAppStore.getState().tracks.list;
+
+      console.log("Preserving offline changes:", {
+        pattern: currentPattern,
+        bpm: currentBpm,
+        measureCount: currentMeasureCount,
+        tracks: currentTracks,
+      });
+
+      // Create new room
+      await createRoom();
+
+      // Restore the local state AFTER room creation
+      setPattern(currentPattern);
+      syncBpm(currentBpm);
+      syncMeasureCount(currentMeasureCount);
+      setTracks(currentTracks);
+
+      // Force connection state to connected since we just created a room
+      useAppStore.setState((state) => ({
+        websocket: {
+          ...state.websocket,
+          connectionState: "connected",
+          error: null,
+        },
+      }));
+
+      console.log("Restored offline changes to new room");
+    } catch (err) {
+      console.error("Failed to create new room:", err);
+    }
+  };
+
+  const handleBackToSelection = () => {
+    // Don't cleanup the entire connection, just reset room state
+    // This preserves the WebSocket connection for room selection
+    useAppStore.setState((state) => ({
+      websocket: {
+        ...state.websocket,
+        isInRoom: false,
+        roomId: null,
+        users: [],
+        connectionState: state.websocket.isConnected
+          ? "connected"
+          : "disconnected",
+        error: null,
+        lastRemoteTransportCommand: null,
+      },
+    }));
+  };
+
+  // Check if we should show the room not found modal
+  const showRoomNotFoundModal =
+    connectionState === "failed" && error === "room-not-found";
+
+  // Debug logging
+  console.log("Modal debug:", {
+    connectionState,
+    error,
+    showRoomNotFoundModal,
+    isInRoom,
+  });
+
   // If not connected or not in room, show connection interface
   if (!isInRoom) {
     return (
@@ -166,6 +240,13 @@ function DrumMachineApp() {
           {/* Global Sound Selector Modal */}
           <SoundSelectorModal drumSounds={drumSounds} />
           <EffectsModal />
+
+          {/* Room Not Found Modal */}
+          <RoomNotFoundModal
+            isOpen={showRoomNotFoundModal}
+            onCreateNewRoom={handleCreateNewRoomFromCurrent}
+            onBackToSelection={handleBackToSelection}
+          />
         </div>
       </motion.div>
     </AnimatePresence>

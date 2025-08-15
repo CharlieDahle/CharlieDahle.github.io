@@ -574,11 +574,18 @@ export const useAppStore = create((set, get) => ({
   websocket: {
     socket: null,
     isConnected: false,
+    connectionState: "disconnected", // 'connected', 'disconnected', 'syncing', 'failed'
     error: null,
     roomId: null,
     isInRoom: false,
     users: [],
     lastRemoteTransportCommand: null,
+
+    // Reconnection state
+    reconnectAttempts: 0,
+    reconnectStartTime: null,
+    reconnectTimer: null,
+    maxReconnectTime: 5 * 60 * 1000, // 5 minutes
 
     initializeConnection: () => {
       console.log("Connecting to server...");
@@ -587,9 +594,31 @@ export const useAppStore = create((set, get) => ({
       // Connection events
       newSocket.on("connect", () => {
         console.log(`Connected to server, ID: ${newSocket.id}`);
+
+        const { websocket } = get();
+        const wasReconnecting = websocket.reconnectStartTime !== null; // Better check for actual reconnection
+
         set((state) => ({
-          websocket: { ...state.websocket, isConnected: true, error: null },
+          websocket: {
+            ...state.websocket,
+            isConnected: true,
+            error: null,
+            connectionState: wasReconnecting ? "syncing" : "connected",
+            reconnectAttempts: 0,
+            reconnectStartTime: null,
+          },
         }));
+
+        // Clear any existing reconnect timer
+        if (websocket.reconnectTimer) {
+          clearTimeout(websocket.reconnectTimer);
+        }
+
+        // If we were reconnecting and still have a room, try to rejoin
+        if (wasReconnecting && websocket.roomId) {
+          console.log("Attempting to rejoin room after reconnection...");
+          get().websocket.attemptRejoinRoom();
+        }
       });
 
       newSocket.on("disconnect", () => {
@@ -598,10 +627,14 @@ export const useAppStore = create((set, get) => ({
           websocket: {
             ...state.websocket,
             isConnected: false,
-            isInRoom: false,
+            connectionState: "disconnected",
             error: "Disconnected from server",
+            reconnectStartTime: Date.now(),
           },
         }));
+
+        // Start reconnection attempts
+        get().websocket.startReconnection();
       });
 
       newSocket.on("connect_error", (err) => {
@@ -620,7 +653,7 @@ export const useAppStore = create((set, get) => ({
         set((state) => ({
           websocket: {
             ...state.websocket,
-            users: [...state.websocket.users, userId],
+            users: [...new Set([...state.websocket.users, userId])], // Use Set to prevent duplicates
           },
         }));
       });
@@ -635,7 +668,7 @@ export const useAppStore = create((set, get) => ({
         }));
       });
 
-      // NEW: Effect chain events (replaces individual effect-change)
+      // Effect chain events
       newSocket.on("effect-chain-update", ({ trackId, enabledEffects }) => {
         console.log("Effect chain update received:", {
           trackId,
@@ -649,7 +682,7 @@ export const useAppStore = create((set, get) => ({
         get().effects.syncTrackEffectReset(trackId);
       });
 
-      // LEGACY: Keep for backward compatibility (can remove later)
+      // LEGACY: Keep for backward compatibility
       newSocket.on(
         "effect-change",
         ({ trackId, effectType, parameter, value }) => {
@@ -807,6 +840,144 @@ export const useAppStore = create((set, get) => ({
       return newSocket;
     },
 
+    startReconnection: () => {
+      const { websocket } = get();
+
+      // Don't start if already failed or if we don't have a room to rejoin
+      if (websocket.connectionState === "failed" || !websocket.roomId) {
+        return;
+      }
+
+      const timeSinceStart = Date.now() - websocket.reconnectStartTime;
+
+      // Check if we've exceeded max reconnect time
+      if (timeSinceStart >= websocket.maxReconnectTime) {
+        console.log("Reconnection timeout exceeded");
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            connectionState: "failed",
+            error: "Connection failed - unable to reconnect",
+          },
+        }));
+        return;
+      }
+
+      // Calculate delay with exponential backoff (1s, 2s, 4s, 8s, max 30s)
+      const baseDelay = 1000;
+      const maxDelay = 30000;
+      const delay = Math.min(
+        baseDelay * Math.pow(2, websocket.reconnectAttempts),
+        maxDelay
+      );
+
+      console.log(
+        `Reconnection attempt ${websocket.reconnectAttempts + 1} in ${delay}ms`
+      );
+
+      const timer = setTimeout(() => {
+        const { websocket } = get();
+
+        // Double-check we should still be trying
+        if (websocket.connectionState !== "disconnected") {
+          return;
+        }
+
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            reconnectAttempts: state.websocket.reconnectAttempts + 1,
+          },
+        }));
+
+        // Try to reconnect
+        if (websocket.socket) {
+          websocket.socket.connect();
+        }
+
+        // Schedule next attempt if this one fails
+        setTimeout(() => {
+          const { websocket } = get();
+          if (websocket.connectionState === "disconnected") {
+            get().websocket.startReconnection();
+          }
+        }, 5000); // Wait 5s to see if connection succeeds
+      }, delay);
+
+      set((state) => ({
+        websocket: { ...state.websocket, reconnectTimer: timer },
+      }));
+    },
+
+    attemptRejoinRoom: () => {
+      const { websocket } = get();
+
+      if (!websocket.socket || !websocket.roomId) {
+        return;
+      }
+
+      console.log("Attempting to rejoin room:", websocket.roomId);
+
+      websocket.socket.emit(
+        "join-room",
+        { roomId: websocket.roomId },
+        (response) => {
+          if (response && response.success) {
+            console.log("Successfully rejoined room");
+
+            // Sync all state from server (server wins)
+            get().websocket.syncFromServer(response.roomState);
+
+            // Show syncing state for 5 seconds, then connected
+            setTimeout(() => {
+              set((state) => ({
+                websocket: {
+                  ...state.websocket,
+                  connectionState: "connected",
+                },
+              }));
+            }, 5000);
+          } else {
+            console.log("Room no longer exists");
+            set((state) => ({
+              websocket: {
+                ...state.websocket,
+                connectionState: "failed",
+                error: "room-not-found",
+              },
+            }));
+          }
+        }
+      );
+    },
+
+    syncFromServer: (roomState) => {
+      console.log("Syncing state from server:", roomState);
+
+      // Update all local state with server state (server is authoritative)
+      if (roomState.pattern) {
+        get().pattern.setPattern(roomState.pattern);
+      }
+      if (roomState.bpm) {
+        get().transport.syncBpm(roomState.bpm);
+      }
+      if (roomState.measureCount) {
+        get().transport.syncMeasureCount(roomState.measureCount);
+      }
+      if (roomState.tracks) {
+        get().tracks.setTracks(roomState.tracks);
+      }
+      if (roomState.users) {
+        // Server's user list is authoritative - replace completely
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            users: [...roomState.users], // Fresh copy from server
+          },
+        }));
+      }
+    },
+
     createRoom: () => {
       const { socket, isConnected } = get().websocket;
       if (!socket || !isConnected) return Promise.reject("Not connected");
@@ -902,18 +1073,24 @@ export const useAppStore = create((set, get) => ({
       }));
     },
 
-    // Send methods
+    // Safe send methods - only send if connected
     sendPatternChange: (change) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping pattern change - not connected");
+        return;
+      }
 
       console.log("Sending pattern change:", change);
       socket.emit("pattern-change", { roomId, change });
     },
 
     sendBpmChange: (newBpm) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping BPM change - not connected");
+        return;
+      }
 
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
       console.log("Sending BPM change:", clampedBpm);
@@ -921,49 +1098,66 @@ export const useAppStore = create((set, get) => ({
     },
 
     sendMeasureCountChange: (measureCount) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping measure count change - not connected");
+        return;
+      }
 
       console.log("Sending measure count change:", measureCount);
       socket.emit("set-measure-count", { roomId, measureCount });
     },
 
     sendTransportCommand: (command) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping transport command - not connected");
+        return;
+      }
 
       console.log("Sending transport command:", command);
       socket.emit("transport-command", { roomId, command });
     },
 
     sendAddTrack: (trackData) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping add track - not connected");
+        return;
+      }
 
       console.log("Sending add track:", trackData);
       socket.emit("add-track", { roomId, trackData });
     },
 
     sendRemoveTrack: (trackId) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping remove track - not connected");
+        return;
+      }
 
       console.log("Sending remove track:", trackId);
       socket.emit("remove-track", { roomId, trackId });
     },
 
     sendUpdateTrackSound: (trackId, soundFile) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping track sound update - not connected");
+        return;
+      }
 
       console.log("Sending track sound update:", trackId, soundFile);
       socket.emit("update-track-sound", { roomId, trackId, soundFile });
     },
 
-    // NEW: Send entire effect chain state
     sendEffectChainUpdate: (trackId, enabledEffects) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping effect chain update - not connected");
+        return;
+      }
 
       console.log("Sending effect chain update:", { trackId, enabledEffects });
       socket.emit("effect-chain-update", {
@@ -973,10 +1167,12 @@ export const useAppStore = create((set, get) => ({
       });
     },
 
-    // LEGACY: Keep individual effect changes for backward compatibility (can remove later)
     sendEffectChange: (trackId, effectType, parameter, value) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping legacy effect change - not connected");
+        return;
+      }
 
       console.log("Sending legacy effect change:", {
         trackId,
@@ -994,29 +1190,42 @@ export const useAppStore = create((set, get) => ({
     },
 
     sendEffectReset: (trackId) => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        console.log("Skipping effect reset - not connected");
+        return;
+      }
 
       console.log("Sending effect reset:", trackId);
       socket.emit("effect-reset", { roomId, trackId });
     },
 
     cleanup: () => {
-      const { socket } = get().websocket;
+      const { socket, reconnectTimer } = get().websocket;
+
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+
       if (socket) {
         console.log("Cleaning up socket connection");
         socket.close();
       }
+
       set((state) => ({
         websocket: {
           ...state.websocket,
           socket: null,
           isConnected: false,
+          connectionState: "disconnected",
           isInRoom: false,
           roomId: null,
           users: [],
           error: null,
           lastRemoteTransportCommand: null,
+          reconnectAttempts: 0,
+          reconnectStartTime: null,
+          reconnectTimer: null,
         },
       }));
     },
