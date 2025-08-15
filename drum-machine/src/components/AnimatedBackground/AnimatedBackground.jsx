@@ -114,7 +114,7 @@ function AnimatedBackground({
     };
 
     const isTooClose = (newPos, existingBlobs) => {
-      const minDistance = 20;
+      const minDistance = 35;
       return existingBlobs.some((blob) => {
         const distance = Math.sqrt(
           Math.pow(newPos.top - blob.top, 2) +

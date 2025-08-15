@@ -3,7 +3,7 @@ import AnimatedBackground from "../AnimatedBackground/AnimatedBackground";
 import "./RoomInterface.css";
 
 // Define blob count range outside component to prevent recreating on every render
-const ROOM_BLOB_COUNT = [2, 6];
+const ROOM_BLOB_COUNT = [2, 5];
 
 function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   const [joinRoomId, setJoinRoomId] = useState("");

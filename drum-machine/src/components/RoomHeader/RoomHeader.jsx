@@ -1,5 +1,5 @@
 import React from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, ChevronLeft } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./RoomHeader.css";
 
@@ -22,11 +22,19 @@ function RoomHeader() {
           <h1 className="room-title">Drum Machine</h1>
           <div className="room-info">Room: {roomId}</div>
         </div>
-        <div className="user-count-badge">
-          <div className="status-indicator"></div>
-          <span>
-            {userCount} user{userCount !== 1 ? "s" : ""} online
-          </span>
+
+        <div className="header-badges">
+          <button className="leave-room-badge" onClick={handleLeaveRoom}>
+            <ChevronLeft size={16} />
+            <span>leave room</span>
+          </button>
+
+          <div className="user-count-badge">
+            <div className="status-indicator"></div>
+            <span>
+              {userCount} user{userCount !== 1 ? "s" : ""} online
+            </span>
+          </div>
         </div>
       </div>
     </div>
