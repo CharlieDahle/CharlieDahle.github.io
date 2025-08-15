@@ -4,8 +4,12 @@ import { useAppStore } from "../../stores/useAppStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
-import drumSounds from "../../assets/data/drum-sounds.json";
 import EffectsModal from "../EffectsModal/EffectsModal.jsx";
+import AnimatedBackground from "../AnimatedBackground/AnimatedBackground.jsx";
+import drumSounds from "../../assets/data/drum-sounds.json";
+
+// Define these outside the component to prevent recreating arrays on every render
+const DRUM_MACHINE_BLOB_COUNT = [2, 4];
 
 function DrumMachineApp() {
   // Get WebSocket state and actions
@@ -134,7 +138,7 @@ function DrumMachineApp() {
     );
   }
 
-  // Render the drum machine
+  // Render the drum machine with animated background
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -147,13 +151,22 @@ function DrumMachineApp() {
         style={{
           width: "100%",
           minHeight: "100vh",
+          position: "relative",
         }}
       >
-        <DrumMachine remoteTransportCommand={lastRemoteTransportCommand} />
+        {/* Animated Background for drum machine - inside the animated container */}
+        <AnimatedBackground
+          blobCount={DRUM_MACHINE_BLOB_COUNT}
+          placement="edge"
+        />
 
-        {/* Global Sound Selector Modal */}
-        <SoundSelectorModal drumSounds={drumSounds} />
-        <EffectsModal />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <DrumMachine remoteTransportCommand={lastRemoteTransportCommand} />
+
+          {/* Global Sound Selector Modal */}
+          <SoundSelectorModal drumSounds={drumSounds} />
+          <EffectsModal />
+        </div>
       </motion.div>
     </AnimatePresence>
   );
