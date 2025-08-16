@@ -10,6 +10,14 @@
   align-items: center;
 }
 
+.room-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
 /* Title Section - matching mockup typography */
 .title-section h1.room-title {
   font-size: 28px;

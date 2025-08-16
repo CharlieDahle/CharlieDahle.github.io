@@ -32,37 +32,6 @@
   max-width: 500px;
 }
 
-/* Background Blobs */
-.background-blobs {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.background-blob {
-  position: absolute;
-  opacity: 0.5;
-  animation: float infinite ease-in-out;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translate(0px, 0px) rotate(0deg);
-  }
-  33% {
-    transform: translate(30px, -30px) rotate(120deg);
-  }
-  66% {
-    transform: translate(-20px, 20px) rotate(240deg);
-  }
-}
-
 /* Connection Status */
 .connection-status {
   position: fixed;
@@ -124,7 +93,7 @@
 
 .room-card__header {
   background: white;
-  padding: 32px 48px 24px;
+  padding: 32px 48px 0px;
   text-align: center;
 }
 
@@ -132,12 +101,9 @@
   padding: 40px 48px;
 }
 
-.room-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.5px;
+/* Room Title Image Styling */
+.room-title-image {
+  width: 300px;
 }
 
 /* Action Sections */
@@ -306,63 +272,4 @@
   font-size: 14px;
   font-weight: 500;
   position: relative;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .room-layout {
-    padding: 16px;
-  }
-
-  .room-card__header {
-    padding: 24px 32px 20px;
-  }
-
-  .room-card__body {
-    padding: 32px 24px;
-  }
-
-  .room-title {
-    font-size: 28px;
-  }
-
-  .action-title {
-    font-size: 20px;
-  }
-
-  .action-description {
-    font-size: 14px;
-  }
-
-  .action-header {
-    gap: 12px;
-  }
-
-  .action-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-
-  .connection-status {
-    top: 16px;
-    right: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .action-section {
-    margin-bottom: 24px;
-  }
-
-  .action-header {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 16px;
-  }
-
-  .action-icon {
-    margin-top: 0;
-  }
 }
