@@ -1,0 +1,442 @@
+/* EffectsModal.css - Compact, Timeline-Consistent Design */
+:root {
+  --effects-primary-blue: #5bc0eb;
+  --effects-success-green: #28a745;
+  --effects-danger-red: #dc3545;
+  --effects-text-primary: #333;
+  --effects-text-secondary: #6c757d;
+  --effects-border-color: #dee2e6;
+  --effects-sidebar-bg: #f8f9fa;
+  --effects-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --effects-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --effects-transition: 0.15s ease;
+}
+
+/* Modal Overlay */
+.effects-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container - Fixed size with scrolling */
+.effects-modal {
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--effects-shadow-md);
+  width: 800px; /* Fixed width - more compact */
+  height: 600px; /* Fixed height */
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal Header - Compact padding */
+.effects-modal-header {
+  background: var(--effects-sidebar-bg);
+  padding: 16px 24px; /* Reduced from 24px 32px */
+  border-bottom: 1px solid var(--effects-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.effects-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--effects-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.effects-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--effects-text-secondary);
+  transition: color var(--effects-transition);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.effects-close-btn:hover {
+  color: var(--effects-text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Body - Compact padding with flex layout */
+.effects-modal-body {
+  padding: 24px; /* Reduced from 32px */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Effect Tabs - Compact spacing */
+.effects-tabs {
+  display: flex;
+  gap: 4px; /* Increased from 2px for usability */
+  margin-bottom: 24px; /* Consistent with timeline section gaps */
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.effects-tab {
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--effects-text-secondary);
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  min-width: 80px;
+  white-space: nowrap;
+}
+
+.effects-tab.active {
+  background: white;
+  color: var(--effects-primary-blue);
+  box-shadow: var(--effects-shadow-sm);
+}
+
+.effects-tab:hover:not(.active) {
+  color: var(--effects-text-primary);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Scrollable Content Area */
+.effects-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px; /* Space for scrollbar */
+}
+
+/* Effect Panels */
+.effects-panel {
+  animation: fadeInPanel 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Consistent with timeline */
+}
+
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.effects-section {
+  margin-bottom: 24px; /* Reduced from 32px to match timeline */
+}
+
+.effects-section:last-child {
+  margin-bottom: 0;
+}
+
+.effects-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--effects-text-primary);
+  margin-bottom: 16px; /* Reduced from 20px */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Slider Rows - More compact than knob rows */
+.slider-row {
+  display: flex;
+  gap: 20px; /* Reduced from 24px */
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.slider-control {
+  text-align: center;
+  flex: 1;
+  max-width: 120px;
+  min-width: 100px;
+}
+
+.slider-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--effects-text-secondary);
+  margin-bottom: 8px; /* Reduced from 12px */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Slider Styling - More prominent since no knobs */
+.effects-slider {
+  width: 100px; /* Wider than before */
+  height: 6px; /* Thicker track */
+  margin: 8px 0; /* Reduced margin */
+  background: var(--effects-border-color);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: all var(--effects-transition);
+}
+
+/* Slider track */
+.effects-slider::-webkit-slider-track {
+  height: 6px;
+  background: var(--effects-border-color);
+  border-radius: 3px;
+}
+
+.effects-slider::-moz-range-track {
+  height: 6px;
+  background: var(--effects-border-color);
+  border-radius: 3px;
+  border: none;
+}
+
+/* Slider thumb */
+.effects-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--effects-primary-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: var(--effects-shadow-sm);
+  transition: all 0.15s ease;
+}
+
+.effects-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--effects-primary-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: var(--effects-shadow-sm);
+  transition: all 0.15s ease;
+}
+
+/* Hover states */
+.effects-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
+}
+
+.effects-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.4);
+}
+
+/* Focus states */
+.effects-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
+}
+
+.effects-slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(91, 192, 235, 0.3);
+}
+
+.slider-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--effects-text-primary);
+  background: rgba(91, 192, 235, 0.1);
+  padding: 4px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  min-width: 50px;
+  margin-top: 4px;
+}
+
+/* Select Dropdown Styling */
+.effects-select {
+  width: 80px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid var(--effects-border-color);
+  fontsize: 12px;
+  text-align: center;
+  background: white;
+  cursor: pointer;
+  transition: border-color var(--effects-transition);
+}
+
+.effects-select:focus {
+  outline: none;
+  border-color: var(--effects-primary-blue);
+}
+
+/* Warning Box - No more inline styles */
+.effects-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #856404;
+}
+
+/* Modal Footer - Compact with new button layout */
+.effects-modal-footer {
+  background: var(--effects-sidebar-bg);
+  padding: 16px 24px; /* Reduced from 24px 32px */
+  border-top: 1px solid var(--effects-border-color);
+  display: flex;
+  gap: 8px; /* Reduced from 16px to match timeline */
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Button Spacer */
+.button-spacer {
+  flex: 1;
+}
+
+/* Buttons - Timeline-consistent styling */
+.effects-btn {
+  padding: 12px 20px; /* Match timeline buttons */
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  font-size: 14px;
+  box-shadow: var(--effects-shadow-sm); /* Add shadow like timeline */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.effects-btn--secondary {
+  background: var(--effects-border-color);
+  color: var(--effects-text-primary);
+}
+
+.effects-btn--secondary:hover {
+  background: #adb5bd;
+  transform: translateY(-1px);
+  box-shadow: var(--effects-shadow-md);
+}
+
+.effects-btn--primary {
+  background: var(--effects-primary-blue);
+  color: white;
+}
+
+.effects-btn--primary:hover {
+  background: #4ba8cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
+}
+
+.effects-btn--danger {
+  background: var(--effects-danger-red);
+  color: white;
+}
+
+.effects-btn--danger:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Focus states for accessibility */
+.effects-tab:focus,
+.effects-btn:focus,
+.effects-slider:focus,
+.effects-select:focus {
+  outline: 2px solid var(--effects-primary-blue);
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling for content area */
+.effects-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.effects-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.effects-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.effects-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 900px) {
+  .effects-modal {
+    width: 90vw;
+    height: 80vh;
+    margin: 20px;
+  }
+
+  .slider-row {
+    gap: 16px;
+  }
+
+  .slider-control {
+    min-width: 80px;
+  }
+}

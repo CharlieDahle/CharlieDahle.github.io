@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Settings } from "lucide-react";
+import { Drum, Sliders } from "lucide-react";
 import { useAppStore } from "../../stores";
 import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
-// TrackLabel component with hover controls
 function TrackLabel({ track }) {
-  const [showControls, setShowControls] = useState(false);
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
+  const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
 
   // Get display name - either sound name or "Choose Sound..."
   const getDisplayName = () => {
@@ -41,28 +40,30 @@ function TrackLabel({ track }) {
   };
 
   return (
-    <div
-      className="track-label"
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
-    >
+    <div className="track-label">
       <div
         className="track-color-indicator"
         style={{ backgroundColor: track.color }}
       />
       <span className="track-name">{getDisplayName()}</span>
 
-      {showControls && (
-        <div className="track-controls">
-          <button
-            className="track-settings-btn"
-            onClick={() => openSoundModal(track)}
-            title="Change sound"
-          >
-            <Settings size={16} />
-          </button>
-        </div>
-      )}
+      {/* Always visible controls - removed hover state logic */}
+      <div className="track-controls">
+        <button
+          className="track-settings-btn"
+          onClick={() => openSoundModal(track)}
+          title="Change sound"
+        >
+          <Drum size={16} />
+        </button>
+        <button
+          className="track-effects-btn"
+          onClick={() => openEffectsModal(track)}
+          title="Track effects"
+        >
+          <Sliders size={16} />
+        </button>
+      </div>
     </div>
   );
 }

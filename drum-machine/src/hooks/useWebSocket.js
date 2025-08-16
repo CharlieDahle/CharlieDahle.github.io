@@ -22,8 +22,8 @@ export function useWebSocket() {
   // Initialize WebSocket connection
   useEffect(() => {
     console.log("Connecting to server...");
-    const newSocket = io("https://api.charliedahle.me");
-    // const newSocket = io("http://localhost:3001");
+    // const newSocket = io("https://api.charliedahle.me");
+    const newSocket = io("http://localhost:3001");
 
     // Connection events
     newSocket.on("connect", () => {

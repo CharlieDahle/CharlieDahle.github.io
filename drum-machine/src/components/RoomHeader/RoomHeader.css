@@ -24,9 +24,16 @@
   font-size: 14px;
 }
 
-/* User Badge Styles - refined to match mockup */
-.user-count-badge {
-  background: #28a745;
+/* Header Badges Container */
+.header-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Leave Room Badge - styled like user count badge but red */
+.leave-room-badge {
+  background: #e55934; /* Red blob color from your color palette */
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -35,6 +42,62 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.leave-room-badge:hover:not(:disabled) {
+  background: #d14d2f; /* Slightly darker red on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(229, 89, 52, 0.3);
+}
+
+.leave-room-badge:active {
+  transform: translateY(0);
+}
+
+.leave-room-badge:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Base User Badge Styles */
+.user-count-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Connected State - Green */
+.user-count-badge--connected {
+  background: #28a745;
+  color: white;
+}
+
+/* Syncing State - Yellow (same as pause button) */
+.user-count-badge--syncing {
+  background: #ffc107;
+  color: #212529; /* Dark text for better contrast on yellow */
+}
+
+/* Disconnected State - Red */
+.user-count-badge--disconnected {
+  background: #e55934;
+  color: white;
+}
+
+/* Failed State - Darker Red */
+.user-count-badge--failed {
+  background: #dc3545;
+  color: white;
 }
 
 .status-indicator {
