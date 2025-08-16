@@ -105,7 +105,7 @@
 
 /* Leave Room Badge - styled like user count badge but red */
 .leave-room-badge {
-  background: #e55934; /* Red blob color from your color palette */
+  background: #dc3545; /* Red blob color from your color palette */
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
