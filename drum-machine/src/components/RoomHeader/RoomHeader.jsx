@@ -21,7 +21,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
     leaveRoom();
   };
 
-  // Secret debug mode trigger - click "Drum Machine" 5 times quickly
+  // Secret debug mode trigger - click the logo 5 times quickly
   const handleTitleClick = () => {
     const newClickCount = clickCount + 1;
     setClickCount(newClickCount);
@@ -38,11 +38,11 @@ function RoomHeader({ debugMode, setDebugMode }) {
       console.log("🔧 Debug mode activated!");
 
       // Show a brief visual feedback
-      const titleElement = document.querySelector(".room-title");
-      if (titleElement) {
-        titleElement.style.color = "#5bc0eb";
+      const logoElement = document.querySelector(".room-title-logo");
+      if (logoElement) {
+        logoElement.style.filter = "hue-rotate(180deg)";
         setTimeout(() => {
-          titleElement.style.color = "";
+          logoElement.style.filter = "";
         }, 500);
       }
       return;
@@ -101,42 +101,22 @@ function RoomHeader({ debugMode, setDebugMode }) {
     <div className="floating-card room-header-card">
       <div className="room-header-content">
         <div className="title-section">
-          <h1
-            className="room-title"
+          <div
+            className="room-title-container"
             onClick={handleTitleClick}
-            style={{
-              cursor: "pointer",
-              userSelect: "none",
-              transition: "color 0.2s ease",
-              position: "relative",
-            }}
             title={
               clickCount > 0 ? `Debug mode: ${clickCount}/5 clicks` : undefined
             }
           >
-            Drum Machine
+            <img
+              src="/damn.png"
+              alt="Drum Machine"
+              className="room-title-logo"
+            />
             {clickCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-8px",
-                  right: "-8px",
-                  background: "#5bc0eb",
-                  color: "#000",
-                  borderRadius: "50%",
-                  width: "16px",
-                  height: "16px",
-                  fontSize: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                {clickCount}
-              </span>
+              <span className="debug-counter">{clickCount}</span>
             )}
-          </h1>
+          </div>
           <div className="room-info">Room: {roomId}</div>
         </div>
 
