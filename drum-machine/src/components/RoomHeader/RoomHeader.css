@@ -10,6 +10,14 @@
   align-items: center;
 }
 
+.room-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
 /* Title Section - matching mockup typography */
 .title-section h1.room-title {
   font-size: 28px;
@@ -17,6 +25,70 @@
   color: var(--text-primary, #333);
   margin: 0 0 4px 0;
   letter-spacing: -0.5px;
+}
+
+/* Logo Container - replaces the old h1.room-title */
+.room-title-container {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.room-title-container:hover {
+  transform: scale(1.02);
+}
+
+.room-title-container:active {
+  transform: scale(0.98);
+}
+
+/* Logo Image Styling */
+.room-title-logo {
+  height: 40px;
+  width: auto;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.room-title-logo:hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+/* Debug Counter Badge */
+.debug-counter {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #5bc0eb;
+  color: #000;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse-counter 0.6s ease-in-out;
+}
+
+@keyframes pulse-counter {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .room-info {
@@ -115,5 +187,26 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .room-title-logo {
+    height: 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .room-header-card {
+    padding: 16px 20px;
+  }
+
+  .room-title-logo {
+    height: 32px;
+  }
+
+  .header-badges {
+    gap: 8px;
   }
 }

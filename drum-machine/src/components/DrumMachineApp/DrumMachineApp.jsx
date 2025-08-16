@@ -10,7 +10,7 @@ import AnimatedBackground from "../AnimatedBackground/AnimatedBackground.jsx";
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 // Define these outside the component to prevent recreating arrays on every render
-const DRUM_MACHINE_BLOB_COUNT = [4, 8];
+const DRUM_MACHINE_BLOB_COUNT = [4, 6];
 
 function DrumMachineApp() {
   // Get WebSocket state and actions
