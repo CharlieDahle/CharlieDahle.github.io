@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from "react";
+// src/components/DrumMachine/DrumMachine.jsx
+import React, { useEffect, useRef, useState } from "react";
 import { useAppStore } from "../../stores";
 import PatternTimeline from "../PatternTimeline/PatternTimeline";
 import DrumScheduler from "../DrumScheduler/DrumScheduler";
 import RoomHeader from "../RoomHeader/RoomHeader";
+import DebugPanel from "../DebugPanel/DebugPanel";
 
 function DrumMachine({ remoteTransportCommand }) {
   // Get all state from the single store
@@ -16,12 +18,16 @@ function DrumMachine({ remoteTransportCommand }) {
   const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
   const getTotalTicks = useAppStore((state) => state.transport.getTotalTicks);
 
-  // Get effects state - ADD THIS
+  // Get effects state
   const trackEffects = useAppStore((state) => state.effects.trackEffects);
   const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
 
   // Scheduler instance
   const schedulerRef = useRef(null);
+
+  // Debug data state - extracted from scheduler for debug panel
+  const [toneEffectsData, setToneEffectsData] = useState(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Track the last processed remote command to avoid re-processing
   const lastProcessedCommandRef = useRef(null);
@@ -46,6 +52,35 @@ function DrumMachine({ remoteTransportCommand }) {
     };
   }, [setCurrentTick]);
 
+  // Update debug data whenever scheduler state changes
+  useEffect(() => {
+    if (schedulerRef.current) {
+      const updateDebugData = () => {
+        const scheduler = schedulerRef.current;
+        setToneEffectsData({
+          tonePlayers: scheduler.tonePlayers || {},
+          trackEffects: scheduler.trackEffects || {},
+          audioContext: scheduler.context?.state || "unknown",
+          isPlaying: scheduler.isPlaying,
+          currentTick: scheduler.currentTick,
+          trackSounds: scheduler.trackSounds || {},
+          bpm: scheduler.bpm || bpm, // Use scheduler BPM or fallback to store BPM
+          soundsLoaded: scheduler.soundsLoaded,
+          // Add debug method to check Tone.js state
+          toneContextState: window.Tone?.context?.state || "Tone.js not loaded",
+        });
+      };
+
+      // Update immediately
+      updateDebugData();
+
+      // Update every second while debug panel might be open
+      const interval = setInterval(updateDebugData, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [pattern, tracks, isPlaying, currentTick, bpm]); // Added bpm to dependencies
+
   // Update scheduler when pattern, BPM, or tracks change
   useEffect(() => {
     if (schedulerRef.current) {
@@ -55,7 +90,7 @@ function DrumMachine({ remoteTransportCommand }) {
     }
   }, [pattern, bpm, tracks]);
 
-  // NEW: Update effects when they change
+  // Update effects when they change
   useEffect(() => {
     if (schedulerRef.current) {
       // Update effects for each track
@@ -107,14 +142,29 @@ function DrumMachine({ remoteTransportCommand }) {
       currentTick,
     });
 
+    // Log to debug panel if available
+    if (window.debugPanel) {
+      window.debugPanel.addMessageToLog(
+        "in",
+        "remote-transport-command",
+        remoteTransportCommand
+      );
+    }
+
     // The state is already updated by the WebSocket store
     // The audio coordination useEffect above will handle the scheduler
   }, [remoteTransportCommand, isPlaying, currentTick]);
 
   return (
     <div className="drum-machine-layout">
-      <RoomHeader />
+      <RoomHeader debugMode={debugMode} setDebugMode={setDebugMode} />
       <PatternTimeline />
+      {/* Debug panel appears as its own card below PatternTimeline */}
+      <DebugPanel
+        isOpen={debugMode}
+        onClose={() => setDebugMode(false)}
+        toneEffectsData={toneEffectsData}
+      />
     </div>
   );
 }
