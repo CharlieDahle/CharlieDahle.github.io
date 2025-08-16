@@ -120,7 +120,7 @@
 }
 
 .leave-room-badge:hover:not(:disabled) {
-  background: #d14d2f; /* Slightly darker red on hover */
+  background: rgb(198, 73, 45); /* Slightly darker red on hover */
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(229, 89, 52, 0.3);
 }
