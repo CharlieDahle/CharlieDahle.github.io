@@ -109,7 +109,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
             }
           >
             <img
-              src="/damn.png"
+              src="/idk.png"
               alt="Drum Machine"
               className="room-title-logo"
             />

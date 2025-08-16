@@ -61,7 +61,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
           <div className="room-card">
             <div className="room-card__header">
               <img
-                src="/yeezus2.png"
+                src="/pablo.png"
                 alt="Drum Machine"
                 className="room-title-image"
               />
