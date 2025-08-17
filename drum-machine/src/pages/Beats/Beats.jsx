@@ -1,0 +1,407 @@
+// src/pages/Beats/Beats.jsx - Enhanced with better beat status
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../../stores";
+import AnimatedBackground from "../../components/AnimatedBackground/AnimatedBackground";
+import {
+  Music,
+  Play,
+  Clock,
+  Calendar,
+  Plus,
+  User,
+  LogOut,
+  Wifi,
+  WifiOff,
+  FileText,
+  Edit,
+} from "lucide-react";
+import "./Beats.css";
+
+function Beats() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loadingBeatId, setLoadingBeatId] = useState(null);
+  const navigate = useNavigate();
+
+  const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
+  const {
+    userBeats,
+    isLoading,
+    error,
+    fetchUserBeats,
+    loadBeat,
+    clearError,
+    getSaveButtonInfo,
+    createNewBeat,
+  } = useAppStore((state) => state.beats);
+
+  // WebSocket functions for creating room
+  const createRoom = useAppStore((state) => state.websocket.createRoom);
+  const isConnected = useAppStore((state) => state.websocket.isConnected);
+  const connectionState = useAppStore(
+    (state) => state.websocket.connectionState
+  );
+
+  // Get current beat info
+  const saveButtonInfo = getSaveButtonInfo();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    // Fetch user's beats when component loads
+    fetchUserBeats();
+  }, [isAuthenticated, fetchUserBeats, navigate]);
+
+  // Log connection state changes for debugging
+  useEffect(() => {
+    console.log("🔌 Beats page - Connection state:", {
+      isConnected,
+      connectionState,
+      timestamp: new Date().toISOString(),
+    });
+  }, [isConnected, connectionState]);
+
+  const handleLoadBeat = async (beat) => {
+    if (!isConnected) {
+      console.error("Not connected to server");
+      return;
+    }
+
+    setLoadingBeatId(beat.id);
+
+    try {
+      // First, load the beat data into the local state
+      console.log("Loading beat data:", beat.name);
+      await loadBeat(beat.id);
+
+      // Then create a new room with this beat data
+      console.log("Creating room with loaded beat...");
+      await createRoom();
+
+      // Navigate to drum machine (now with the room created and beat loaded)
+      navigate("/DrumMachine");
+    } catch (error) {
+      console.error("Failed to load beat and create room:", error);
+      setLoadingBeatId(null);
+    }
+  };
+
+  const handleCreateNew = () => {
+    // Clear current beat tracking and navigate
+    createNewBeat();
+    navigate("/DrumMachine");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/", { replace: true });
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const filteredBeats = userBeats.filter((beat) =>
+    beat.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Get connection status display info
+  const getConnectionStatus = () => {
+    switch (connectionState) {
+      case "connected":
+        return {
+          icon: <Wifi size={16} />,
+          text: "Connected",
+          className: "connection-status-connected",
+        };
+      case "disconnected":
+        return {
+          icon: <WifiOff size={16} />,
+          text: "Disconnected",
+          className: "connection-status-disconnected",
+        };
+      case "syncing":
+        return {
+          icon: <Wifi size={16} />,
+          text: "Connecting...",
+          className: "connection-status-connecting",
+        };
+      default:
+        return {
+          icon: <WifiOff size={16} />,
+          text: "No Connection",
+          className: "connection-status-disconnected",
+        };
+    }
+  };
+
+  const connectionStatus = getConnectionStatus();
+
+  if (!isAuthenticated) {
+    return <div>Redirecting to login...</div>;
+  }
+
+  return (
+    <div className="beats-page">
+      <AnimatedBackground blobCount={[3, 5]} />
+
+      <div className="beats-layout">
+        {/* Header */}
+        <div className="beats-header">
+          <div className="beats-header-content">
+            <div className="header-left">
+              <img src="/idk.png" alt="Drum Machine" className="beats-logo" />
+              <div className="header-text">
+                <h1 className="beats-title">My Beats</h1>
+                <p className="beats-subtitle">
+                  Welcome back, <strong>{user?.username}</strong>
+                  {saveButtonInfo.isUpdate && (
+                    <span className="current-beat-info">
+                      • Currently working on:{" "}
+                      <strong>"{saveButtonInfo.beatName}"</strong>
+                      {saveButtonInfo.showUnsavedIndicator && (
+                        <span className="unsaved-changes-indicator">
+                          {" "}
+                          (has unsaved changes)
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="header-actions">
+              {/* Connection Status Display */}
+              <div
+                className={`connection-status ${connectionStatus.className}`}
+              >
+                {connectionStatus.icon}
+                <span>{connectionStatus.text}</span>
+              </div>
+
+              <button className="create-new-btn" onClick={handleCreateNew}>
+                <Plus size={18} />
+                Create New Beat
+              </button>
+
+              <div className="user-menu">
+                <div className="user-info">
+                  <User size={16} />
+                  {user?.username}
+                </div>
+                <button
+                  className="logout-btn"
+                  onClick={handleLogout}
+                  title="Sign Out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="beats-content">
+          <div className="beats-container">
+            {/* Search and Stats */}
+            <div className="content-header">
+              <div className="search-section">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search your beats..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="stats-section">
+                <div className="stat-item">
+                  <Music size={16} />
+                  <span>
+                    {userBeats.length} beat{userBeats.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                {saveButtonInfo.isUpdate && (
+                  <div className="stat-item current-beat-stat">
+                    <FileText size={16} />
+                    <span>
+                      Working on "{saveButtonInfo.beatName}"
+                      {saveButtonInfo.showUnsavedIndicator && " *"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="error-banner">
+                <p>{error}</p>
+                <button onClick={clearError} className="error-close">
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Connection Status Warning */}
+            {!isConnected && (
+              <div className="error-banner">
+                <p>
+                  ⚠️ Not connected to server. Please wait for connection before
+                  loading beats.
+                </p>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="loading-state">
+                <div className="loading-spinner-large"></div>
+                <p>Loading your beats...</p>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && userBeats.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <Music size={64} />
+                </div>
+                <h2>No beats yet!</h2>
+                <p>
+                  Create your first beat and start building your rhythm library.
+                </p>
+                <button className="empty-action-btn" onClick={handleCreateNew}>
+                  <Plus size={18} />
+                  Create Your First Beat
+                </button>
+              </div>
+            )}
+
+            {/* No Search Results */}
+            {!isLoading &&
+              userBeats.length > 0 &&
+              filteredBeats.length === 0 && (
+                <div className="no-results">
+                  <p>No beats found matching "{searchTerm}"</p>
+                  <button
+                    className="clear-search-btn"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    Clear Search
+                  </button>
+                </div>
+              )}
+
+            {/* Beats Grid */}
+            {!isLoading && filteredBeats.length > 0 && (
+              <div className="beats-grid">
+                {filteredBeats.map((beat) => {
+                  const isLoadingThisBeat = loadingBeatId === beat.id;
+                  const isCurrentlyLoaded =
+                    saveButtonInfo.isUpdate &&
+                    saveButtonInfo.beatName === beat.name;
+
+                  return (
+                    <div
+                      key={beat.id}
+                      className={`beat-card ${
+                        isCurrentlyLoaded ? "currently-loaded" : ""
+                      }`}
+                    >
+                      <div className="beat-card-header">
+                        <h3 className="beat-name">
+                          {beat.name}
+                          {isCurrentlyLoaded && (
+                            <span className="current-beat-badge">
+                              <Edit size={14} />
+                              Current
+                              {saveButtonInfo.showUnsavedIndicator && " *"}
+                            </span>
+                          )}
+                        </h3>
+                        <button
+                          className="play-btn"
+                          onClick={() => handleLoadBeat(beat)}
+                          disabled={!isConnected || isLoadingThisBeat}
+                          title="Load and play this beat"
+                        >
+                          {isLoadingThisBeat ? (
+                            <div
+                              className="loading-spinner"
+                              style={{ width: 20, height: 20 }}
+                            ></div>
+                          ) : (
+                            <Play size={20} />
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="beat-info">
+                        <div className="beat-detail">
+                          <Clock size={14} />
+                          <span>{beat.bpm} BPM</span>
+                        </div>
+
+                        <div className="beat-detail">
+                          <Music size={14} />
+                          <span>{beat.measure_count} measures</span>
+                        </div>
+
+                        <div className="beat-detail">
+                          <Calendar size={14} />
+                          <span>{formatDate(beat.created_at)}</span>
+                        </div>
+                      </div>
+
+                      <div className="beat-card-footer">
+                        <button
+                          className={`load-beat-btn ${
+                            isCurrentlyLoaded ? "current-beat" : ""
+                          }`}
+                          onClick={() => handleLoadBeat(beat)}
+                          disabled={!isConnected || isLoadingThisBeat}
+                        >
+                          {isLoadingThisBeat ? (
+                            <>
+                              <div
+                                className="loading-spinner"
+                                style={{
+                                  width: 16,
+                                  height: 16,
+                                  marginRight: 8,
+                                }}
+                              ></div>
+                              Loading...
+                            </>
+                          ) : isCurrentlyLoaded ? (
+                            "Continue Editing"
+                          ) : (
+                            "Load Beat"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Beats;

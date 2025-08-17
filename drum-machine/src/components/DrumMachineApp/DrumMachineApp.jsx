@@ -1,3 +1,4 @@
+// src/components/DrumMachineApp/DrumMachineApp.jsx - Updated without duplicate WebSocket init
 import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "../../stores/useAppStore";
@@ -26,12 +27,8 @@ function DrumMachineApp() {
     (state) => state.websocket.lastRemoteTransportCommand
   );
 
-  const initializeConnection = useAppStore(
-    (state) => state.websocket.initializeConnection
-  );
   const createRoom = useAppStore((state) => state.websocket.createRoom);
   const joinRoom = useAppStore((state) => state.websocket.joinRoom);
-  const cleanup = useAppStore((state) => state.websocket.cleanup);
 
   // Get store setters for room sync
   const setTracks = useAppStore((state) => state.tracks?.setTracks);
@@ -67,14 +64,8 @@ function DrumMachineApp() {
     mass: 0.8,
   };
 
-  // Initialize WebSocket connection
-  useEffect(() => {
-    initializeConnection();
-
-    return () => {
-      cleanup();
-    };
-  }, [initializeConnection, cleanup]);
+  // NOTE: WebSocket initialization is now handled in main.jsx AppInitializer
+  // So we don't need to call initializeConnection() here anymore
 
   // Room management handlers
   const handleCreateRoom = async () => {
@@ -183,6 +174,7 @@ function DrumMachineApp() {
     error,
     showRoomNotFoundModal,
     isInRoom,
+    isConnected,
   });
 
   // If not connected or not in room, show connection interface

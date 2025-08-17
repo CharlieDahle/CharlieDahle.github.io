@@ -1,10 +1,14 @@
-// src/components/RoomHeader/RoomHeader.jsx - Updated to render debug panel below PatternTimeline
-import React, { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+// src/components/RoomHeader/RoomHeader.jsx - Streamlined version
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
+import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
+  const navigate = useNavigate();
+
   // Get room info from WebSocket slice
   const roomId = useAppStore((state) => state.websocket.roomId);
   const users = useAppStore((state) => state.websocket.users);
@@ -13,12 +17,36 @@ function RoomHeader({ debugMode, setDebugMode }) {
   );
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
+  // Get auth state
+  const { isAuthenticated } = useAppStore((state) => state.auth);
+
+  // Get beat tracking info
+  const { getSaveButtonInfo } = useAppStore((state) => state.beats);
+  const saveButtonInfo = getSaveButtonInfo();
+
+  // Save beat modal state
+  const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
+
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
   const [clickTimer, setClickTimer] = useState(null);
 
   const handleLeaveRoom = () => {
     leaveRoom();
+  };
+
+  const handleSaveBeat = () => {
+    if (isAuthenticated) {
+      setShowSaveBeatModal(true);
+    }
+  };
+
+  const handleNavigateToBeats = () => {
+    navigate("/beats");
+  };
+
+  const handleSignInClick = () => {
+    navigate("/login");
   };
 
   // Secret debug mode trigger - click the logo 5 times quickly
@@ -56,89 +84,138 @@ function RoomHeader({ debugMode, setDebugMode }) {
   };
 
   const userCount = users.length;
-
-  // Determine badge content and styling based on connection state
-  const getBadgeConfig = () => {
-    switch (connectionState) {
-      case "connected":
-        return {
-          className: "user-count-badge user-count-badge--connected",
-          text: `${userCount} user${userCount !== 1 ? "s" : ""} online`,
-          showIndicator: true,
-        };
-      case "syncing":
-        return {
-          className: "user-count-badge user-count-badge--syncing",
-          text: "Syncing...",
-          showIndicator: false,
-        };
-      case "disconnected":
-        return {
-          className: "user-count-badge user-count-badge--disconnected",
-          text: "Disconnected",
-          showIndicator: false,
-        };
-      case "failed":
-        return {
-          className: "user-count-badge user-count-badge--failed",
-          text: "Connection Failed",
-          showIndicator: false,
-        };
-      default:
-        return {
-          className: "user-count-badge user-count-badge--disconnected",
-          text: "Connecting...",
-          showIndicator: false,
-        };
-    }
-  };
-
-  const badgeConfig = getBadgeConfig();
   const isConnected = connectionState === "connected";
 
+  // Determine if we should show the save/update button
+  const shouldShowSaveButton = () => {
+    if (!isAuthenticated || !isConnected) return false;
+
+    // Don't show if explicitly hidden (saved beat with no changes)
+    if (saveButtonInfo.hideButton) return false;
+
+    // Show for new beats or existing beats with changes
+    return !saveButtonInfo.isUpdate || saveButtonInfo.showUnsavedIndicator;
+  };
+
+  // Get the save button configuration
+  const getSaveButtonConfig = () => {
+    if (!saveButtonInfo.isUpdate) {
+      // New beat (not loaded from server)
+      return {
+        text: "Save",
+        icon: <Save size={16} />,
+        className: "header-action-btn header-action-btn--save",
+      };
+    } else if (saveButtonInfo.showUnsavedIndicator) {
+      // Existing beat with changes
+      return {
+        text: "Update",
+        icon: <Edit size={16} />,
+        className: "header-action-btn header-action-btn--update",
+      };
+    }
+
+    // This shouldn't render based on shouldShowSaveButton logic
+    return null;
+  };
+
+  const saveButtonConfig = getSaveButtonConfig();
+
   return (
-    // Just the room header card - debug panel now rendered in DrumMachine
-    <div className="floating-card room-header-card">
-      <div className="room-header-content">
-        <div className="title-section">
-          <div
-            className="room-title-container"
-            onClick={handleTitleClick}
-            title={
-              clickCount > 0 ? `Debug mode: ${clickCount}/5 clicks` : undefined
-            }
-          >
-            <img
-              src="/idk.png"
-              alt="Drum Machine"
-              className="room-title-logo"
-            />
-            {clickCount > 0 && (
-              <span className="debug-counter">{clickCount}</span>
-            )}
+    <>
+      <div className="floating-card room-header-card">
+        <div className="room-header-content">
+          <div className="title-section">
+            <div
+              className="room-title-container"
+              onClick={handleTitleClick}
+              title={
+                clickCount > 0
+                  ? `Debug mode: ${clickCount}/5 clicks`
+                  : undefined
+              }
+            >
+              <img
+                src="/idk.png"
+                alt="Drum Machine"
+                className="room-title-logo"
+              />
+              {clickCount > 0 && (
+                <span className="debug-counter">{clickCount}</span>
+              )}
+            </div>
+            <div className="room-info">
+              <div className="room-code-line">
+                Room: {roomId}
+                <div className="user-count-badge">
+                  <Users size={16} />
+                  <span>
+                    {userCount} user{userCount !== 1 ? "s" : ""} online
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="room-info">Room: {roomId}</div>
-        </div>
 
-        <div className="header-badges">
-          <button
-            className="leave-room-badge"
-            onClick={handleLeaveRoom}
-            disabled={!isConnected}
-          >
-            <ChevronLeft size={16} />
-            <span>Leave Room</span>
-          </button>
-
-          <div className={badgeConfig.className}>
-            {badgeConfig.showIndicator && (
-              <div className="status-indicator"></div>
+          <div className="header-actions">
+            {/* Save/Update Button - only show when needed */}
+            {shouldShowSaveButton() && saveButtonConfig && (
+              <button
+                className={saveButtonConfig.className}
+                onClick={handleSaveBeat}
+                disabled={!isConnected}
+                title={
+                  saveButtonInfo.isUpdate
+                    ? `Update "${saveButtonInfo.beatName}" with your changes`
+                    : "Save this beat to your library"
+                }
+              >
+                {saveButtonConfig.icon}
+                <span>{saveButtonConfig.text}</span>
+              </button>
             )}
-            <span>{badgeConfig.text}</span>
+
+            {/* Navigate to Beats (if authenticated) or Sign In (if not) */}
+            {isAuthenticated ? (
+              <button
+                className="header-action-btn header-action-btn--beats"
+                onClick={handleNavigateToBeats}
+                disabled={!isConnected}
+                title="View your saved beats"
+              >
+                <FileText size={16} />
+                <span>My Beats</span>
+              </button>
+            ) : (
+              <button
+                className="header-action-btn header-action-btn--signin"
+                onClick={handleSignInClick}
+                title="Sign in to save beats"
+              >
+                <User size={16} />
+                <span>Sign In</span>
+              </button>
+            )}
+
+            {/* Leave Room Button */}
+            <button
+              className="header-action-btn header-action-btn--leave"
+              onClick={handleLeaveRoom}
+              disabled={!isConnected}
+            >
+              <ChevronLeft size={16} />
+              <span>Leave Room</span>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Save Beat Modal */}
+      <SaveBeatModal
+        isOpen={showSaveBeatModal}
+        onClose={() => setShowSaveBeatModal(false)}
+      />
+    </>
   );
 }
 

@@ -1,3 +1,5 @@
+/* src/components/RoomHeader/RoomHeader.css - Streamlined styles */
+
 /* Room Header Card - matching mockup design language */
 .room-header-card {
   padding: 24px 32px;
@@ -91,21 +93,38 @@
   }
 }
 
+/* Room Info Styling */
 .room-info {
   color: var(--text-secondary, #6c757d);
   font-size: 14px;
 }
 
-/* Header Badges Container */
-.header-badges {
+.room-code-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* User Count - simple green text inline with room code */
+.user-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #28a745;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Header Actions Container */
+.header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Leave Room Badge - styled like user count badge but red */
-.leave-room-badge {
-  background: #dc3545; /* Red blob color from your color palette */
+/* Universal Header Action Button Styles - matching original Leave Room */
+.header-action-btn {
+  background: #dc3545; /* Default red like original Leave Room */
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -119,75 +138,68 @@
   transition: all 0.15s ease;
 }
 
-.leave-room-badge:hover:not(:disabled) {
-  background: rgb(198, 73, 45); /* Slightly darker red on hover */
+.header-action-btn:hover:not(:disabled) {
+  background: #c82333; /* Darker red on hover */
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(229, 89, 52, 0.3);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
-.leave-room-badge:active {
+.header-action-btn:active {
   transform: translateY(0);
 }
 
-.leave-room-badge:disabled {
+.header-action-btn:disabled {
   background: #adb5bd;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-/* Base User Badge Styles */
-.user-count-badge {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-/* Connected State - Green */
-.user-count-badge--connected {
+/* Save Button - Green */
+.header-action-btn--save {
   background: #28a745;
+}
+
+.header-action-btn--save:hover:not(:disabled) {
+  background: #218838;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Update Button - Blue */
+.header-action-btn--update {
+  background: #17a2b8;
+}
+
+.header-action-btn--update:hover:not(:disabled) {
+  background: #138496;
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+/* My Beats Button - Nice blue we've been using */
+.header-action-btn--beats {
+  background: #5bc0eb;
   color: white;
 }
 
-/* Syncing State - Yellow (same as pause button) */
-.user-count-badge--syncing {
-  background: #ffc107;
-  color: #212529; /* Dark text for better contrast on yellow */
+.header-action-btn--beats:hover:not(:disabled) {
+  background: #4ba8cc;
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
 }
 
-/* Disconnected State - Red */
-.user-count-badge--disconnected {
-  background: #e55934;
+/* Sign In Button - Same blue as My Beats */
+.header-action-btn--signin {
+  background: #5bc0eb;
   color: white;
 }
 
-/* Failed State - Darker Red */
-.user-count-badge--failed {
-  background: #dc3545;
-  color: white;
+.header-action-btn--signin:hover:not(:disabled) {
+  background: #4ba8cc;
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
 }
 
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+/* Leave Room Button - Red (default styling) */
+.header-action-btn--leave {
+  /* Uses default red styling from base .header-action-btn */
 }
 
 /* Responsive adjustments */
@@ -206,7 +218,47 @@
     height: 32px;
   }
 
-  .header-badges {
+  .header-actions {
     gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .room-header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .title-section {
+    text-align: center;
+  }
+
+  .room-code-line {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .user-count-badge {
+    font-size: 12px;
+  }
+
+  .header-action-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-action-btn {
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+
+  .header-action-btn span {
+    display: none; /* Hide text on very small screens, show only icons */
+  }
+
+  .header-actions {
+    justify-content: center;
   }
 }
