@@ -1,3 +1,5 @@
+/* src/components/RoomHeader/RoomHeader.css - Updated with auth styles */
+
 /* Room Header Card - matching mockup design language */
 .room-header-card {
   padding: 24px 32px;
@@ -96,11 +98,95 @@
   font-size: 14px;
 }
 
+.auth-info {
+  color: #5bc0eb;
+  font-weight: 500;
+}
+
 /* Header Badges Container */
 .header-badges {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* Save Beat Button */
+.save-beat-btn {
+  background: #28a745; /* Green to indicate saving */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.save-beat-btn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.save-beat-btn:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Auth Actions */
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.auth-btn--primary {
+  background: #5bc0eb;
+  color: white;
+}
+
+.auth-btn--primary:hover {
+  background: #4ba8cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.auth-btn--secondary {
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.auth-btn--secondary:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+  color: #495057;
+  text-decoration: none;
 }
 
 /* Leave Room Badge - styled like user count badge but red */
@@ -208,5 +294,38 @@
 
   .header-badges {
     gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .room-header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .title-section {
+    text-align: center;
+  }
+
+  .auth-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .save-beat-btn,
+  .auth-btn,
+  .leave-room-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .save-beat-btn span,
+  .leave-room-badge span {
+    display: none; /* Hide text on very small screens, show only icons */
+  }
+
+  .header-badges {
+    justify-content: center;
   }
 }

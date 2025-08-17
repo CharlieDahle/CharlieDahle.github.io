@@ -1,4 +1,5 @@
-import { StrictMode } from "react";
+// src/main.jsx - Updated with auth routes and initialization
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -8,7 +9,24 @@ import App from "./App.jsx";
 import DrumMachineApp from "./components/DrumMachineApp/DrumMachineApp.jsx";
 import Home from "./pages/Home/Home.jsx";
 import AnimatedPage from "./AnimatedPage.jsx";
+import { useAppStore } from "./stores";
 import "./styles/index.css";
+
+// Import the new auth pages
+import Login from "./pages/Login/Login.jsx";
+import Beats from "./pages/Beats/Beats.jsx";
+
+// Auth initialization component
+function AuthInitializer({ children }) {
+  const initializeAuth = useAppStore((state) => state.auth.initializeAuth);
+
+  useEffect(() => {
+    // Initialize auth state from localStorage on app start
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return children;
+}
 
 function AppRouter() {
   const location = useLocation();
@@ -29,7 +47,23 @@ function AppRouter() {
             path="/DrumMachine"
             element={
               <AnimatedPage>
-                <DrumMachineApp /> {/* Changed from DrumMachine */}
+                <DrumMachineApp />
+              </AnimatedPage>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <AnimatedPage>
+                <Login />
+              </AnimatedPage>
+            }
+          />
+          <Route
+            path="/beats"
+            element={
+              <AnimatedPage>
+                <Beats />
               </AnimatedPage>
             }
           />
@@ -59,7 +93,9 @@ function AppRouter() {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AppRouter />
+      <AuthInitializer>
+        <AppRouter />
+      </AuthInitializer>
     </BrowserRouter>
   </StrictMode>
 );

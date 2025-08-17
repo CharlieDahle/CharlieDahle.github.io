@@ -1306,6 +1306,350 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ============================================================================
+  // AUTH SLICE - Add this to your store
+  // ============================================================================
+  auth: {
+    isAuthenticated: false,
+    user: null,
+    token: null,
+    isLoading: false,
+    error: null,
+
+    // Initialize auth state from localStorage on app start
+    initializeAuth: () => {
+      const token = localStorage.getItem("drum_machine_token");
+      const userString = localStorage.getItem("drum_machine_user");
+
+      if (token && userString) {
+        try {
+          const user = JSON.parse(userString);
+          set((state) => ({
+            auth: {
+              ...state.auth,
+              isAuthenticated: true,
+              user,
+              token,
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to parse stored user data:", error);
+          get().auth.logout(); // Clear invalid data
+        }
+      }
+    },
+
+    // Register new user
+    register: async (username, password) => {
+      set((state) => ({
+        auth: { ...state.auth, isLoading: true, error: null },
+      }));
+
+      try {
+        const response = await fetch(
+          "https://api.charliedahle.me/api/auth/register",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Registration failed");
+        }
+
+        // Store auth data
+        localStorage.setItem("drum_machine_token", data.token);
+        localStorage.setItem("drum_machine_user", JSON.stringify(data.user));
+
+        set((state) => ({
+          auth: {
+            ...state.auth,
+            isAuthenticated: true,
+            user: data.user,
+            token: data.token,
+            isLoading: false,
+            error: null,
+          },
+        }));
+
+        return data.user;
+      } catch (error) {
+        set((state) => ({
+          auth: {
+            ...state.auth,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // Login existing user
+    login: async (username, password) => {
+      set((state) => ({
+        auth: { ...state.auth, isLoading: true, error: null },
+      }));
+
+      try {
+        const response = await fetch(
+          "https://api.charliedahle.me/api/auth/login",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Login failed");
+        }
+
+        // Store auth data
+        localStorage.setItem("drum_machine_token", data.token);
+        localStorage.setItem("drum_machine_user", JSON.stringify(data.user));
+
+        set((state) => ({
+          auth: {
+            ...state.auth,
+            isAuthenticated: true,
+            user: data.user,
+            token: data.token,
+            isLoading: false,
+            error: null,
+          },
+        }));
+
+        return data.user;
+      } catch (error) {
+        set((state) => ({
+          auth: {
+            ...state.auth,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // Logout user
+    logout: () => {
+      localStorage.removeItem("drum_machine_token");
+      localStorage.removeItem("drum_machine_user");
+
+      set((state) => ({
+        auth: {
+          ...state.auth,
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          error: null,
+        },
+      }));
+    },
+
+    // Clear auth errors
+    clearError: () => {
+      set((state) => ({
+        auth: { ...state.auth, error: null },
+      }));
+    },
+
+    // Helper to get auth headers for API calls
+    getAuthHeaders: () => {
+      const { token } = get().auth;
+      return token
+        ? {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }
+        : {
+            "Content-Type": "application/json",
+          };
+    },
+  },
+
+  // ============================================================================
+  // BEATS SLICE - Add this to your store
+  // ============================================================================
+  beats: {
+    userBeats: [],
+    isLoading: false,
+    error: null,
+
+    // Fetch user's saved beats
+    fetchUserBeats: async () => {
+      const { isAuthenticated } = get().auth;
+      if (!isAuthenticated) return;
+
+      set((state) => ({
+        beats: { ...state.beats, isLoading: true, error: null },
+      }));
+
+      try {
+        const headers = get().auth.getAuthHeaders();
+        const response = await fetch("https://api.charliedahle.me/api/beats", {
+          headers,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to fetch beats");
+        }
+
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            userBeats: data.beats,
+            isLoading: false,
+            error: null,
+          },
+        }));
+
+        return data.beats;
+      } catch (error) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // Save current beat
+    saveBeat: async (beatName) => {
+      const { isAuthenticated } = get().auth;
+      if (!isAuthenticated) throw new Error("Must be logged in to save beats");
+
+      // Get current pattern, tracks, bpm, and measures
+      const { pattern, tracks, transport } = get();
+
+      const beatData = {
+        name: beatName,
+        patternData: pattern.data,
+        tracksConfig: tracks.list,
+        bpm: transport.bpm,
+        measureCount: transport.measureCount,
+      };
+
+      set((state) => ({
+        beats: { ...state.beats, isLoading: true, error: null },
+      }));
+
+      try {
+        const headers = get().auth.getAuthHeaders();
+        const response = await fetch("https://api.charliedahle.me/api/beats", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(beatData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save beat");
+        }
+
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: null,
+          },
+        }));
+
+        // Refresh the beats list
+        await get().beats.fetchUserBeats();
+
+        return data.beat;
+      } catch (error) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // Load a specific beat
+    loadBeat: async (beatId) => {
+      const { isAuthenticated } = get().auth;
+      if (!isAuthenticated) throw new Error("Must be logged in to load beats");
+
+      set((state) => ({
+        beats: { ...state.beats, isLoading: true, error: null },
+      }));
+
+      try {
+        const headers = get().auth.getAuthHeaders();
+        const response = await fetch(
+          `https://api.charliedahle.me/api/beats/${beatId}`,
+          {
+            headers,
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load beat");
+        }
+
+        // Apply the loaded beat to current state
+        const { pattern, tracks, transport } = get();
+
+        pattern.setPattern(data.patternData);
+        tracks.setTracks(data.tracksConfig);
+        transport.syncBpm(data.bpm);
+        transport.syncMeasureCount(data.measureCount);
+
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: null,
+          },
+        }));
+
+        return data;
+      } catch (error) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // Clear beats errors
+    clearError: () => {
+      set((state) => ({
+        beats: { ...state.beats, error: null },
+      }));
+    },
+  },
+
+  // ============================================================================
   // EFFECTS SLICE
   // ============================================================================
   effects: {
