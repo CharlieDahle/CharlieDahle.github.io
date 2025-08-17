@@ -152,15 +152,25 @@ function RoomHeader({ debugMode, setDebugMode }) {
           <div className="header-badges">
             {/* Save Beat Button - only show if authenticated */}
             {isAuthenticated && (
-              <button
-                className="save-beat-btn"
-                onClick={handleSaveBeat}
-                disabled={!isConnected}
-                title="Save this beat to your library"
-              >
-                <Save size={16} />
-                <span>Save Beat</span>
-              </button>
+              <>
+                <button
+                  className="save-beat-btn"
+                  onClick={handleSaveBeat}
+                  disabled={!isConnected}
+                  title="Save this beat to your library"
+                >
+                  <Save size={16} />
+                  <span>Save Beat</span>
+                </button>
+
+                <button
+                  className="auth-btn auth-btn--secondary"
+                  onClick={() => navigate("/beats")}
+                  title="View your saved beats"
+                >
+                  <span>My Beats</span>
+                </button>
+              </>
             )}
 
             {/* Auth Actions - only show if not authenticated */}
