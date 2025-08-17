@@ -1,8 +1,7 @@
-// src/components/RoomHeader/RoomHeader.jsx - Updated with Save Beat functionality
+// src/components/RoomHeader/RoomHeader.jsx - Updated to render debug panel below PatternTimeline
 import React, { useState } from "react";
-import { ChevronLeft, Save, User } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useAppStore } from "../../stores";
-import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
@@ -14,24 +13,12 @@ function RoomHeader({ debugMode, setDebugMode }) {
   );
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
-  // Get auth state
-  const { isAuthenticated, user } = useAppStore((state) => state.auth);
-
-  // Save beat modal state
-  const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
-
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
   const [clickTimer, setClickTimer] = useState(null);
 
   const handleLeaveRoom = () => {
     leaveRoom();
-  };
-
-  const handleSaveBeat = () => {
-    if (isAuthenticated) {
-      setShowSaveBeatModal(true);
-    }
   };
 
   // Secret debug mode trigger - click the logo 5 times quickly
@@ -110,90 +97,48 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const isConnected = connectionState === "connected";
 
   return (
-    <>
-      <div className="floating-card room-header-card">
-        <div className="room-header-content">
-          <div className="title-section">
-            <div
-              className="room-title-container"
-              onClick={handleTitleClick}
-              title={
-                clickCount > 0
-                  ? `Debug mode: ${clickCount}/5 clicks`
-                  : undefined
-              }
-            >
-              <img
-                src="/idk.png"
-                alt="Drum Machine"
-                className="room-title-logo"
-              />
-              {clickCount > 0 && (
-                <span className="debug-counter">{clickCount}</span>
-              )}
-            </div>
-            <div className="room-info">
-              Room: {roomId}
-              {isAuthenticated && (
-                <span className="auth-info">
-                  • Signed in as <strong>{user?.username}</strong>
-                </span>
-              )}
-            </div>
+    // Just the room header card - debug panel now rendered in DrumMachine
+    <div className="floating-card room-header-card">
+      <div className="room-header-content">
+        <div className="title-section">
+          <div
+            className="room-title-container"
+            onClick={handleTitleClick}
+            title={
+              clickCount > 0 ? `Debug mode: ${clickCount}/5 clicks` : undefined
+            }
+          >
+            <img
+              src="/idk.png"
+              alt="Drum Machine"
+              className="room-title-logo"
+            />
+            {clickCount > 0 && (
+              <span className="debug-counter">{clickCount}</span>
+            )}
           </div>
+          <div className="room-info">Room: {roomId}</div>
+        </div>
 
-          <div className="header-badges">
-            {/* Save Beat Button - only show if authenticated */}
-            {isAuthenticated && (
-              <button
-                className="save-beat-btn"
-                onClick={handleSaveBeat}
-                disabled={!isConnected}
-                title="Save this beat to your library"
-              >
-                <Save size={16} />
-                <span>Save Beat</span>
-              </button>
+        <div className="header-badges">
+          <button
+            className="leave-room-badge"
+            onClick={handleLeaveRoom}
+            disabled={!isConnected}
+          >
+            <ChevronLeft size={16} />
+            <span>Leave Room</span>
+          </button>
+
+          <div className={badgeConfig.className}>
+            {badgeConfig.showIndicator && (
+              <div className="status-indicator"></div>
             )}
-
-            {/* Auth Actions - only show if not authenticated */}
-            {!isAuthenticated && (
-              <div className="auth-actions">
-                <button
-                  className="auth-btn auth-btn--secondary"
-                  onClick={() => (window.location.href = "/login")}
-                >
-                  <User size={16} />
-                  Sign In
-                </button>
-              </div>
-            )}
-
-            <button
-              className="leave-room-badge"
-              onClick={handleLeaveRoom}
-              disabled={!isConnected}
-            >
-              <ChevronLeft size={16} />
-              <span>Leave Room</span>
-            </button>
-
-            <div className={badgeConfig.className}>
-              {badgeConfig.showIndicator && (
-                <div className="status-indicator"></div>
-              )}
-              <span>{badgeConfig.text}</span>
-            </div>
+            <span>{badgeConfig.text}</span>
           </div>
         </div>
       </div>
-
-      {/* Save Beat Modal */}
-      <SaveBeatModal
-        isOpen={showSaveBeatModal}
-        onClose={() => setShowSaveBeatModal(false)}
-      />
-    </>
+    </div>
   );
 }
 
