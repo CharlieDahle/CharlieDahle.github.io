@@ -1,4 +1,4 @@
-// src/components/SaveBeatModal/SaveBeatModal.jsx
+// src/components/SaveBeatModal/SaveBeatModal.jsx - Fixed hooks order issue
 import React, { useState, useEffect } from "react";
 import { Save, X } from "lucide-react";
 import { useAppStore } from "../../stores";
@@ -8,6 +8,7 @@ function SaveBeatModal({ isOpen, onClose }) {
   const [beatName, setBeatName] = useState("");
   const [error, setError] = useState("");
 
+  // ALWAYS call hooks in the same order - move these to the top
   const { isAuthenticated } = useAppStore((state) => state.auth);
   const { saveBeat, isLoading } = useAppStore((state) => state.beats);
 
@@ -30,7 +31,22 @@ function SaveBeatModal({ isOpen, onClose }) {
     }
   }, [isOpen]);
 
-  // Don't render if not authenticated or not open
+  // Handle Escape key - always define this hook
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && !isLoading && isOpen) {
+        onClose();
+      }
+    };
+
+    // Only add listeners if modal is open
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isOpen, isLoading, onClose]);
+
+  // Early return AFTER all hooks are called
   if (!isAuthenticated || !isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -64,20 +80,6 @@ function SaveBeatModal({ isOpen, onClose }) {
       onClose();
     }
   };
-
-  // Handle Escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && !isLoading) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [isOpen, isLoading, onClose]);
 
   return (
     <div

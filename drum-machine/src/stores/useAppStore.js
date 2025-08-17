@@ -1612,13 +1612,39 @@ export const useAppStore = create((set, get) => ({
           throw new Error(data.error || "Failed to load beat");
         }
 
-        // Apply the loaded beat to current state
+        console.log("Beat data loaded from server:", {
+          name: data.name,
+          bpm: data.bpm,
+          measureCount: data.measureCount,
+          tracksCount: data.tracksConfig?.length || 0,
+          patternKeys: Object.keys(data.patternData || {}).length,
+        });
+
+        // Apply the loaded beat to current state IMMEDIATELY
         const { pattern, tracks, transport } = get();
 
-        pattern.setPattern(data.patternData);
-        tracks.setTracks(data.tracksConfig);
-        transport.syncBpm(data.bpm);
-        transport.syncMeasureCount(data.measureCount);
+        // Set pattern data
+        if (data.patternData) {
+          pattern.setPattern(data.patternData);
+          console.log("Pattern data applied to store");
+        }
+
+        // Set tracks configuration
+        if (data.tracksConfig) {
+          tracks.setTracks(data.tracksConfig);
+          console.log("Tracks configuration applied to store");
+        }
+
+        // Set transport settings
+        if (data.bpm) {
+          transport.syncBpm(data.bpm);
+          console.log("BPM applied to store:", data.bpm);
+        }
+
+        if (data.measureCount) {
+          transport.syncMeasureCount(data.measureCount);
+          console.log("Measure count applied to store:", data.measureCount);
+        }
 
         set((state) => ({
           beats: {
@@ -1628,8 +1654,10 @@ export const useAppStore = create((set, get) => ({
           },
         }));
 
+        console.log("Beat loaded successfully and applied to store");
         return data;
       } catch (error) {
+        console.error("Failed to load beat:", error);
         set((state) => ({
           beats: {
             ...state.beats,

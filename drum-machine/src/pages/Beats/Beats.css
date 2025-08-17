@@ -486,3 +486,111 @@
     align-items: stretch;
   }
 }
+
+.loading-spinner {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+/* Animation for spinner */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Disabled state for loading beats */
+.beat-card .play-btn:disabled,
+.beat-card .load-beat-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.beat-card .play-btn:disabled:hover,
+.beat-card .load-beat-btn:disabled:hover {
+  transform: none;
+  background: #28a745; /* Keep original color */
+}
+
+.beat-card .load-beat-btn:disabled:hover {
+  background: #5bc0eb; /* Keep original color */
+}
+
+/* Loading beat card state */
+.beat-card.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+
+.connection-status-connected {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border-color: rgba(40, 167, 69, 0.2);
+}
+
+.connection-status-disconnected {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border-color: rgba(220, 53, 69, 0.2);
+}
+
+.connection-status-connecting {
+  background: rgba(255, 193, 7, 0.1);
+  color: #856404;
+  border-color: rgba(255, 193, 7, 0.2);
+}
+
+/* Add pulse animation for connecting state */
+.connection-status-connecting {
+  animation: pulse-connecting 2s ease-in-out infinite;
+}
+
+@keyframes pulse-connecting {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Responsive adjustments for header actions */
+@media (max-width: 768px) {
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .connection-status {
+    order: -1; /* Show connection status first on mobile */
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .connection-status {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}

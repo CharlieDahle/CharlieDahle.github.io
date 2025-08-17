@@ -1,5 +1,6 @@
-// src/pages/Login/Login.jsx
+// src/pages/Login/Login.jsx - Fixed with React Router navigation
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../stores";
 import AnimatedBackground from "../../components/AnimatedBackground/AnimatedBackground";
 import "./Login.css";
@@ -8,17 +9,17 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const navigate = useNavigate();
 
   const { isAuthenticated, isLoading, error, login, register, clearError } =
     useAppStore((state) => state.auth);
 
-  // Redirect if already logged in (you'll need to handle this in your router)
+  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      // Navigate to beats page - implement this in your main router
-      window.location.href = "/beats";
+      navigate("/beats", { replace: true });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   // Clear errors when switching between login/register
   useEffect(() => {
@@ -35,10 +36,10 @@ function Login() {
     try {
       if (isRegistering) {
         await register(username.trim(), password);
-        window.location.href = "/beats";
+        navigate("/beats", { replace: true });
       } else {
         await login(username.trim(), password);
-        window.location.href = "/beats";
+        navigate("/beats", { replace: true });
       }
     } catch (err) {
       // Error is handled by the store
@@ -54,7 +55,7 @@ function Login() {
   };
 
   const goToGuest = () => {
-    window.location.href = "/DrumMachine";
+    navigate("/DrumMachine");
   };
 
   return (

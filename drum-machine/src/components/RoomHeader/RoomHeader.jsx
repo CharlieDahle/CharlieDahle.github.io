@@ -1,11 +1,14 @@
-// src/components/RoomHeader/RoomHeader.jsx - Updated with Save Beat functionality
+// src/components/RoomHeader/RoomHeader.jsx - Fixed with React Router navigation
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { ChevronLeft, Save, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
+  const navigate = useNavigate();
+
   // Get room info from WebSocket slice
   const roomId = useAppStore((state) => state.websocket.roomId);
   const users = useAppStore((state) => state.websocket.users);
@@ -32,6 +35,10 @@ function RoomHeader({ debugMode, setDebugMode }) {
     if (isAuthenticated) {
       setShowSaveBeatModal(true);
     }
+  };
+
+  const handleSignInClick = () => {
+    navigate("/login");
   };
 
   // Secret debug mode trigger - click the logo 5 times quickly
@@ -161,7 +168,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
               <div className="auth-actions">
                 <button
                   className="auth-btn auth-btn--secondary"
-                  onClick={() => (window.location.href = "/login")}
+                  onClick={handleSignInClick}
                 >
                   <User size={16} />
                   Sign In
