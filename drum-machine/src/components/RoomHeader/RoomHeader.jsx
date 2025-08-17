@@ -1,10 +1,13 @@
-// src/components/RoomHeader/RoomHeader.jsx - Updated to render debug panel below PatternTimeline
+// src/components/RoomHeader/RoomHeader.jsx - Fixed with React Router navigation
 import React, { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ChevronLeft, Save, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
+  const navigate = useNavigate();
+
   // Get room info from WebSocket slice
   const roomId = useAppStore((state) => state.websocket.roomId);
   const users = useAppStore((state) => state.websocket.users);
@@ -19,6 +22,16 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   const handleLeaveRoom = () => {
     leaveRoom();
+  };
+
+  const handleSaveBeat = () => {
+    if (isAuthenticated) {
+      setShowSaveBeatModal(true);
+    }
+  };
+
+  const handleSignInClick = () => {
+    navigate("/login");
   };
 
   // Secret debug mode trigger - click the logo 5 times quickly
@@ -121,6 +134,32 @@ function RoomHeader({ debugMode, setDebugMode }) {
         </div>
 
         <div className="header-badges">
+          {/* Save Beat Button - only show if authenticated */}
+          {isAuthenticated && (
+            <button
+              className="save-beat-btn"
+              onClick={handleSaveBeat}
+              disabled={!isConnected}
+              title="Save this beat to your library"
+            >
+              <Save size={16} />
+              <span>Save Beat</span>
+            </button>
+          )}
+
+          {/* Auth Actions - only show if not authenticated */}
+          {!isAuthenticated && (
+            <div className="auth-actions">
+              <button
+                className="auth-btn auth-btn--secondary"
+                onClick={handleSignInClick}
+              >
+                <User size={16} />
+                Sign In
+              </button>
+            </div>
+          )}
+
           <button
             className="leave-room-badge"
             onClick={handleLeaveRoom}
