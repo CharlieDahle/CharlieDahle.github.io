@@ -46,6 +46,11 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       // Send to server
       get().websocket.sendPatternChange({
         type: "add-note",
@@ -68,6 +73,11 @@ export const useAppStore = create((set, get) => ({
 
         return { pattern: { ...state.pattern, data: newData } };
       });
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -92,6 +102,11 @@ export const useAppStore = create((set, get) => ({
 
         return { pattern: { ...state.pattern, data: newData } };
       });
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -122,6 +137,11 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       // Send to server
       get().websocket.sendPatternChange({
         type: "move-note",
@@ -142,6 +162,11 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       // Send to server
       get().websocket.sendPatternChange({
         type: "clear-track",
@@ -151,6 +176,11 @@ export const useAppStore = create((set, get) => ({
 
     clearAllTracks: () => {
       set((state) => ({ pattern: { ...state.pattern, data: {} } }));
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
     },
 
     setPattern: (newPattern) => {
@@ -161,6 +191,9 @@ export const useAppStore = create((set, get) => ({
       set((state) => ({
         pattern: { ...state.pattern, data: normalizedPattern },
       }));
+
+      // Don't mark as modified when loading from server or loading a beat
+      // This method is used for those cases
     },
 
     removeTrackFromPattern: (trackId) => {
@@ -169,9 +202,14 @@ export const useAppStore = create((set, get) => ({
         delete newData[trackId];
         return { pattern: { ...state.pattern, data: newData } };
       });
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
     },
 
-    // Getter helpers
+    // ... rest of pattern methods remain the same
     getNotesForTrack: (trackId) => {
       const notes = get().pattern.data[trackId] || [];
       return notes.map(normalizeNote);
@@ -212,6 +250,7 @@ export const useAppStore = create((set, get) => ({
     BEATS_PER_LOOP: 16,
     measureCount: 4,
 
+    // Transport control actions (user-initiated)
     play: () => {
       set((state) => ({ transport: { ...state.transport, isPlaying: true } }));
       get().websocket.sendTransportCommand({ type: "play" });
@@ -239,12 +278,20 @@ export const useAppStore = create((set, get) => ({
       }));
     },
 
+    // BPM control (user-initiated - triggers change tracking)
     setBpm: (newBpm) => {
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
       set((state) => ({ transport: { ...state.transport, bpm: clampedBpm } }));
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       get().websocket.sendBpmChange(clampedBpm);
     },
 
+    // Measure control (user-initiated - triggers change tracking)
     addMeasure: () => {
       set((state) => {
         const newMeasureCount = state.transport.measureCount + 1;
@@ -256,6 +303,12 @@ export const useAppStore = create((set, get) => ({
           },
         };
       });
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
 
@@ -270,9 +323,16 @@ export const useAppStore = create((set, get) => ({
           },
         };
       });
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
 
+    // Direct setter (for internal use, loading beats, etc. - NO change tracking)
     setMeasureCount: (count) => {
       const clampedCount = Math.max(1, Math.min(16, count));
       set((state) => ({
@@ -284,7 +344,7 @@ export const useAppStore = create((set, get) => ({
       }));
     },
 
-    // Sync methods (for WebSocket updates)
+    // Sync methods (for WebSocket updates - these DON'T trigger change tracking)
     syncBpm: (serverBpm) => {
       set((state) => ({ transport: { ...state.transport, bpm: serverBpm } }));
     },
@@ -352,7 +412,6 @@ export const useAppStore = create((set, get) => ({
       return (currentTick / totalTicks) * 100;
     },
   },
-
   // ============================================================================
   // TRACKS SLICE
   // ============================================================================
@@ -1467,8 +1526,15 @@ export const useAppStore = create((set, get) => ({
 
     // Helper to get auth headers for API calls
     getAuthHeaders: () => {
-      const { token } = get().auth;
-      return token
+      const { token, isAuthenticated } = get().auth;
+
+      console.log("🔐 Auth Debug:", {
+        isAuthenticated,
+        hasToken: !!token,
+        tokenPreview: token ? `${token.substring(0, 10)}...` : "null",
+      });
+
+      const headers = token
         ? {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -1476,16 +1542,22 @@ export const useAppStore = create((set, get) => ({
         : {
             "Content-Type": "application/json",
           };
+
+      console.log("🔐 Generated headers:", headers);
+      return headers;
     },
   },
 
   // ============================================================================
-  // BEATS SLICE - Add this to your store
+  // BEATS SLICE
   // ============================================================================
   beats: {
     userBeats: [],
     isLoading: false,
     error: null,
+    // NEW: Track the currently loaded beat
+    currentlyLoadedBeat: null, // { id, name, lastModified }
+    hasUnsavedChanges: false,
 
     // Fetch user's saved beats
     fetchUserBeats: async () => {
@@ -1530,10 +1602,21 @@ export const useAppStore = create((set, get) => ({
       }
     },
 
-    // Save current beat
+    // Save current beat (either new or update existing)
     saveBeat: async (beatName) => {
       const { isAuthenticated } = get().auth;
       if (!isAuthenticated) throw new Error("Must be logged in to save beats");
+
+      const { currentlyLoadedBeat } = get().beats;
+      const isUpdate = currentlyLoadedBeat && currentlyLoadedBeat.id;
+
+      console.log("💾 Save Beat Debug:", {
+        beatName,
+        isUpdate,
+        currentlyLoadedBeat,
+        endpoint: isUpdate ? `beats/${currentlyLoadedBeat.id}` : "beats",
+        method: isUpdate ? "PUT" : "POST",
+      });
 
       // Get current pattern, tracks, bpm, and measures
       const { pattern, tracks, transport } = get();
@@ -1546,37 +1629,95 @@ export const useAppStore = create((set, get) => ({
         measureCount: transport.measureCount,
       };
 
+      console.log("💾 Beat data to save:", beatData);
+
       set((state) => ({
         beats: { ...state.beats, isLoading: true, error: null },
       }));
 
       try {
         const headers = get().auth.getAuthHeaders();
-        const response = await fetch("https://api.charliedahle.me/api/beats", {
-          method: "POST",
+        console.log("💾 Request headers:", headers);
+
+        // Decide endpoint and method based on whether we're updating
+        const url = isUpdate
+          ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}`
+          : "https://api.charliedahle.me/api/beats";
+
+        const method = isUpdate ? "PUT" : "POST";
+
+        console.log("💾 Making request:", { url, method });
+
+        const response = await fetch(url, {
+          method,
           headers,
           body: JSON.stringify(beatData),
         });
 
-        const data = await response.json();
+        console.log("💾 Response status:", response.status);
+        console.log(
+          "💾 Response headers:",
+          Object.fromEntries(response.headers.entries())
+        );
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to save beat");
+        // Check content type before parsing
+        const contentType = response.headers.get("content-type");
+        console.log("💾 Response content-type:", contentType);
+
+        if (!contentType || !contentType.includes("application/json")) {
+          // Server returned HTML or plain text instead of JSON
+          const textResponse = await response.text();
+          console.error("💾 Server returned non-JSON response:", textResponse);
+
+          if (!response.ok) {
+            throw new Error(
+              `Server error (${response.status}): ${textResponse.slice(
+                0,
+                200
+              )}...`
+            );
+          } else {
+            throw new Error("Server returned unexpected response format");
+          }
         }
 
+        const data = await response.json();
+        console.log("💾 Parsed response data:", data);
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || `Failed to ${isUpdate ? "update" : "save"} beat`
+          );
+        }
+
+        // Update tracking
         set((state) => ({
           beats: {
             ...state.beats,
             isLoading: false,
             error: null,
+            currentlyLoadedBeat: {
+              id: data.beat.id,
+              name: data.beat.name,
+              lastModified: data.beat.updated_at || data.beat.created_at,
+            },
+            hasUnsavedChanges: false,
           },
         }));
+
+        console.log("💾 Save successful, updated tracking:", {
+          id: data.beat.id,
+          name: data.beat.name,
+          isUpdate,
+        });
 
         // Refresh the beats list
         await get().beats.fetchUserBeats();
 
-        return data.beat;
+        return { beat: data.beat, isUpdate };
       } catch (error) {
+        console.error("💾 Save failed:", error);
+
         set((state) => ({
           beats: {
             ...state.beats,
@@ -1646,11 +1787,18 @@ export const useAppStore = create((set, get) => ({
           console.log("Measure count applied to store:", data.measureCount);
         }
 
+        // NEW: Track this as the currently loaded beat
         set((state) => ({
           beats: {
             ...state.beats,
             isLoading: false,
             error: null,
+            currentlyLoadedBeat: {
+              id: data.id,
+              name: data.name,
+              lastModified: data.updated_at || data.created_at,
+            },
+            hasUnsavedChanges: false, // Just loaded, so no unsaved changes
           },
         }));
 
@@ -1667,6 +1815,198 @@ export const useAppStore = create((set, get) => ({
         }));
         throw error;
       }
+    },
+
+    // NEW: Create a new beat (clears tracking)
+    createNewBeat: () => {
+      // Clear all patterns and reset to defaults
+      const { pattern, tracks, transport } = get();
+
+      pattern.clearAllTracks();
+      transport.syncBpm(120);
+      transport.syncMeasureCount(4);
+
+      // Reset to default tracks
+      tracks.setTracks([
+        {
+          id: "kick",
+          name: "Kick",
+          color: "#e74c3c",
+          soundFile: "kicks/Ac_K.wav",
+          availableSounds: [],
+        },
+        {
+          id: "snare",
+          name: "Snare",
+          color: "#f39c12",
+          soundFile: "snares/Box_Snr2.wav",
+          availableSounds: [],
+        },
+        {
+          id: "hihat",
+          name: "Hi-Hat",
+          color: "#2ecc71",
+          soundFile: "hihats/Jls_H.wav",
+          availableSounds: [],
+        },
+        {
+          id: "openhat",
+          name: "Open Hat",
+          color: "#3498db",
+          soundFile: "cymbals/CL_OHH1.wav",
+          availableSounds: [],
+        },
+      ]);
+
+      // Clear tracking
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          currentlyLoadedBeat: null,
+          hasUnsavedChanges: false,
+        },
+      }));
+    },
+
+    // NEW: Mark as having unsaved changes
+    markAsModified: () => {
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          hasUnsavedChanges: true,
+        },
+      }));
+    },
+
+    // NEW: Save as new beat (always creates new, even if one is loaded)
+    saveAsNewBeat: async (beatName) => {
+      const { isAuthenticated } = get().auth;
+      if (!isAuthenticated) throw new Error("Must be logged in to save beats");
+
+      console.log("💾 Save As New Beat Debug:", { beatName });
+
+      // Get current pattern, tracks, bpm, and measures
+      const { pattern, tracks, transport } = get();
+
+      const beatData = {
+        name: beatName,
+        patternData: pattern.data,
+        tracksConfig: tracks.list,
+        bpm: transport.bpm,
+        measureCount: transport.measureCount,
+      };
+
+      console.log("💾 New beat data to save:", beatData);
+
+      set((state) => ({
+        beats: { ...state.beats, isLoading: true, error: null },
+      }));
+
+      try {
+        const headers = get().auth.getAuthHeaders();
+        console.log("💾 Request headers:", headers);
+
+        const url = "https://api.charliedahle.me/api/beats";
+        console.log("💾 Making POST request to:", url);
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(beatData),
+        });
+
+        console.log("💾 Response status:", response.status);
+        console.log(
+          "💾 Response headers:",
+          Object.fromEntries(response.headers.entries())
+        );
+
+        // Check content type before parsing
+        const contentType = response.headers.get("content-type");
+        console.log("💾 Response content-type:", contentType);
+
+        if (!contentType || !contentType.includes("application/json")) {
+          // Server returned HTML or plain text instead of JSON
+          const textResponse = await response.text();
+          console.error("💾 Server returned non-JSON response:", textResponse);
+
+          if (!response.ok) {
+            throw new Error(
+              `Server error (${response.status}): ${textResponse.slice(
+                0,
+                200
+              )}...`
+            );
+          } else {
+            throw new Error("Server returned unexpected response format");
+          }
+        }
+
+        const data = await response.json();
+        console.log("💾 Parsed response data:", data);
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save beat");
+        }
+
+        // Update tracking to the new beat
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: null,
+            currentlyLoadedBeat: {
+              id: data.beat.id,
+              name: data.beat.name,
+              lastModified: data.beat.created_at,
+            },
+            hasUnsavedChanges: false,
+          },
+        }));
+
+        console.log("💾 Save as new successful, updated tracking:", {
+          id: data.beat.id,
+          name: data.beat.name,
+        });
+
+        // Refresh the beats list
+        await get().beats.fetchUserBeats();
+
+        return data.beat;
+      } catch (error) {
+        console.error("💾 Save as new failed:", error);
+
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            isLoading: false,
+            error: error.message,
+          },
+        }));
+        throw error;
+      }
+    },
+
+    // NEW: Get display info for the save button
+    getSaveButtonInfo: () => {
+      const { currentlyLoadedBeat, hasUnsavedChanges } = get().beats;
+
+      if (!currentlyLoadedBeat) {
+        return {
+          text: "Save Beat",
+          isUpdate: false,
+          showUnsavedIndicator: false,
+        };
+      }
+
+      return {
+        text: hasUnsavedChanges
+          ? `Update "${currentlyLoadedBeat.name}"`
+          : `"${currentlyLoadedBeat.name}" Saved`,
+        isUpdate: true,
+        showUnsavedIndicator: hasUnsavedChanges,
+        beatName: currentlyLoadedBeat.name,
+      };
     },
 
     // Clear beats errors

@@ -1,4 +1,4 @@
-// src/pages/Beats/Beats.jsx - Enhanced with better connection status display
+// src/pages/Beats/Beats.jsx - Enhanced with better beat status
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../stores";
@@ -13,6 +13,8 @@ import {
   LogOut,
   Wifi,
   WifiOff,
+  FileText,
+  Edit,
 } from "lucide-react";
 import "./Beats.css";
 
@@ -22,8 +24,16 @@ function Beats() {
   const navigate = useNavigate();
 
   const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
-  const { userBeats, isLoading, error, fetchUserBeats, loadBeat, clearError } =
-    useAppStore((state) => state.beats);
+  const {
+    userBeats,
+    isLoading,
+    error,
+    fetchUserBeats,
+    loadBeat,
+    clearError,
+    getSaveButtonInfo,
+    createNewBeat,
+  } = useAppStore((state) => state.beats);
 
   // WebSocket functions for creating room
   const createRoom = useAppStore((state) => state.websocket.createRoom);
@@ -31,6 +41,9 @@ function Beats() {
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
+
+  // Get current beat info
+  const saveButtonInfo = getSaveButtonInfo();
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -73,12 +86,13 @@ function Beats() {
       navigate("/DrumMachine");
     } catch (error) {
       console.error("Failed to load beat and create room:", error);
-      // You could show an error toast here
       setLoadingBeatId(null);
     }
   };
 
   const handleCreateNew = () => {
+    // Clear current beat tracking and navigate
+    createNewBeat();
     navigate("/DrumMachine");
   };
 
@@ -149,6 +163,18 @@ function Beats() {
                 <h1 className="beats-title">My Beats</h1>
                 <p className="beats-subtitle">
                   Welcome back, <strong>{user?.username}</strong>
+                  {saveButtonInfo.isUpdate && (
+                    <span className="current-beat-info">
+                      • Currently working on:{" "}
+                      <strong>"{saveButtonInfo.beatName}"</strong>
+                      {saveButtonInfo.showUnsavedIndicator && (
+                        <span className="unsaved-changes-indicator">
+                          {" "}
+                          (has unsaved changes)
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -206,6 +232,15 @@ function Beats() {
                     {userBeats.length} beat{userBeats.length !== 1 ? "s" : ""}
                   </span>
                 </div>
+                {saveButtonInfo.isUpdate && (
+                  <div className="stat-item current-beat-stat">
+                    <FileText size={16} />
+                    <span>
+                      Working on "{saveButtonInfo.beatName}"
+                      {saveButtonInfo.showUnsavedIndicator && " *"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -274,11 +309,28 @@ function Beats() {
               <div className="beats-grid">
                 {filteredBeats.map((beat) => {
                   const isLoadingThisBeat = loadingBeatId === beat.id;
+                  const isCurrentlyLoaded =
+                    saveButtonInfo.isUpdate &&
+                    saveButtonInfo.beatName === beat.name;
 
                   return (
-                    <div key={beat.id} className="beat-card">
+                    <div
+                      key={beat.id}
+                      className={`beat-card ${
+                        isCurrentlyLoaded ? "currently-loaded" : ""
+                      }`}
+                    >
                       <div className="beat-card-header">
-                        <h3 className="beat-name">{beat.name}</h3>
+                        <h3 className="beat-name">
+                          {beat.name}
+                          {isCurrentlyLoaded && (
+                            <span className="current-beat-badge">
+                              <Edit size={14} />
+                              Current
+                              {saveButtonInfo.showUnsavedIndicator && " *"}
+                            </span>
+                          )}
+                        </h3>
                         <button
                           className="play-btn"
                           onClick={() => handleLoadBeat(beat)}
@@ -315,7 +367,9 @@ function Beats() {
 
                       <div className="beat-card-footer">
                         <button
-                          className="load-beat-btn"
+                          className={`load-beat-btn ${
+                            isCurrentlyLoaded ? "current-beat" : ""
+                          }`}
                           onClick={() => handleLoadBeat(beat)}
                           disabled={!isConnected || isLoadingThisBeat}
                         >
@@ -331,6 +385,8 @@ function Beats() {
                               ></div>
                               Loading...
                             </>
+                          ) : isCurrentlyLoaded ? (
+                            "Continue Editing"
                           ) : (
                             "Load Beat"
                           )}

@@ -1,7 +1,7 @@
-// src/components/RoomHeader/RoomHeader.jsx - Fixed with React Router navigation
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ChevronLeft, Save, User } from "lucide-react";
+// src/components/RoomHeader/RoomHeader.jsx - Enhanced version
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, Save, User, Plus, FileText } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./RoomHeader.css";
 
@@ -16,6 +16,18 @@ function RoomHeader({ debugMode, setDebugMode }) {
   );
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
+  // Get auth state
+  const { isAuthenticated, user } = useAppStore((state) => state.auth);
+
+  // Get beat tracking info
+  const { getSaveButtonInfo, createNewBeat } = useAppStore(
+    (state) => state.beats
+  );
+  const saveButtonInfo = getSaveButtonInfo();
+
+  // Save beat modal state
+  const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
+
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
   const [clickTimer, setClickTimer] = useState(null);
@@ -27,6 +39,12 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const handleSaveBeat = () => {
     if (isAuthenticated) {
       setShowSaveBeatModal(true);
+    }
+  };
+
+  const handleCreateNew = () => {
+    if (isAuthenticated) {
+      createNewBeat();
     }
   };
 
@@ -110,52 +128,90 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const isConnected = connectionState === "connected";
 
   return (
-    // Just the room header card - debug panel now rendered in DrumMachine
-    <div className="floating-card room-header-card">
-      <div className="room-header-content">
-        <div className="title-section">
-          <div
-            className="room-title-container"
-            onClick={handleTitleClick}
-            title={
-              clickCount > 0 ? `Debug mode: ${clickCount}/5 clicks` : undefined
-            }
-          >
-            <img
-              src="/idk.png"
-              alt="Drum Machine"
-              className="room-title-logo"
-            />
-            {clickCount > 0 && (
-              <span className="debug-counter">{clickCount}</span>
-            )}
+    <>
+      <div className="floating-card room-header-card">
+        <div className="room-header-content">
+          <div className="title-section">
+            <div
+              className="room-title-container"
+              onClick={handleTitleClick}
+              title={
+                clickCount > 0
+                  ? `Debug mode: ${clickCount}/5 clicks`
+                  : undefined
+              }
+            >
+              <img
+                src="/idk.png"
+                alt="Drum Machine"
+                className="room-title-logo"
+              />
+              {clickCount > 0 && (
+                <span className="debug-counter">{clickCount}</span>
+              )}
+            </div>
+            <div className="room-info">
+              Room: {roomId}
+              {/* NEW: Show current beat info */}
+              {isAuthenticated && saveButtonInfo.isUpdate && (
+                <span className="beat-info">
+                  • Beat: <strong>"{saveButtonInfo.beatName}"</strong>
+                  {saveButtonInfo.showUnsavedIndicator && (
+                    <span className="unsaved-indicator">
+                      {" "}
+                      (unsaved changes)
+                    </span>
+                  )}
+                </span>
+              )}
+              {isAuthenticated && (
+                <span className="auth-info">
+                  • Signed in as <strong>{user?.username}</strong>
+                </span>
+              )}
+            </div>
           </div>
-          <div className="room-info">Room: {roomId}</div>
-        </div>
 
-        <div className="header-badges">
-          {/* Save Beat Button - only show if authenticated */}
-          {isAuthenticated && (
-            <>
-              <button
-                className="save-beat-btn"
-                onClick={handleSaveBeat}
-                disabled={!isConnected}
-                title="Save this beat to your library"
-              >
-                <Save size={16} />
-                <span>Save Beat</span>
-              </button>
+          <div className="header-badges">
+            {/* Beat Management - only show if authenticated */}
+            {isAuthenticated && (
+              <div className="beat-controls">
+                <button
+                  className="create-new-btn"
+                  onClick={handleCreateNew}
+                  disabled={!isConnected}
+                  title="Start a new beat"
+                >
+                  <Plus size={16} />
+                  <span>New</span>
+                </button>
 
-              <button
-                className="auth-btn auth-btn--secondary"
-                onClick={() => navigate("/beats")}
-                title="View your saved beats"
-              >
-                <span>My Beats</span>
-              </button>
-            </>
-          )}
+                <button
+                  className={`save-beat-btn ${
+                    saveButtonInfo.showUnsavedIndicator ? "has-changes" : ""
+                  } ${saveButtonInfo.isUpdate ? "update-mode" : ""}`}
+                  onClick={handleSaveBeat}
+                  disabled={!isConnected}
+                  title={
+                    saveButtonInfo.isUpdate
+                      ? saveButtonInfo.showUnsavedIndicator
+                        ? `Update "${saveButtonInfo.beatName}" with your changes`
+                        : `"${saveButtonInfo.beatName}" is saved`
+                      : "Save this beat to your library"
+                  }
+                >
+                  {saveButtonInfo.isUpdate ? (
+                    <FileText size={16} />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  <span className="save-btn-text">{saveButtonInfo.text}</span>
+                  {saveButtonInfo.showUnsavedIndicator && (
+                    <span className="unsaved-dot"></span>
+                  )}
+                </button>
+              </div>
+            )}
 
           {/* Auth Actions - only show if not authenticated */}
           {!isAuthenticated && (
