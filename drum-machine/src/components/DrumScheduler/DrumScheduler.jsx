@@ -378,10 +378,16 @@ class DrumScheduler {
   // Load individual audio file into Tone.Player and connect to effects
   async loadAudioFile(filePath, trackId) {
     try {
-      console.log(`Attempting to load: /${filePath} for track: ${trackId}`);
+      // Properly encode the file path for URL usage
+      const encodedPath = encodeURI(filePath);
+      console.log(`Loading audio file:`, {
+        originalPath: filePath,
+        encodedPath: encodedPath,
+        trackId: trackId,
+      });
 
-      // Create a new Tone.Player
-      const player = new Tone.Player(`/${filePath}`);
+      // Create a new Tone.Player with the encoded path
+      const player = new Tone.Player(`/${encodedPath}`);
 
       // Connect to the track's effect chain
       const effects = this.trackEffects[trackId];
@@ -397,10 +403,23 @@ class DrumScheduler {
       // Wait for the player to load
       await Tone.loaded();
 
-      console.log(`Successfully loaded: ${filePath} for track: ${trackId}`);
+      console.log(`✅ Successfully loaded: ${filePath} for track: ${trackId}`);
       return player;
     } catch (error) {
-      console.error(`Failed to load audio file: ${filePath}`, error);
+      console.error(`❌ Failed to load audio file: ${filePath}`, error);
+
+      // Add to failed loads tracking
+      if (window.drumSoundDebugData) {
+        if (!window.drumSoundDebugData.failed) {
+          window.drumSoundDebugData.failed = [];
+        }
+        window.drumSoundDebugData.failed.push({
+          file: filePath,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
       return null;
     }
   }

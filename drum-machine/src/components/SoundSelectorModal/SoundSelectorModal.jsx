@@ -144,7 +144,15 @@ function SoundSelectorModal({ drumSounds }) {
         // Track that we're attempting to load this sound
         setLoadingAttempts((prev) => new Set([...prev, sound.file]));
 
-        const response = await fetch(`/${sound.file}`);
+        // Properly encode the file path for URL usage
+        const encodedPath = encodeURI(sound.file);
+        console.log(`Attempting to load:`, {
+          original: sound.file,
+          encoded: encodedPath,
+          name: sound.name,
+        });
+
+        const response = await fetch(`/${encodedPath}`);
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -183,6 +191,7 @@ function SoundSelectorModal({ drumSounds }) {
   const playSound = (soundFile) => {
     if (!audioContext || !loadedSounds[selectedCategory]?.[soundFile]) return;
 
+    console.log(`Playing sound: ${soundFile}`);
     const audioBuffer = loadedSounds[selectedCategory][soundFile];
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
