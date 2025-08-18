@@ -262,3 +262,80 @@
     justify-content: center;
   }
 }
+
+save-mode-selection {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 8px;
+  background: white;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #6c757d;
+}
+
+.mode-btn:hover:not(:disabled) {
+  background: rgba(91, 192, 235, 0.1);
+  color: #5bc0eb;
+}
+
+.mode-btn.active {
+  background: #5bc0eb;
+  color: white;
+  box-shadow: 0 2px 4px rgba(91, 192, 235, 0.3);
+}
+
+.mode-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Enhance existing save button for different modes */
+.save-btn.update-mode {
+  background: #28a745;
+}
+
+.save-btn.update-mode:hover:not(:disabled) {
+  background: #218838;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Add some visual feedback for unsaved changes */
+.beat-info.has-unsaved {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.beat-info.has-unsaved .info-text {
+  color: #856404;
+}
+
+.beat-info.has-unsaved::before {
+  content: "⚠️ ";
+  margin-right: 4px;
+}

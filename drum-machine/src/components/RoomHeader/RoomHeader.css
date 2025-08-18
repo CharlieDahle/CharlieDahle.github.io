@@ -329,3 +329,149 @@
     justify-content: center;
   }
 }
+
+.beat-info {
+  color: #5bc0eb;
+  font-weight: 500;
+}
+
+.unsaved-indicator {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+/* Beat Controls */
+.beat-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-new-btn {
+  background: #6c757d;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.create-new-btn:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.create-new-btn:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Enhanced Save Button */
+.save-beat-btn {
+  position: relative;
+  min-width: 140px;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.save-beat-btn.update-mode {
+  background: #17a2b8; /* Info blue for updates */
+}
+
+.save-beat-btn.update-mode:hover:not(:disabled) {
+  background: #138496;
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.save-beat-btn.has-changes {
+  background: #ffc107; /* Warning yellow for unsaved changes */
+  color: #212529;
+  animation: pulse-changes 2s ease-in-out infinite;
+}
+
+.save-beat-btn.has-changes:hover:not(:disabled) {
+  background: #e0a800;
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
+}
+
+@keyframes pulse-changes {
+  0%,
+  100% {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  50% {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075),
+      0 0 0 3px rgba(255, 193, 7, 0.3);
+  }
+}
+
+.save-btn-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.unsaved-dot {
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Responsive adjustments for the new controls */
+@media (max-width: 768px) {
+  .beat-controls {
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .create-new-btn,
+  .save-beat-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .save-btn-text {
+    max-width: none;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-new-btn span,
+  .save-beat-btn .save-btn-text {
+    display: none; /* Hide text on very small screens, show only icons */
+  }
+
+  .save-beat-btn {
+    min-width: auto;
+    width: 44px;
+    justify-content: center;
+  }
+}

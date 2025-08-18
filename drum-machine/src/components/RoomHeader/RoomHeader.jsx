@@ -1,7 +1,7 @@
-// src/components/RoomHeader/RoomHeader.jsx - Fixed with React Router navigation
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ChevronLeft, Save, User } from "lucide-react";
+// src/components/RoomHeader/RoomHeader.jsx - Enhanced version
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, Save, User, Plus, FileText } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import "./RoomHeader.css";
@@ -20,6 +20,12 @@ function RoomHeader({ debugMode, setDebugMode }) {
   // Get auth state
   const { isAuthenticated, user } = useAppStore((state) => state.auth);
 
+  // Get beat tracking info
+  const { getSaveButtonInfo, createNewBeat } = useAppStore(
+    (state) => state.beats
+  );
+  const saveButtonInfo = getSaveButtonInfo();
+
   // Save beat modal state
   const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
 
@@ -34,6 +40,12 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const handleSaveBeat = () => {
     if (isAuthenticated) {
       setShowSaveBeatModal(true);
+    }
+  };
+
+  const handleCreateNew = () => {
+    if (isAuthenticated) {
+      createNewBeat();
     }
   };
 
@@ -141,6 +153,18 @@ function RoomHeader({ debugMode, setDebugMode }) {
             </div>
             <div className="room-info">
               Room: {roomId}
+              {/* NEW: Show current beat info */}
+              {isAuthenticated && saveButtonInfo.isUpdate && (
+                <span className="beat-info">
+                  • Beat: <strong>"{saveButtonInfo.beatName}"</strong>
+                  {saveButtonInfo.showUnsavedIndicator && (
+                    <span className="unsaved-indicator">
+                      {" "}
+                      (unsaved changes)
+                    </span>
+                  )}
+                </span>
+              )}
               {isAuthenticated && (
                 <span className="auth-info">
                   • Signed in as <strong>{user?.username}</strong>
@@ -150,27 +174,44 @@ function RoomHeader({ debugMode, setDebugMode }) {
           </div>
 
           <div className="header-badges">
-            {/* Save Beat Button - only show if authenticated */}
+            {/* Beat Management - only show if authenticated */}
             {isAuthenticated && (
-              <>
+              <div className="beat-controls">
                 <button
-                  className="save-beat-btn"
-                  onClick={handleSaveBeat}
+                  className="create-new-btn"
+                  onClick={handleCreateNew}
                   disabled={!isConnected}
-                  title="Save this beat to your library"
+                  title="Start a new beat"
                 >
-                  <Save size={16} />
-                  <span>Save Beat</span>
+                  <Plus size={16} />
+                  <span>New</span>
                 </button>
 
                 <button
-                  className="auth-btn auth-btn--secondary"
-                  onClick={() => navigate("/beats")}
-                  title="View your saved beats"
+                  className={`save-beat-btn ${
+                    saveButtonInfo.showUnsavedIndicator ? "has-changes" : ""
+                  } ${saveButtonInfo.isUpdate ? "update-mode" : ""}`}
+                  onClick={handleSaveBeat}
+                  disabled={!isConnected}
+                  title={
+                    saveButtonInfo.isUpdate
+                      ? saveButtonInfo.showUnsavedIndicator
+                        ? `Update "${saveButtonInfo.beatName}" with your changes`
+                        : `"${saveButtonInfo.beatName}" is saved`
+                      : "Save this beat to your library"
+                  }
                 >
-                  <span>My Beats</span>
+                  {saveButtonInfo.isUpdate ? (
+                    <FileText size={16} />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  <span className="save-btn-text">{saveButtonInfo.text}</span>
+                  {saveButtonInfo.showUnsavedIndicator && (
+                    <span className="unsaved-dot"></span>
+                  )}
                 </button>
-              </>
+              </div>
             )}
 
             {/* Auth Actions - only show if not authenticated */}
