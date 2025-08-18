@@ -5,7 +5,7 @@ import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
-function TrackLabel({ track }) {
+function TrackLabel({ track, drumSounds }) {
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
   const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
 
@@ -15,7 +15,14 @@ function TrackLabel({ track }) {
       return "Choose Sound...";
     }
 
-    // Hard-coded mapping for the first four default tracks
+    // Find the sound in the flat drumSounds array
+    const soundObj = drumSounds.find((sound) => sound.file === track.soundFile);
+
+    if (soundObj) {
+      return soundObj.name;
+    }
+
+    // Hard-coded mapping for backward compatibility with old default tracks
     const defaultSoundNames = {
       "kicks/Ac_K.wav": "Acoustic Kick",
       "snares/Box_Snr2.wav": "Box Snare 2",
@@ -25,14 +32,6 @@ function TrackLabel({ track }) {
 
     if (defaultSoundNames[track.soundFile]) {
       return defaultSoundNames[track.soundFile];
-    }
-
-    // Find the sound name from drumSounds for other sounds
-    for (const category of Object.values(drumSounds)) {
-      const sound = category.find((s) => s.file === track.soundFile);
-      if (sound) {
-        return sound.name;
-      }
     }
 
     // Fallback to track name if sound not found
@@ -364,7 +363,11 @@ function PatternTimeline() {
           <div className="sidebar-header">TRACKS</div>
 
           {tracks.map((track) => (
-            <TrackLabel key={`label-${track.id}`} track={track} />
+            <TrackLabel
+              key={`label-${track.id}`}
+              track={track}
+              drumSounds={drumSounds}
+            />
           ))}
 
           <div className="add-track-container">

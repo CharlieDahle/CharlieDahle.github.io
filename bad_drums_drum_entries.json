@@ -1,0 +1,3308 @@
+[
+  {
+    "name": "Open hat 12 (Frank Ricotti - Stoned)",
+    "category": "openhats",
+    "file": "openhats/Open hat 12 (Frank Ricotti - Stoned).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 07 (Gilberto Gil - Morena)",
+    "category": "openhats",
+    "file": "openhats/Open hat 07 (Gilberto Gil - Morena).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_OPEN_ZETO",
+    "category": "openhats",
+    "file": "openhats/MURDA_HAT_OPEN_ZETO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 02 (Giorgio Moroder - E=MC2)",
+    "category": "openhats",
+    "file": "openhats/Open hat 02 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 11 (Frank Ricotti - Stoned)",
+    "category": "openhats",
+    "file": "openhats/Open hat 11 (Frank Ricotti - Stoned).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 08 (Minako Yoshida - Clouds)",
+    "category": "openhats",
+    "file": "openhats/Open hat 08 (Minako Yoshida - Clouds).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 04 (Willie Wood & Willie Wood Crew - Willie Rap)",
+    "category": "openhats",
+    "file": "openhats/Open hat 04 (Willie Wood & Willie Wood Crew - Willie Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_OPEN_KINGZ",
+    "category": "openhats",
+    "file": "openhats/MURDA_HAT_OPEN_KINGZ.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open Hat [ FunkXelf ]",
+    "category": "openhats",
+    "file": "openhats/Open Hat [ FunkXelf ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "pbs - cardo [ OpHat ]",
+    "category": "openhats",
+    "file": "openhats/pbs - cardo [ OpHat ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 14 (Alan Tew - The Burn)",
+    "category": "openhats",
+    "file": "openhats/Open hat 14 (Alan Tew - The Burn).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 15 (Alan Tew - Final Statement)",
+    "category": "openhats",
+    "file": "openhats/Open hat 15 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 10 (James Clarke - The Heavies)",
+    "category": "openhats",
+    "file": "openhats/Open hat 10 (James Clarke - The Heavies).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 09 (Alan Parker - Psychosis)",
+    "category": "openhats",
+    "file": "openhats/Open hat 09 (Alan Parker - Psychosis).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_OPEN_URUS",
+    "category": "openhats",
+    "file": "openhats/MURDA_HAT_OPEN_URUS.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 05 (Cloud One - Charleston Hopscotch)",
+    "category": "openhats",
+    "file": "openhats/Open hat 05 (Cloud One - Charleston Hopscotch).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 06 (Gwen Guthrie - Joy Riders)",
+    "category": "openhats",
+    "file": "openhats/Open hat 06 (Gwen Guthrie - Joy Riders).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 03 (Willie Wood & Willie Wood Crew - Willie Rap)",
+    "category": "openhats",
+    "file": "openhats/Open hat 03 (Willie Wood & Willie Wood Crew - Willie Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tk_Ohh",
+    "category": "openhats",
+    "file": "openhats/Tk_Ohh.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 01 (Giorgio Moroder - E=MC2)",
+    "category": "openhats",
+    "file": "openhats/Open hat 01 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_OPEN_CHIRON",
+    "category": "openhats",
+    "file": "openhats/MURDA_HAT_OPEN_CHIRON.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_OPEN_REVERSE",
+    "category": "openhats",
+    "file": "openhats/MURDA_HAT_OPEN_REVERSE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Open hat 13 (Les Hurdle - Tequila Festival)",
+    "category": "openhats",
+    "file": "openhats/Open hat 13 (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 09 (Grace Jones - All On A Summers Night)",
+    "category": "percs",
+    "file": "percs/Tom 09 (Grace Jones - All On A Summers Night).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 24 (Gal Costa - A Coisa Mais Linda Que Existe)",
+    "category": "percs",
+    "file": "percs/Tom 24 (Gal Costa - A Coisa Mais Linda Que Existe).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Perc] Shaker 2",
+    "category": "percs",
+    "file": "percs/[Perc] Shaker 2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Stick (Lonnie Smith - Lean Meat)",
+    "category": "percs",
+    "file": "percs/Stick (Lonnie Smith - Lean Meat).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 16 (Gwen Guthrie - God Don_t Like Ugly)",
+    "category": "percs",
+    "file": "percs/Tom 16 (Gwen Guthrie - God Don_t Like Ugly).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 05 (Frank Ricotti - Undertone)",
+    "category": "percs",
+    "file": "percs/Cowbell 05 (Frank Ricotti - Undertone).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 06 (Lonnie Smith - Lean Meat)",
+    "category": "percs",
+    "file": "percs/Tom 06 (Lonnie Smith - Lean Meat).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 13 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 13 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 15 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 15 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Xn Hat Perc",
+    "category": "percs",
+    "file": "percs/CC - Xn Hat Perc.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 01 (Lonnie Smith - Do It)",
+    "category": "percs",
+    "file": "percs/Cowbell 01 (Lonnie Smith - Do It).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 04 (Patrice Rushen - Breakin_ All The Rules)",
+    "category": "percs",
+    "file": "percs/Perc 04 (Patrice Rushen - Breakin_ All The Rules).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Agogo 01 (Lonnie Smith - Straight to the Point)",
+    "category": "percs",
+    "file": "percs/Agogo 01 (Lonnie Smith - Straight to the Point).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 23 (Gal Costa - Se Voc\u00e0 Pensa)",
+    "category": "percs",
+    "file": "percs/Tom 23 (Gal Costa - Se Voc\u00e0 Pensa).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pharrell Pitch Click",
+    "category": "percs",
+    "file": "percs/Pharrell Pitch Click.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 01 (Cerrone - Love in C Minor)",
+    "category": "percs",
+    "file": "percs/Perc 01 (Cerrone - Love in C Minor).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 09 (My Mine - Hypnotic Tango [Instrumental Version])",
+    "category": "percs",
+    "file": "percs/Perc 09 (My Mine - Hypnotic Tango [Instrumental Version]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 01 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 01 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_KNOCK",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_KNOCK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 02 (Skyy - Love Attack)",
+    "category": "percs",
+    "file": "percs/Cowbell 02 (Skyy - Love Attack).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 31 (Kenny Salmon - Flying Squad)",
+    "category": "percs",
+    "file": "percs/Tom 31 (Kenny Salmon - Flying Squad).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "9th Wonder Shaker_bip",
+    "category": "percs",
+    "file": "percs/9th Wonder Shaker_bip.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 08 (Gwen Guthrie - Is This Love_)",
+    "category": "percs",
+    "file": "percs/Perc 08 (Gwen Guthrie - Is This Love_).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga2Lo",
+    "category": "percs",
+    "file": "percs/Conga2Lo.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 05 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 05 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 05 (Patrice Rushen - Breakin_ All The Rules)",
+    "category": "percs",
+    "file": "percs/Perc 05 (Patrice Rushen - Breakin_ All The Rules).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 07 (Gal Costa - Milho Verde [Folclore Portugues])",
+    "category": "percs",
+    "file": "percs/Conga 07 (Gal Costa - Milho Verde [Folclore Portugues]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 02 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 02 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "cardo cowbell 2k17",
+    "category": "percs",
+    "file": "percs/cardo cowbell 2k17.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 21 (Gilberto Gil - Sebastiana)",
+    "category": "percs",
+    "file": "percs/Tom 21 (Gilberto Gil - Sebastiana).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_8",
+    "category": "percs",
+    "file": "percs/Conga_8.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 32 (Kenny Salmon - Flying Squad)",
+    "category": "percs",
+    "file": "percs/Tom 32 (Kenny Salmon - Flying Squad).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 17 (Jiro Inagaki and His Soul Media - The Ground for Peace)",
+    "category": "percs",
+    "file": "percs/Tom 17 (Jiro Inagaki and His Soul Media - The Ground for Peace).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 08 (Grace Jones - Do Or Die)",
+    "category": "percs",
+    "file": "percs/Tom 08 (Grace Jones - Do Or Die).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MZ Perc [Alchemist Shaker]",
+    "category": "percs",
+    "file": "percs/MZ Perc [Alchemist Shaker].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Perc] Tin",
+    "category": "percs",
+    "file": "percs/[Perc] Tin.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 20 (Gilberto Gil - Morena)",
+    "category": "percs",
+    "file": "percs/Tom 20 (Gilberto Gil - Morena).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 14 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 14 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Agogo 02 (Lonnie Smith - Straight to the Point)",
+    "category": "percs",
+    "file": "percs/Agogo 02 (Lonnie Smith - Straight to the Point).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Shaker 02 (Skyy - Tell Her You Care)",
+    "category": "percs",
+    "file": "percs/Shaker 02 (Skyy - Tell Her You Care).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 12 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 12 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 11 (My Mine - Hypnotic Tango [Instrumental Version])",
+    "category": "percs",
+    "file": "percs/Perc 11 (My Mine - Hypnotic Tango [Instrumental Version]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 05 (Young-Holt Unlimited - Make It with You)",
+    "category": "percs",
+    "file": "percs/Tom 05 (Young-Holt Unlimited - Make It with You).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 06 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 06 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 03 (Cerrone - Give Me Love)",
+    "category": "percs",
+    "file": "percs/Conga 03 (Cerrone - Give Me Love).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "dam funk cowbell",
+    "category": "percs",
+    "file": "percs/dam funk cowbell.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mac x Pharrell Snap",
+    "category": "percs",
+    "file": "percs/Mac x Pharrell Snap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_ECHO_RIM",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_ECHO_RIM.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Thumbs",
+    "category": "percs",
+    "file": "percs/Thumbs.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_BRINX",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_BRINX.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 18 (Jiro Inagaki and His Soul Media - The Ground for Peace)",
+    "category": "percs",
+    "file": "percs/Tom 18 (Jiro Inagaki and His Soul Media - The Ground for Peace).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 03 (Cerrone - Give Me Love)",
+    "category": "percs",
+    "file": "percs/Perc 03 (Cerrone - Give Me Love).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 29 (Alan Parker - Play It Cool)",
+    "category": "percs",
+    "file": "percs/Tom 29 (Alan Parker - Play It Cool).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 04 (Grace Jones - Below The Belt)",
+    "category": "percs",
+    "file": "percs/Conga 04 (Grace Jones - Below The Belt).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 30 (Kenny Salmon - Flying Squad)",
+    "category": "percs",
+    "file": "percs/Tom 30 (Kenny Salmon - Flying Squad).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom roll (Young-Holt Unlimited - Blood in the Streets)",
+    "category": "percs",
+    "file": "percs/Tom roll (Young-Holt Unlimited - Blood in the Streets).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 12 (Patrice Rushen - Yolon)",
+    "category": "percs",
+    "file": "percs/Tom 12 (Patrice Rushen - Yolon).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell2",
+    "category": "percs",
+    "file": "percs/Cowbell2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 06 (Alan Parker - Little Things)",
+    "category": "percs",
+    "file": "percs/Cowbell 06 (Alan Parker - Little Things).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 04 (Young-Holt Unlimited - Make It with You)",
+    "category": "percs",
+    "file": "percs/Tom 04 (Young-Holt Unlimited - Make It with You).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 02 (Cerrone - Give Me Love)",
+    "category": "percs",
+    "file": "percs/Perc 02 (Cerrone - Give Me Love).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 03 (Gal Costa - Milho Verde [Folclore Portugues])",
+    "category": "percs",
+    "file": "percs/Cowbell 03 (Gal Costa - Milho Verde [Folclore Portugues]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 01 (Cerrone - Give Me Love)",
+    "category": "percs",
+    "file": "percs/Conga 01 (Cerrone - Give Me Love).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 03 (Young-Holt Unlimited - Make It with You)",
+    "category": "percs",
+    "file": "percs/Tom 03 (Young-Holt Unlimited - Make It with You).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 11 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 11 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_1",
+    "category": "percs",
+    "file": "percs/Conga_1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga2Hi",
+    "category": "percs",
+    "file": "percs/Conga2Hi.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 04 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 04 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 22 (Gal Costa - Se Voc\u00e0 Pensa)",
+    "category": "percs",
+    "file": "percs/Tom 22 (Gal Costa - Se Voc\u00e0 Pensa).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 01 (Lonnie Smith - Straight to the Point)",
+    "category": "percs",
+    "file": "percs/Conga 01 (Lonnie Smith - Straight to the Point).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 10 (My Mine - Hypnotic Tango [Instrumental Version])",
+    "category": "percs",
+    "file": "percs/Perc 10 (My Mine - Hypnotic Tango [Instrumental Version]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mac x Pharrell Bongo",
+    "category": "percs",
+    "file": "percs/Mac x Pharrell Bongo.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 13 (Patrice Rushen - Yolon)",
+    "category": "percs",
+    "file": "percs/Tom 13 (Patrice Rushen - Yolon).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_3",
+    "category": "percs",
+    "file": "percs/Conga_3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 05 (Gal Costa - Milho Verde [Folclore Portugues])",
+    "category": "percs",
+    "file": "percs/Conga 05 (Gal Costa - Milho Verde [Folclore Portugues]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 06 (Skyy - Questions No Answers)",
+    "category": "percs",
+    "file": "percs/Perc 06 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 02 (Young-Holt Unlimited - Hot Pants)",
+    "category": "percs",
+    "file": "percs/Tom 02 (Young-Holt Unlimited - Hot Pants).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 34 (Frank Ricotti - Jay Walk)",
+    "category": "percs",
+    "file": "percs/Tom 34 (Frank Ricotti - Jay Walk).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell 04 (Les Hurdle - Tequila Festival)",
+    "category": "percs",
+    "file": "percs/Cowbell 04 (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 07 (Lonnie Smith - No Tears Tomorrow)",
+    "category": "percs",
+    "file": "percs/Tom 07 (Lonnie Smith - No Tears Tomorrow).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Agogo 03 (Bruno Battisti d_Armario - O Pato)",
+    "category": "percs",
+    "file": "percs/Agogo 03 (Bruno Battisti d_Armario - O Pato).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_7",
+    "category": "percs",
+    "file": "percs/Conga_7.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 01 (Young-Holt Unlimited - Blood in the Streets)",
+    "category": "percs",
+    "file": "percs/Tom 01 (Young-Holt Unlimited - Blood in the Streets).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_6",
+    "category": "percs",
+    "file": "percs/Conga_6.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 27 (Os Tincoas - Dora)",
+    "category": "percs",
+    "file": "percs/Tom 27 (Os Tincoas - Dora).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 08 (Jim Lawless - Action Assignment)",
+    "category": "percs",
+    "file": "percs/Conga 08 (Jim Lawless - Action Assignment).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_RAINSTICK",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_RAINSTICK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 15 (Gwen Guthrie - Is This Love_)",
+    "category": "percs",
+    "file": "percs/Tom 15 (Gwen Guthrie - Is This Love_).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 09 (Jim Lawless - Action Assignment)",
+    "category": "percs",
+    "file": "percs/Conga 09 (Jim Lawless - Action Assignment).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_BUTTERFLY_EFFECT",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_BUTTERFLY_EFFECT.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 02 (Cerrone - Give Me Love)",
+    "category": "percs",
+    "file": "percs/Conga 02 (Cerrone - Give Me Love).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 06 (Gal Costa - Milho Verde [Folclore Portugues])",
+    "category": "percs",
+    "file": "percs/Conga 06 (Gal Costa - Milho Verde [Folclore Portugues]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga_5",
+    "category": "percs",
+    "file": "percs/Conga_5.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 19 (Gilberto Gil - Morena)",
+    "category": "percs",
+    "file": "percs/Tom 19 (Gilberto Gil - Morena).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 26 (Spyro Gyra - Pipo_s Song)",
+    "category": "percs",
+    "file": "percs/Tom 26 (Spyro Gyra - Pipo_s Song).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Perc] Shaker",
+    "category": "percs",
+    "file": "percs/[Perc] Shaker.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 16 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 16 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Shaker 01 (Cerrone - Love in C Minor)",
+    "category": "percs",
+    "file": "percs/Shaker 01 (Cerrone - Love in C Minor).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cowbell",
+    "category": "percs",
+    "file": "percs/Cowbell.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Perc] Rattle",
+    "category": "percs",
+    "file": "percs/[Perc] Rattle.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga 10 (Mike Moran - The Pick-Up)",
+    "category": "percs",
+    "file": "percs/Conga 10 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "diplo perc",
+    "category": "percs",
+    "file": "percs/diplo perc.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Swell (Cerrone - Oops, Oh No!)",
+    "category": "percs",
+    "file": "percs/Swell (Cerrone - Oops, Oh No!).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 25 (Gal Costa - Louca Me Chamam [Crazy He Call_s Me])",
+    "category": "percs",
+    "file": "percs/Tom 25 (Gal Costa - Louca Me Chamam [Crazy He Call_s Me]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Perc",
+    "category": "percs",
+    "file": "percs/CC - Perc.WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 11 (Patrice Rushen - Just a Natural Thing)",
+    "category": "percs",
+    "file": "percs/Tom 11 (Patrice Rushen - Just a Natural Thing).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Perc 07 (Skyy - Questions No Answers)",
+    "category": "percs",
+    "file": "percs/Perc 07 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 28 (Alan Parker - Play It Cool)",
+    "category": "percs",
+    "file": "percs/Tom 28 (Alan Parker - Play It Cool).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_CRYSTALS",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_CRYSTALS.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Whistle (Les Hurdle - Tequila Festival)",
+    "category": "percs",
+    "file": "percs/Whistle (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Bells (Cerrone - Portrait Of A Modern Man)",
+    "category": "percs",
+    "file": "percs/Bells (Cerrone - Portrait Of A Modern Man).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Ride (Patrice Rushen - Remind Me)",
+    "category": "percs",
+    "file": "percs/Ride (Patrice Rushen - Remind Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 07 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 07 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_PERCUSSION_GUIRO",
+    "category": "percs",
+    "file": "percs/MURDA_PERCUSSION_GUIRO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Triangle 03 (Jim Lawless - L.A. Holiday)",
+    "category": "percs",
+    "file": "percs/Triangle 03 (Jim Lawless - L.A. Holiday).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Conga1Sp",
+    "category": "percs",
+    "file": "percs/Conga1Sp.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Poker Perc",
+    "category": "percs",
+    "file": "percs/CC - Poker Perc.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 14 (Gwen Guthrie - Oh What A Life)",
+    "category": "percs",
+    "file": "percs/Tom 14 (Gwen Guthrie - Oh What A Life).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 10 (Grace Jones - All On A Summers Night)",
+    "category": "percs",
+    "file": "percs/Tom 10 (Grace Jones - All On A Summers Night).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Agogo 04 (Bruno Battisti d_Armario - O Pato)",
+    "category": "percs",
+    "file": "percs/Agogo 04 (Bruno Battisti d_Armario - O Pato).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tom 33 (Frank Ricotti - Fast Mover)",
+    "category": "percs",
+    "file": "percs/Tom 33 (Frank Ricotti - Fast Mover).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mac x Pharrell Stomp",
+    "category": "vox",
+    "file": "vox/Mac x Pharrell Stomp.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "FX (Murda-x-FKi)",
+    "category": "vox",
+    "file": "vox/FX (Murda-x-FKi).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[fx] vinylz",
+    "category": "vox",
+    "file": "vox/[fx] vinylz.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "pbs - fki [ Transition]",
+    "category": "vox",
+    "file": "vox/pbs - fki [ Transition].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "I CALL THIS SOME FLY-LO SHIT IDK",
+    "category": "vox",
+    "file": "vox/I CALL THIS SOME FLY-LO SHIT IDK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Vrb_H2",
+    "category": "hihats",
+    "file": "hihats/Vrb_H2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_PATEK",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_PATEK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Hi Hat] Thundercat",
+    "category": "hihats",
+    "file": "hihats/[Hi Hat] Thundercat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wu-RZA-Hat 32",
+    "category": "hihats",
+    "file": "hihats/Wu-RZA-Hat 32.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_GREEN_TEA",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_GREEN_TEA.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 13 (Cerrone - Oops, Oh No!)",
+    "category": "hihats",
+    "file": "hihats/Hat 13 (Cerrone - Oops, Oh No!).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 05 (Giorgio Moroder - E=MC2)",
+    "category": "hihats",
+    "file": "hihats/Hat 05 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 23 (James Clarke - The Heavies)",
+    "category": "hihats",
+    "file": "hihats/Hat 23 (James Clarke - The Heavies).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Vrb_H1",
+    "category": "hihats",
+    "file": "hihats/Vrb_H1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 12 (Cerrone - Rock Me)",
+    "category": "hihats",
+    "file": "hihats/Hat 12 (Cerrone - Rock Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_METALLIC",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_METALLIC.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Smugged Hi Hat",
+    "category": "hihats",
+    "file": "hihats/CC - Smugged Hi Hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_BANANA_SPLIT",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_BANANA_SPLIT.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_6IX",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_6IX.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_TREK",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_TREK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 18 (Willie Wood & Willie Wood Crew - Willie Rap)",
+    "category": "hihats",
+    "file": "hihats/Hat 18 (Willie Wood & Willie Wood Crew - Willie Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB UPGRADE3 Hi-HAT (21)",
+    "category": "hihats",
+    "file": "hihats/BWB UPGRADE3 Hi-HAT (21).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 29 (Alan Tew - The Burn)",
+    "category": "hihats",
+    "file": "hihats/Hat 29 (Alan Tew - The Burn).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wu-RZA-Hat 35",
+    "category": "hihats",
+    "file": "hihats/Wu-RZA-Hat 35.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wnd_H",
+    "category": "hihats",
+    "file": "hihats/Wnd_H.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "DVNNYBEATS_Alchemist Hi Hat",
+    "category": "hihats",
+    "file": "hihats/DVNNYBEATS_Alchemist Hi Hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_ROLL_DICE",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_ROLL_DICE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 19 (Patrice Rushen - Number One [Instrumental Version])",
+    "category": "hihats",
+    "file": "hihats/Hat 19 (Patrice Rushen - Number One [Instrumental Version]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_NIAGARA",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_NIAGARA.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 14 (Lonnie Smith - Twenty-Five Miles [Remastered])",
+    "category": "hihats",
+    "file": "hihats/Hat 14 (Lonnie Smith - Twenty-Five Miles [Remastered]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 17 (Cloud One - Charleston Hopscotch)",
+    "category": "hihats",
+    "file": "hihats/Hat 17 (Cloud One - Charleston Hopscotch).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat roll 02 (Alan Parker - Century City)",
+    "category": "hihats",
+    "file": "hihats/Hat roll 02 (Alan Parker - Century City).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 10 (Cerrone - Midnite Lady)",
+    "category": "hihats",
+    "file": "hihats/Hat 10 (Cerrone - Midnite Lady).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wu-RZA-Hat 44",
+    "category": "hihats",
+    "file": "hihats/Wu-RZA-Hat 44.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 02 (Young-Holt Unlimited - Wah Wah Man)",
+    "category": "hihats",
+    "file": "hihats/Hat 02 (Young-Holt Unlimited - Wah Wah Man).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "V2HAT029",
+    "category": "hihats",
+    "file": "hihats/V2HAT029.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cln_H3",
+    "category": "hihats",
+    "file": "hihats/Cln_H3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat roll 01 (Gwen Guthrie - Younger Than Me)",
+    "category": "hihats",
+    "file": "hihats/Hat roll 01 (Gwen Guthrie - Younger Than Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 04 (Giorgio Moroder - E=MC2)",
+    "category": "hihats",
+    "file": "hihats/Hat 04 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 16 (Grace Jones - Below The Belt)",
+    "category": "hihats",
+    "file": "hihats/Hat 16 (Grace Jones - Below The Belt).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_LAMBO",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_LAMBO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 32 (Alan Tew - Final Statement)",
+    "category": "hihats",
+    "file": "hihats/Hat 32 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cln_H2",
+    "category": "hihats",
+    "file": "hihats/Cln_H2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "V2HAT028",
+    "category": "hihats",
+    "file": "hihats/V2HAT028.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wng_H",
+    "category": "hihats",
+    "file": "hihats/Wng_H.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 11 (Cerrone - Rock Me)",
+    "category": "hihats",
+    "file": "hihats/Hat 11 (Cerrone - Rock Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 22 (Gwen Guthrie - Joy Riders)",
+    "category": "hihats",
+    "file": "hihats/Hat 22 (Gwen Guthrie - Joy Riders).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wsh_H2",
+    "category": "hihats",
+    "file": "hihats/Wsh_H2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 31 (Alan Tew - The Prowler)",
+    "category": "hihats",
+    "file": "hihats/Hat 31 (Alan Tew - The Prowler).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 03 (Giorgio Moroder - E=MC2)",
+    "category": "hihats",
+    "file": "hihats/Hat 03 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 08 (Cerrone - Midnite Lady)",
+    "category": "hihats",
+    "file": "hihats/Hat 08 (Cerrone - Midnite Lady).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wsh_H1",
+    "category": "hihats",
+    "file": "hihats/Wsh_H1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cln_H4",
+    "category": "hihats",
+    "file": "hihats/Cln_H4.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_TRAPHOUSE",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_TRAPHOUSE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_456",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_456.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Bright Hi Hat",
+    "category": "hihats",
+    "file": "hihats/CC - Bright Hi Hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[Hi Hat] Stove",
+    "category": "hihats",
+    "file": "hihats/[Hi Hat] Stove.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 20 (Skyy - Questions No Answers)",
+    "category": "hihats",
+    "file": "hihats/Hat 20 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clk_H",
+    "category": "hihats",
+    "file": "hihats/Clk_H.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 26 (Mike Moran - Task Force)",
+    "category": "hihats",
+    "file": "hihats/Hat 26 (Mike Moran - Task Force).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 09 (Cerrone - Midnite Lady)",
+    "category": "hihats",
+    "file": "hihats/Hat 09 (Cerrone - Midnite Lady).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Twisted Hi Hat",
+    "category": "hihats",
+    "file": "hihats/CC - Twisted Hi Hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "V2HAT026",
+    "category": "hihats",
+    "file": "hihats/V2HAT026.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 07 (Giorgio Moroder - E=MC2)",
+    "category": "hihats",
+    "file": "hihats/Hat 07 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 21 (Skyy - Love Attack)",
+    "category": "hihats",
+    "file": "hihats/Hat 21 (Skyy - Love Attack).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 30 (Alan Tew - The Burn)",
+    "category": "hihats",
+    "file": "hihats/Hat 30 (Alan Tew - The Burn).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 24 (James Clarke - Study in Fear)",
+    "category": "hihats",
+    "file": "hihats/Hat 24 (James Clarke - Study in Fear).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "V2HAT027",
+    "category": "hihats",
+    "file": "hihats/V2HAT027.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Tis_H2",
+    "category": "hihats",
+    "file": "hihats/Tis_H2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Adventure Hat",
+    "category": "hihats",
+    "file": "hihats/CC - Adventure Hat.WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "dam funk hat",
+    "category": "hihats",
+    "file": "hihats/dam funk hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 01 (Young-Holt Unlimited - Make It with You)",
+    "category": "hihats",
+    "file": "hihats/Hat 01 (Young-Holt Unlimited - Make It with You).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 28 (Alan Tew - The Burn)",
+    "category": "hihats",
+    "file": "hihats/Hat 28 (Alan Tew - The Burn).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 15 (Grace Jones - Victor Should Have Been A Jazz Musician)",
+    "category": "hihats",
+    "file": "hihats/Hat 15 (Grace Jones - Victor Should Have Been A Jazz Musician).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 33 (Alan Tew - Final Statement)",
+    "category": "hihats",
+    "file": "hihats/Hat 33 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 27 (Alan Tew - The Burn)",
+    "category": "hihats",
+    "file": "hihats/Hat 27 (Alan Tew - The Burn).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mac x Earl Hat",
+    "category": "hihats",
+    "file": "hihats/Mac x Earl Hat.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 06 (Giorgio Moroder - E=MC2)",
+    "category": "hihats",
+    "file": "hihats/Hat 06 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hihat (Vinylz)",
+    "category": "hihats",
+    "file": "hihats/Hihat (Vinylz).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Hat 25 (James Clarke - Study in Fear)",
+    "category": "hihats",
+    "file": "hihats/Hat 25 (James Clarke - Study in Fear).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_HAT_CLOSED_GELATO",
+    "category": "hihats",
+    "file": "hihats/MURDA_HAT_CLOSED_GELATO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Rev_Crsh",
+    "category": "cymbals",
+    "file": "cymbals/Rev_Crsh.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wan_Ohh",
+    "category": "cymbals",
+    "file": "cymbals/Wan_Ohh.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MUB1 Crash 002",
+    "category": "cymbals",
+    "file": "cymbals/MUB1 Crash 002.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MUB1 Crash 006",
+    "category": "cymbals",
+    "file": "cymbals/MUB1 Crash 006.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "pbs - cardo [ Cymbal ]",
+    "category": "cymbals",
+    "file": "cymbals/pbs - cardo [ Cymbal ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Str_Cym2",
+    "category": "cymbals",
+    "file": "cymbals/Str_Cym2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Str_Cym3",
+    "category": "cymbals",
+    "file": "cymbals/Str_Cym3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Oh Crash",
+    "category": "cymbals",
+    "file": "cymbals/CC - Oh Crash.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Cmon - Mac Miller - Genius",
+    "category": "vox",
+    "file": "vox/Cmon - Mac Miller - Genius.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (6)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (6).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pharrell Breath",
+    "category": "vox",
+    "file": "vox/Pharrell Breath.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (7)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (7).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Kanye Shout",
+    "category": "vox",
+    "file": "vox/CC - Kanye Shout.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "!! my eyes vox",
+    "category": "vox",
+    "file": "vox/!! my eyes vox.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Vox (Vinylz)",
+    "category": "vox",
+    "file": "vox/Vox (Vinylz).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (1)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (1).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "175_NK_Noisia_Diplodocus",
+    "category": "vox",
+    "file": "vox/175_NK_Noisia_Diplodocus.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "140_E_Diplo_Earthquake",
+    "category": "vox",
+    "file": "vox/140_E_Diplo_Earthquake.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (2)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (3)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (3).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "!! belong to the world vox",
+    "category": "vox",
+    "file": "vox/!! belong to the world vox.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (4)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (4).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB 5 Chant J Cole (5)",
+    "category": "vox",
+    "file": "vox/BWB 5 Chant J Cole (5).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Motto Clp",
+    "category": "claps",
+    "file": "claps/CC - Motto Clp.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_SLICK",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_SLICK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_SIMPLE",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_SIMPLE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_TIES",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_TIES.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 07 (Skyy - Love Attack)",
+    "category": "claps",
+    "file": "claps/Clap 07 (Skyy - Love Attack).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 01 (Yannick Chevalier - Ecoute le son du soleil [Instrumental])",
+    "category": "claps",
+    "file": "claps/Clap 01 (Yannick Chevalier - Ecoute le son du soleil [Instrumental]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_LOWER",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_LOWER.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_CLACK",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_CLACK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_GOAT",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_GOAT.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Whip Clap",
+    "category": "claps",
+    "file": "claps/CC - Whip Clap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 03 (Naomi Peterson - Sweet Naomi Rap)",
+    "category": "claps",
+    "file": "claps/Clap 03 (Naomi Peterson - Sweet Naomi Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap (So Ambitious)",
+    "category": "claps",
+    "file": "claps/Clap (So Ambitious).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Aqua Clap",
+    "category": "claps",
+    "file": "claps/CC - Aqua Clap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap [ Grindin_ ]",
+    "category": "claps",
+    "file": "claps/Clap [ Grindin_ ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Nation Wide Clap",
+    "category": "claps",
+    "file": "claps/CC - Nation Wide Clap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MZ Clap [Sevn #1]",
+    "category": "claps",
+    "file": "claps/MZ Clap [Sevn #1].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 06 (Patrice Rushen - Breakin_ All The Rules)",
+    "category": "claps",
+    "file": "claps/Clap 06 (Patrice Rushen - Breakin_ All The Rules).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MZ Clap [Sevn #2]",
+    "category": "claps",
+    "file": "claps/MZ Clap [Sevn #2].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MZ Clap [Sevn]",
+    "category": "claps",
+    "file": "claps/MZ Clap [Sevn].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_TRAP",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_TRAP.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 02 (Naomi Peterson - Sweet Naomi Rap)",
+    "category": "claps",
+    "file": "claps/Clap 02 (Naomi Peterson - Sweet Naomi Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_PERCOCET",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_PERCOCET.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap (Vinylz)",
+    "category": "claps",
+    "file": "claps/Clap (Vinylz).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_BANANA_SPLIT",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_BANANA_SPLIT.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Decontaminated Clap",
+    "category": "claps",
+    "file": "claps/CC - Decontaminated Clap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_BAGUETTE",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_BAGUETTE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 05 (Patrice Rushen - Forget Me Nots)",
+    "category": "claps",
+    "file": "claps/Clap 05 (Patrice Rushen - Forget Me Nots).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Clap 04 (Patrice Rushen - Forget Me Nots)",
+    "category": "claps",
+    "file": "claps/Clap 04 (Patrice Rushen - Forget Me Nots).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_CLAP_TICKER",
+    "category": "claps",
+    "file": "claps/MURDA_CLAP_TICKER.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Infinite Clap",
+    "category": "claps",
+    "file": "claps/CC - Infinite Clap.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 11 (Grace Jones - Sinning)",
+    "category": "snares",
+    "file": "snares/Snare 11 (Grace Jones - Sinning).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Osc_Snr",
+    "category": "snares",
+    "file": "snares/Osc_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 06 (Lonnie Smith - Hola Muneca)",
+    "category": "snares",
+    "file": "snares/Snare 06 (Lonnie Smith - Hola Muneca).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Attack Snare",
+    "category": "snares",
+    "file": "snares/CC - Attack Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wnd_Snr",
+    "category": "snares",
+    "file": "snares/Wnd_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Wod_Snr",
+    "category": "snares",
+    "file": "snares/Wod_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Fun_Snr",
+    "category": "snares",
+    "file": "snares/Fun_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_TOURBUS",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_TOURBUS.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 39 (Mike Moran - The Pick-Up)",
+    "category": "snares",
+    "file": "snares/Snare 39 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Him_Snr",
+    "category": "snares",
+    "file": "snares/Him_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_INTENSIFY",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_INTENSIFY.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 17 (Skyy - I Can_t Get Enough)",
+    "category": "snares",
+    "file": "snares/Snare 17 (Skyy - I Can_t Get Enough).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Box_Snr",
+    "category": "snares",
+    "file": "snares/Box_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 27 (Gwen Guthrie - God Don_t Like Ugly)",
+    "category": "snares",
+    "file": "snares/Snare 27 (Gwen Guthrie - God Don_t Like Ugly).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 22 (Skyy - Tell Her You Care)",
+    "category": "snares",
+    "file": "snares/Snare 22 (Skyy - Tell Her You Care).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare (Pharrell-perc)",
+    "category": "snares",
+    "file": "snares/Snare (Pharrell-perc).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 15 (Patrice Rushen - Just a Natural Thing)",
+    "category": "snares",
+    "file": "snares/Snare 15 (Patrice Rushen - Just a Natural Thing).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 31 (Bread And Butter - SUMMER BLUE)",
+    "category": "snares",
+    "file": "snares/Snare 31 (Bread And Butter - SUMMER BLUE).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 21 (Skyy - Love Attack)",
+    "category": "snares",
+    "file": "snares/Snare 21 (Skyy - Love Attack).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 08 (Lonnie Smith - Twenty-Five Miles [Remastered])",
+    "category": "snares",
+    "file": "snares/Snare 08 (Lonnie Smith - Twenty-Five Miles [Remastered]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mok_Snr",
+    "category": "snares",
+    "file": "snares/Mok_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare roll 03 (Andy Clark - Kickback)",
+    "category": "snares",
+    "file": "snares/Snare roll 03 (Andy Clark - Kickback).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Csp_Snr3",
+    "category": "snares",
+    "file": "snares/Csp_Snr3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 33 (Alan Parker - Play It Cool)",
+    "category": "snares",
+    "file": "snares/Snare 33 (Alan Parker - Play It Cool).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Csp_Snr2",
+    "category": "snares",
+    "file": "snares/Csp_Snr2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 02 (Giorgio Moroder - E=MC2)",
+    "category": "snares",
+    "file": "snares/Snare 02 (Giorgio Moroder - E=MC2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Csp_Snr1",
+    "category": "snares",
+    "file": "snares/Csp_Snr1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_SIDE",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_SIDE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Circles Snare (@xephyrisdead)",
+    "category": "snares",
+    "file": "snares/Circles Snare (@xephyrisdead).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Alchemist Snare 5",
+    "category": "snares",
+    "file": "snares/Alchemist Snare 5.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Max x Earl Sweatshirt Snare",
+    "category": "snares",
+    "file": "snares/Max x Earl Sweatshirt Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Lo_Snr2",
+    "category": "snares",
+    "file": "snares/Lo_Snr2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 43 (Frank Ricotti - Undertone)",
+    "category": "snares",
+    "file": "snares/Snare 43 (Frank Ricotti - Undertone).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 35 (Kenny Salmon - Flying Squad)",
+    "category": "snares",
+    "file": "snares/Snare 35 (Kenny Salmon - Flying Squad).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 16 (Patrice Rushen - Just a Natural Thing)",
+    "category": "snares",
+    "file": "snares/Snare 16 (Patrice Rushen - Just a Natural Thing).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 30 - (Jiro Inagaki and His Soul Media - The Ground for Peace)",
+    "category": "snares",
+    "file": "snares/Snare 30 - (Jiro Inagaki and His Soul Media - The Ground for Peace).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 18 (Skyy - Jam The Box)",
+    "category": "snares",
+    "file": "snares/Snare 18 (Skyy - Jam The Box).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Rare Style Snare",
+    "category": "snares",
+    "file": "snares/CC - Rare Style Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 48 (Andy Clark - Kickback)",
+    "category": "snares",
+    "file": "snares/Snare 48 (Andy Clark - Kickback).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 42 (Alan Tew - Final Statement)",
+    "category": "snares",
+    "file": "snares/Snare 42 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "W1_S (29)",
+    "category": "snares",
+    "file": "snares/W1_S (29).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Lof_Snr2",
+    "category": "snares",
+    "file": "snares/Lof_Snr2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Divine Feminine Snare",
+    "category": "snares",
+    "file": "snares/Divine Feminine Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 37 (Mike Moran - Movement Implied)",
+    "category": "snares",
+    "file": "snares/Snare 37 (Mike Moran - Movement Implied).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare(Clams Casino)",
+    "category": "snares",
+    "file": "snares/Snare(Clams Casino).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 45 (Frank Ricotti - Fast Mover)",
+    "category": "snares",
+    "file": "snares/Snare 45 (Frank Ricotti - Fast Mover).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 23 (Gwen Guthrie - Hopscotch)",
+    "category": "snares",
+    "file": "snares/Snare 23 (Gwen Guthrie - Hopscotch).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 26 (Gwen Guthrie - Is This Love_)",
+    "category": "snares",
+    "file": "snares/Snare 26 (Gwen Guthrie - Is This Love_).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare - Mac Miller - Genius",
+    "category": "snares",
+    "file": "snares/Snare - Mac Miller - Genius.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 24 (Gwen Guthrie - Oh What A Life)",
+    "category": "snares",
+    "file": "snares/Snare 24 (Gwen Guthrie - Oh What A Life).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "(Snare) Diplomatic",
+    "category": "snares",
+    "file": "snares/(Snare) Diplomatic.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 41 (Les Hurdle - Tequila Festival)",
+    "category": "snares",
+    "file": "snares/Snare 41 (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "9th Wonder Snares_bip_1",
+    "category": "snares",
+    "file": "snares/9th Wonder Snares_bip_1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 20 (Skyy - Questions No Answers)",
+    "category": "snares",
+    "file": "snares/Snare 20 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 46 (Frank Ricotti - Jay Walk)",
+    "category": "snares",
+    "file": "snares/Snare 46 (Frank Ricotti - Jay Walk).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Ton_Snr",
+    "category": "snares",
+    "file": "snares/Ton_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 04 (Cerrone - Rock Me)",
+    "category": "snares",
+    "file": "snares/Snare 04 (Cerrone - Rock Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 29 (Young-Holt Unlimited - Bumpin_ on Young Street)",
+    "category": "snares",
+    "file": "snares/Snare 29 (Young-Holt Unlimited - Bumpin_ on Young Street).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 40 (Les Hurdle - Soul Train)",
+    "category": "snares",
+    "file": "snares/Snare 40 (Les Hurdle - Soul Train).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 13 (Little Scotty - Shout at the Disco)",
+    "category": "snares",
+    "file": "snares/Snare 13 (Little Scotty - Shout at the Disco).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pharrell Snare (@gordito_chinito)",
+    "category": "snares",
+    "file": "snares/Pharrell Snare (@gordito_chinito).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Rimshot 02 (Grace Jones - Victor Should Have Been A Jazz Musician)",
+    "category": "snares",
+    "file": "snares/Rimshot 02 (Grace Jones - Victor Should Have Been A Jazz Musician).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 25 (Gwen Guthrie - Padlock)",
+    "category": "snares",
+    "file": "snares/Snare 25 (Gwen Guthrie - Padlock).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_PERFECT",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_PERFECT.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_EASTER_EGG",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_EASTER_EGG.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 07 (Lonnie Smith - Sideman)",
+    "category": "snares",
+    "file": "snares/Snare 07 (Lonnie Smith - Sideman).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 19 (Skyy - Questions No Answers)",
+    "category": "snares",
+    "file": "snares/Snare 19 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 34 (Alan Parker - Trailblazer)",
+    "category": "snares",
+    "file": "snares/Snare 34 (Alan Parker - Trailblazer).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Max x Pharrell Snare",
+    "category": "snares",
+    "file": "snares/Max x Pharrell Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 01 (Young-Holt Unlimited - Wah Wah Man)",
+    "category": "snares",
+    "file": "snares/Snare 01 (Young-Holt Unlimited - Wah Wah Man).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare roll 02 (Kenny Salmon - Flying Squad)",
+    "category": "snares",
+    "file": "snares/Snare roll 02 (Kenny Salmon - Flying Squad).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 14 (Karisma - Got You Dancing [Instrumental])",
+    "category": "snares",
+    "file": "snares/Snare 14 (Karisma - Got You Dancing [Instrumental]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_HOTCAKES",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_HOTCAKES.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Fki Snare",
+    "category": "snares",
+    "file": "snares/Fki Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Lef_Snr",
+    "category": "snares",
+    "file": "snares/Lef_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "9TH WONDER SNARE_bip",
+    "category": "snares",
+    "file": "snares/9TH WONDER SNARE_bip.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_DINNER_TIME",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_DINNER_TIME.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 49 (Graham Preskett - Street Credibility (A))",
+    "category": "snares",
+    "file": "snares/Snare 49 (Graham Preskett - Street Credibility (A)).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pls_Snr",
+    "category": "snares",
+    "file": "snares/Pls_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Rimshot 01 (Alan Tew - Final Statement)",
+    "category": "snares",
+    "file": "snares/Rimshot 01 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 05 (Lalo Schifrin - Oh Darlin_...Life Goes On)",
+    "category": "snares",
+    "file": "snares/Snare 05 (Lalo Schifrin - Oh Darlin_...Life Goes On).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_HOTBOY",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_HOTBOY.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Auto Snare",
+    "category": "snares",
+    "file": "snares/CC - Auto Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_SNARE_DRANK",
+    "category": "snares",
+    "file": "snares/MURDA_SNARE_DRANK.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "GOOD AM Snare",
+    "category": "snares",
+    "file": "snares/GOOD AM Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 28 (Gwen Guthrie - Joy Riders)",
+    "category": "snares",
+    "file": "snares/Snare 28 (Gwen Guthrie - Joy Riders).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 36 (Mike Moran - Movement Implied)",
+    "category": "snares",
+    "file": "snares/Snare 36 (Mike Moran - Movement Implied).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Loyalty",
+    "category": "snares",
+    "file": "snares/Loyalty.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare roll 01 (Alan Parker - Play It Cool)",
+    "category": "snares",
+    "file": "snares/Snare roll 01 (Alan Parker - Play It Cool).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 09 (Grace Jones - Do Or Die)",
+    "category": "snares",
+    "file": "snares/Snare 09 (Grace Jones - Do Or Die).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Thn_Snr",
+    "category": "snares",
+    "file": "snares/Thn_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mes_Snr",
+    "category": "snares",
+    "file": "snares/Mes_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 44 (Frank Ricotti - Undertone)",
+    "category": "snares",
+    "file": "snares/Snare 44 (Frank Ricotti - Undertone).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 47 (Les Hurdle - Peking Strut)",
+    "category": "snares",
+    "file": "snares/Snare 47 (Les Hurdle - Peking Strut).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare (Pharrell)",
+    "category": "snares",
+    "file": "snares/Snare (Pharrell).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Trap Snare",
+    "category": "snares",
+    "file": "snares/CC - Trap Snare.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "@based1 - circles (snare)",
+    "category": "snares",
+    "file": "snares/@based1 - circles (snare).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Shl_Snr",
+    "category": "snares",
+    "file": "snares/Shl_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 32 (Bread And Butter - SUMMER BLUE)",
+    "category": "snares",
+    "file": "snares/Snare 32 (Bread And Butter - SUMMER BLUE).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 12 (Eddie Owen - I Wanna Keep Somebody Happy)",
+    "category": "snares",
+    "file": "snares/Snare 12 (Eddie Owen - I Wanna Keep Somebody Happy).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 38 (Frank Ricotti - Stoned)",
+    "category": "snares",
+    "file": "snares/Snare 38 (Frank Ricotti - Stoned).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare (Diplomatic)",
+    "category": "snares",
+    "file": "snares/Snare (Diplomatic).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Klt_Snr",
+    "category": "snares",
+    "file": "snares/Klt_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 10 (Grace Jones - Do Or Die)",
+    "category": "snares",
+    "file": "snares/Snare 10 (Grace Jones - Do Or Die).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pch_Snr",
+    "category": "snares",
+    "file": "snares/Pch_Snr.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Snare 03 (Space Art - Love Machine)",
+    "category": "snares",
+    "file": "snares/Snare 03 (Space Art - Love Machine).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BWB VAULT 808 (Fki)",
+    "category": "808s",
+    "file": "808s/BWB VAULT 808 (Fki).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Circles 808",
+    "category": "808s",
+    "file": "808s/Circles 808.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_COMEWITIT_C",
+    "category": "808s",
+    "file": "808s/MURDA_808_COMEWITIT_C.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Thundercat Bass",
+    "category": "808s",
+    "file": "808s/Thundercat Bass.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Pharrell Type 808",
+    "category": "808s",
+    "file": "808s/Pharrell Type 808.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "808 [ cardo ]",
+    "category": "808s",
+    "file": "808s/808 [ cardo ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_SAINTS_B",
+    "category": "808s",
+    "file": "808s/MURDA_808_SAINTS_B.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo008",
+    "category": "808s",
+    "file": "808s/gm_FlyLo008.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_GOYARD_E",
+    "category": "808s",
+    "file": "808s/MURDA_808_GOYARD_E.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_TRUNK_C",
+    "category": "808s",
+    "file": "808s/MURDA_808_TRUNK_C.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "FOREIGNTECK_Sevn (808) - Loop_3",
+    "category": "808s",
+    "file": "808s/FOREIGNTECK_Sevn (808) - Loop_3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_SLIDES_C",
+    "category": "808s",
+    "file": "808s/MURDA_808_SLIDES_C.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "FOREIGNTECK_Sevn (808)",
+    "category": "808s",
+    "file": "808s/FOREIGNTECK_Sevn (808).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Bass Slide (Pharrell)",
+    "category": "808s",
+    "file": "808s/Bass Slide (Pharrell).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "808 (Vinylz)",
+    "category": "808s",
+    "file": "808s/808 (Vinylz).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Thundercat Bass 1",
+    "category": "808s",
+    "file": "808s/Thundercat Bass 1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_BANANA_SPLIT_C#",
+    "category": "808s",
+    "file": "808s/MURDA_808_BANANA_SPLIT_C#.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Diplo 808",
+    "category": "808s",
+    "file": "808s/Diplo 808.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_DIOR_C",
+    "category": "808s",
+    "file": "808s/MURDA_808_DIOR_C.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo006",
+    "category": "808s",
+    "file": "808s/gm_FlyLo006.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "GOOD AM 808 2",
+    "category": "808s",
+    "file": "808s/GOOD AM 808 2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_BLACKBALL_C",
+    "category": "808s",
+    "file": "808s/MURDA_808_BLACKBALL_C.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Bass (Pharrell)",
+    "category": "808s",
+    "file": "808s/Bass (Pharrell).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "GOOD AM 808 3",
+    "category": "808s",
+    "file": "808s/GOOD AM 808 3.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo007",
+    "category": "808s",
+    "file": "808s/gm_FlyLo007.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo005",
+    "category": "808s",
+    "file": "808s/gm_FlyLo005.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo004",
+    "category": "808s",
+    "file": "808s/gm_FlyLo004.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "GOOD AM 808",
+    "category": "808s",
+    "file": "808s/GOOD AM 808.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - 808 Kick",
+    "category": "808s",
+    "file": "808s/CC - 808 Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo001",
+    "category": "808s",
+    "file": "808s/gm_FlyLo001.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Robotic 808",
+    "category": "808s",
+    "file": "808s/CC - Robotic 808.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo003",
+    "category": "808s",
+    "file": "808s/gm_FlyLo003.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_808_SIMPLE_E",
+    "category": "808s",
+    "file": "808s/MURDA_808_SIMPLE_E.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "gm_FlyLo002",
+    "category": "808s",
+    "file": "808s/gm_FlyLo002.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "GOOD AM Kick",
+    "category": "kicks",
+    "file": "kicks/GOOD AM Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (4)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (4).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick [ Grindin_ ]",
+    "category": "kicks",
+    "file": "kicks/Kick [ Grindin_ ].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "TLIKTB KICK 2 (1)",
+    "category": "kicks",
+    "file": "kicks/TLIKTB KICK 2 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Qtr_K",
+    "category": "kicks",
+    "file": "kicks/Qtr_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 24 (Skyy - Questions No Answers)",
+    "category": "kicks",
+    "file": "kicks/Kick 24 (Skyy - Questions No Answers).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 14 (Grace Jones - Victor Should Have Been A Jazz Musician)",
+    "category": "kicks",
+    "file": "kicks/Kick 14 (Grace Jones - Victor Should Have Been A Jazz Musician).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (40)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (40).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (17)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (17).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "BEVERLEY LAUREL KICK (1)",
+    "category": "kicks",
+    "file": "kicks/BEVERLEY LAUREL KICK (1).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 42 (Graham Preskett - Street Credibility (A))",
+    "category": "kicks",
+    "file": "kicks/Kick 42 (Graham Preskett - Street Credibility (A)).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (8)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (8).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (21)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (21).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (37)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (37).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 20 (Karisma - Got You Dancing [Instrumental])",
+    "category": "kicks",
+    "file": "kicks/Kick 20 (Karisma - Got You Dancing [Instrumental]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Shallow Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Shallow Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 08 (Space Art - Love Machine)",
+    "category": "kicks",
+    "file": "kicks/Kick 08 (Space Art - Love Machine).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_WFH",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_WFH.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Ben_K",
+    "category": "kicks",
+    "file": "kicks/Ben_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 07 (Cerrone - Je suis Music)",
+    "category": "kicks",
+    "file": "kicks/Kick 07 (Cerrone - Je suis Music).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (36)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (36).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 26 (Gwen Guthrie - Seventh Heaven)",
+    "category": "kicks",
+    "file": "kicks/Kick 26 (Gwen Guthrie - Seventh Heaven).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 29 (Young-Holt Unlimited - Bumpin_ on Young Street)",
+    "category": "kicks",
+    "file": "kicks/Kick 29 (Young-Holt Unlimited - Bumpin_ on Young Street).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 32 (Alan Parker - Psychosis)",
+    "category": "kicks",
+    "file": "kicks/Kick 32 (Alan Parker - Psychosis).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (20)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (20).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (9)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (9).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "TLIKTB KICK 3 (1)",
+    "category": "kicks",
+    "file": "kicks/TLIKTB KICK 3 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 38 (Mike Moran - Task Force)",
+    "category": "kicks",
+    "file": "kicks/Kick 38 (Mike Moran - Task Force).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick (Earl Sweatshirt - Rats)",
+    "category": "kicks",
+    "file": "kicks/Kick (Earl Sweatshirt - Rats).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (16)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (16).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (41)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (41).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (5)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (5).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Mid_K",
+    "category": "kicks",
+    "file": "kicks/Mid_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (27)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (27).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 34 (Frank Ricotti - Stoned)",
+    "category": "kicks",
+    "file": "kicks/Kick 34 (Frank Ricotti - Stoned).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 36 (Les Hurdle - Tequila Festival)",
+    "category": "kicks",
+    "file": "kicks/Kick 36 (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Clutch Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Clutch Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 15 (Grace Jones - Victor Should Have Been A Jazz Musician)",
+    "category": "kicks",
+    "file": "kicks/Kick 15 (Grace Jones - Victor Should Have Been A Jazz Musician).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_THRASH",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_THRASH.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 11 (Caramel - L_amour toujours l_amour)",
+    "category": "kicks",
+    "file": "kicks/Kick 11 (Caramel - L_amour toujours l_amour).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (31)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (31).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "NEW PERSONS KICK 3 (1)",
+    "category": "kicks",
+    "file": "kicks/NEW PERSONS KICK 3 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 41 (Frank Ricotti - Jay Walk)",
+    "category": "kicks",
+    "file": "kicks/Kick 41 (Frank Ricotti - Jay Walk).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (2)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (2).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_ISOLATION",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_ISOLATION.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "TLIKTB KICK 1 (1)",
+    "category": "kicks",
+    "file": "kicks/TLIKTB KICK 1 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Sealed Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Sealed Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 02 (Young-Holt Unlimited - Blood in the Streets)",
+    "category": "kicks",
+    "file": "kicks/Kick 02 (Young-Holt Unlimited - Blood in the Streets).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (11)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (11).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_JESUS",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_JESUS.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 30 (Gal Costa - Da Maior Import\u00c9ncia)",
+    "category": "kicks",
+    "file": "kicks/Kick 30 (Gal Costa - Da Maior Import\u00c9ncia).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (10)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (10).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 16 (Grace Jones - Sinning)",
+    "category": "kicks",
+    "file": "kicks/Kick 16 (Grace Jones - Sinning).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Distorted Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Distorted Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Rare Kicker",
+    "category": "kicks",
+    "file": "kicks/CC - Rare Kicker.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 2",
+    "category": "kicks",
+    "file": "kicks/Kick 2.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Alchemist Kick 9",
+    "category": "kicks",
+    "file": "kicks/Alchemist Kick 9.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_RODEO",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_RODEO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (3)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (3).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 01 (Young-Holt Unlimited - Blood in the Streets)",
+    "category": "kicks",
+    "file": "kicks/Kick 01 (Young-Holt Unlimited - Blood in the Streets).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Silverlized Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Silverlized Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick (SevnThomas)",
+    "category": "kicks",
+    "file": "kicks/Kick (SevnThomas).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (30)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (30).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_TATTOO",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_TATTOO.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (26)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (26).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (33)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (33).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "NEW PERSON KICK 1 (1)",
+    "category": "kicks",
+    "file": "kicks/NEW PERSON KICK 1 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (25)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (25).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 35 (Mike Moran - The Pick-Up)",
+    "category": "kicks",
+    "file": "kicks/Kick 35 (Mike Moran - The Pick-Up).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 17 (Naomi Peterson - Sweet Naomi Rap)",
+    "category": "kicks",
+    "file": "kicks/Kick 17 (Naomi Peterson - Sweet Naomi Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (13)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (13).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (44)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (44).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "dam funk kick",
+    "category": "kicks",
+    "file": "kicks/dam funk kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (29)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (29).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (28)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (28).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (1)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (1).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 33 (James Clarke - The Heavies)",
+    "category": "kicks",
+    "file": "kicks/Kick 33 (James Clarke - The Heavies).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MZ Kick [Cole]",
+    "category": "kicks",
+    "file": "kicks/MZ Kick [Cole].wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 31 (Gal Costa - Louca Me Chamam [Crazy He Call_s Me])",
+    "category": "kicks",
+    "file": "kicks/Kick 31 (Gal Costa - Louca Me Chamam [Crazy He Call_s Me]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (45)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (45).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Raw_K",
+    "category": "kicks",
+    "file": "kicks/Raw_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_SOUTHERN",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_SOUTHERN.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (12)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (12).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 25 (Skyy - Love Attack)",
+    "category": "kicks",
+    "file": "kicks/Kick 25 (Skyy - Love Attack).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 19 (Willie Wood & Willie Wood Crew - Willie Rap)",
+    "category": "kicks",
+    "file": "kicks/Kick 19 (Willie Wood & Willie Wood Crew - Willie Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "TLIKTB KICK 4 (1)",
+    "category": "kicks",
+    "file": "kicks/TLIKTB KICK 4 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (24)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (24).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Rep_K",
+    "category": "kicks",
+    "file": "kicks/Rep_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 09 (Maya - Lait de coco [Dub])",
+    "category": "kicks",
+    "file": "kicks/Kick 09 (Maya - Lait de coco [Dub]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (32)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (32).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 12 (Cerrone - Rocket In The Pocket)",
+    "category": "kicks",
+    "file": "kicks/Kick 12 (Cerrone - Rocket In The Pocket).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 03 (Young-Holt Unlimited - Wah Wah Man)",
+    "category": "kicks",
+    "file": "kicks/Kick 03 (Young-Holt Unlimited - Wah Wah Man).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "[kick] circles",
+    "category": "kicks",
+    "file": "kicks/[kick] circles.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 04 (Young-Holt Unlimited - Wah Wah Man)",
+    "category": "kicks",
+    "file": "kicks/Kick 04 (Young-Holt Unlimited - Wah Wah Man).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (15)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (15).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (42)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (42).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (39)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (39).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 37 (Les Hurdle - Tequila Festival)",
+    "category": "kicks",
+    "file": "kicks/Kick 37 (Les Hurdle - Tequila Festival).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 27 (Gwen Guthrie - Joy Riders)",
+    "category": "kicks",
+    "file": "kicks/Kick 27 (Gwen Guthrie - Joy Riders).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (6)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (6).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 23 (Skyy - Jam The Box)",
+    "category": "kicks",
+    "file": "kicks/Kick 23 (Skyy - Jam The Box).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (19)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (19).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 40 (Alan Tew - Final Statement)",
+    "category": "kicks",
+    "file": "kicks/Kick 40 (Alan Tew - Final Statement).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 39 (Alan Tew - Night Watch)",
+    "category": "kicks",
+    "file": "kicks/Kick 39 (Alan Tew - Night Watch).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Fire Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Fire Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (35)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (35).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 05 (Giorgio Moroder - From Here To Eternity)",
+    "category": "kicks",
+    "file": "kicks/Kick 05 (Giorgio Moroder - From Here To Eternity).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Soft Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Soft Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (23)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (23).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Bef_K",
+    "category": "kicks",
+    "file": "kicks/Bef_K.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (22)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (22).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 18 (Naomi Peterson - Sweet Naomi Rap)",
+    "category": "kicks",
+    "file": "kicks/Kick 18 (Naomi Peterson - Sweet Naomi Rap).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 22 (Skyy - I Can_t Get Enough)",
+    "category": "kicks",
+    "file": "kicks/Kick 22 (Skyy - I Can_t Get Enough).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 10 (Yannick Chevalier - Ecoute le son du soleil [Instrumental])",
+    "category": "kicks",
+    "file": "kicks/Kick 10 (Yannick Chevalier - Ecoute le son du soleil [Instrumental]).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_CORONA",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_CORONA.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (34)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (34).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (18)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (18).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Kingdom Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Kingdom Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 13 (Cerrone - Rock Me)",
+    "category": "kicks",
+    "file": "kicks/Kick 13 (Cerrone - Rock Me).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (7)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (7).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "9th Wonder Kicks_bip_1",
+    "category": "kicks",
+    "file": "kicks/9th Wonder Kicks_bip_1.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_THUMPED",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_THUMPED.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Crystal Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Crystal Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (38)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (38).WAV",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 21 (Patrice Rushen - I Was Tired Of Being Alone)",
+    "category": "kicks",
+    "file": "kicks/Kick 21 (Patrice Rushen - I Was Tired Of Being Alone).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (43)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (43).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 28 (Young-Holt Unlimited - Bumpin_ on Young Street)",
+    "category": "kicks",
+    "file": "kicks/Kick 28 (Young-Holt Unlimited - Bumpin_ on Young Street).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MB Kick (14)",
+    "category": "kicks",
+    "file": "kicks/MB Kick (14).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "CC - Crew Luv Kick",
+    "category": "kicks",
+    "file": "kicks/CC - Crew Luv Kick.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "THE MOMENT KICK 1 (1)",
+    "category": "kicks",
+    "file": "kicks/THE MOMENT KICK 1 (1).mp3",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_ROUNDHOUSE",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_ROUNDHOUSE.wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "Kick 06 (Cerrone - Black is Black)",
+    "category": "kicks",
+    "file": "kicks/Kick 06 (Cerrone - Black is Black).wav",
+    "kit": "bad drums"
+  },
+  {
+    "name": "MURDA_KICK_ICED_OUT.",
+    "category": "kicks",
+    "file": "kicks/MURDA_KICK_ICED_OUT..wav",
+    "kit": "bad drums"
+  }
+]

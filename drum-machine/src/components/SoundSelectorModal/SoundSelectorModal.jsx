@@ -12,10 +12,45 @@ function SoundSelectorModal({ drumSounds }) {
     (state) => state.tracks.updateTrackSound
   );
 
+  const [sortMode, setSortMode] = useState("sound"); // "sound" or "kit"
   const [selectedCategory, setSelectedCategory] = useState("kicks");
   const [selectedSound, setSelectedSound] = useState(null);
   const [loadedSounds, setLoadedSounds] = useState({});
   const [audioContext, setAudioContext] = useState(null);
+
+  // Process drum sounds based on sort mode
+  const processedSounds = React.useMemo(() => {
+    if (!drumSounds || !Array.isArray(drumSounds))
+      return { categories: {}, categoryList: [] };
+
+    if (sortMode === "sound") {
+      // Group by category (kicks, snares, etc.)
+      const byCategory = {};
+      drumSounds.forEach((sound) => {
+        if (!byCategory[sound.category]) {
+          byCategory[sound.category] = [];
+        }
+        byCategory[sound.category].push(sound);
+      });
+      return {
+        categories: byCategory,
+        categoryList: Object.keys(byCategory),
+      };
+    } else {
+      // Group by kit (Legacy, Modern, etc.)
+      const byKit = {};
+      drumSounds.forEach((sound) => {
+        if (!byKit[sound.kit]) {
+          byKit[sound.kit] = [];
+        }
+        byKit[sound.kit].push(sound);
+      });
+      return {
+        categories: byKit,
+        categoryList: Object.keys(byKit),
+      };
+    }
+  }, [drumSounds, sortMode]);
 
   // Initialize audio context
   useEffect(() => {
@@ -23,33 +58,63 @@ function SoundSelectorModal({ drumSounds }) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       setAudioContext(ctx);
     }
-  }, [soundModalOpen]);
+  }, [soundModalOpen, audioContext]);
 
-  // Auto-select track's current category when modal opens
+  // Auto-select appropriate category when modal opens or sort mode changes
   useEffect(() => {
     if (soundModalOpen && soundModalTrack) {
-      // Find which category contains the track's current sound
-      const categories = Object.keys(drumSounds);
-      for (const category of categories) {
-        const soundExists = drumSounds[category].some(
-          (sound) => sound.file === soundModalTrack.soundFile
+      if (sortMode === "sound") {
+        // Find the category that contains the track's current sound
+        const soundObj = drumSounds.find(
+          (s) => s.file === soundModalTrack.soundFile
         );
-        if (soundExists) {
-          setSelectedCategory(category);
-          break;
+        if (
+          soundObj &&
+          processedSounds.categoryList.includes(soundObj.category)
+        ) {
+          setSelectedCategory(soundObj.category);
+        } else if (processedSounds.categoryList.length > 0) {
+          setSelectedCategory(processedSounds.categoryList[0]);
+        }
+      } else {
+        // Find the kit that contains the track's current sound
+        const soundObj = drumSounds.find(
+          (s) => s.file === soundModalTrack.soundFile
+        );
+        if (soundObj && processedSounds.categoryList.includes(soundObj.kit)) {
+          setSelectedCategory(soundObj.kit);
+        } else if (processedSounds.categoryList.length > 0) {
+          setSelectedCategory(processedSounds.categoryList[0]);
         }
       }
+
       // Set current sound as selected
       setSelectedSound(soundModalTrack.soundFile);
     }
-  }, [soundModalOpen, soundModalTrack, drumSounds]);
+  }, [
+    soundModalOpen,
+    soundModalTrack,
+    drumSounds,
+    sortMode,
+    processedSounds.categoryList,
+  ]);
+
+  // Update selected category when switching sort modes
+  useEffect(() => {
+    if (
+      processedSounds.categoryList.length > 0 &&
+      !processedSounds.categoryList.includes(selectedCategory)
+    ) {
+      setSelectedCategory(processedSounds.categoryList[0]);
+    }
+  }, [sortMode, processedSounds.categoryList, selectedCategory]);
 
   // Load sounds for a category
   const loadCategorySounds = async (category) => {
     if (loadedSounds[category] || !audioContext) return;
 
     console.log(`Loading sounds for category: ${category}`);
-    const sounds = drumSounds[category];
+    const sounds = processedSounds.categories[category] || [];
     const loadedBuffers = {};
 
     for (const sound of sounds) {
@@ -92,10 +157,9 @@ function SoundSelectorModal({ drumSounds }) {
     playSound(soundFile);
   };
 
-  // Handle apply - now just calls the store action
+  // Handle apply
   const handleApply = () => {
     if (selectedSound && soundModalTrack) {
-      // This now handles both local state and WebSocket automatically
       updateTrackSound(soundModalTrack.id, selectedSound);
     }
     closeSoundModal();
@@ -137,8 +201,7 @@ function SoundSelectorModal({ drumSounds }) {
 
   if (!soundModalOpen) return null;
 
-  const categories = Object.keys(drumSounds);
-  const currentSounds = drumSounds[selectedCategory] || [];
+  const currentSounds = processedSounds.categories[selectedCategory] || [];
 
   return (
     <div
@@ -163,13 +226,52 @@ function SoundSelectorModal({ drumSounds }) {
             ></button>
           </div>
 
-          <div className="modal-body" style={{ height: "400px" }}>
+          {/* Sort Mode Toggle */}
+          <div className="modal-body" style={{ paddingBottom: "0" }}>
+            <div className="d-flex justify-content-center mb-3">
+              <div className="btn-group" role="group">
+                <input
+                  type="radio"
+                  className="btn-check"
+                  name="sortMode"
+                  id="sortBySound"
+                  checked={sortMode === "sound"}
+                  onChange={() => setSortMode("sound")}
+                />
+                <label
+                  className="btn btn-outline-primary"
+                  htmlFor="sortBySound"
+                >
+                  Sort by Sound
+                </label>
+
+                <input
+                  type="radio"
+                  className="btn-check"
+                  name="sortMode"
+                  id="sortByKit"
+                  checked={sortMode === "kit"}
+                  onChange={() => setSortMode("kit")}
+                />
+                <label className="btn btn-outline-primary" htmlFor="sortByKit">
+                  Sort by Kit
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="modal-body"
+            style={{ height: "400px", paddingTop: "0" }}
+          >
             <div className="row h-100">
               {/* Categories */}
               <div className="col-4 border-end">
-                <h6 className="text-muted mb-3">Categories</h6>
+                <h6 className="text-muted mb-3">
+                  {sortMode === "sound" ? "Categories" : "Kits"}
+                </h6>
                 <div className="list-group list-group-flush">
-                  {categories.map((category) => (
+                  {processedSounds.categoryList.map((category) => (
                     <button
                       key={category}
                       className={`list-group-item list-group-item-action ${
@@ -208,7 +310,17 @@ function SoundSelectorModal({ drumSounds }) {
                           onClick={() => handleSoundClick(sound.file)}
                           disabled={!isLoaded}
                         >
-                          <span>{sound.name}</span>
+                          <div className="d-flex flex-column align-items-start">
+                            <span>{sound.name}</span>
+                            {sortMode === "kit" && (
+                              <small className="text-muted">
+                                {sound.category}
+                              </small>
+                            )}
+                            {sortMode === "sound" && (
+                              <small className="text-muted">{sound.kit}</small>
+                            )}
+                          </div>
                           <span
                             className={`badge ${
                               isLoaded ? "bg-secondary" : "bg-warning"

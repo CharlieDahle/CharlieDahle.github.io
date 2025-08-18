@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import json
+import shutil
 from pathlib import Path
 
 def get_audio_files(directory):
@@ -95,10 +96,14 @@ def get_user_category_choice(folder_name, categories):
 
 def main():
     input_dir = "input"
+    output_dir = "output"
     
     if not os.path.exists(input_dir):
         print(f"Error: '{input_dir}' directory not found!")
         return
+    
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
     
     # Initial categories
     categories = ['kicks', 'snares', 'hihats', 'cymbals', 'percs', '808s', 'claps', 'openhats', 'vox']
@@ -149,13 +154,37 @@ def main():
         
         # Process all audio files in this folder
         for audio_file in audio_files:
-            # Create relative path from input directory
-            relative_path = os.path.relpath(audio_file, input_dir)
+            # Create category directory in output if it doesn't exist
+            category_output_dir = os.path.join(output_dir, category)
+            os.makedirs(category_output_dir, exist_ok=True)
+            
+            # Create destination path
+            destination_file = os.path.join(category_output_dir, audio_file.name)
+            
+            # Handle duplicate filenames by adding a number
+            counter = 1
+            original_destination = destination_file
+            while os.path.exists(destination_file):
+                name_without_ext = audio_file.stem
+                extension = audio_file.suffix
+                destination_file = os.path.join(category_output_dir, f"{name_without_ext}_{counter}{extension}")
+                counter += 1
+            
+            # Copy the file
+            try:
+                shutil.copy2(audio_file, destination_file)
+                print(f"  → Copied '{audio_file.name}' to '{category}/'")
+            except Exception as e:
+                print(f"  ✗ Error copying '{audio_file.name}': {e}")
+                continue
+            
+            # Create relative path for JSON (from output directory)
+            relative_path = os.path.relpath(destination_file, output_dir)
             # Convert to forward slashes for consistency
             relative_path = relative_path.replace('\\', '/')
             
             # Create name from filename (without extension)
-            name = audio_file.stem
+            name = Path(destination_file).stem
             
             # Create JSON entry
             entry = {
@@ -170,7 +199,7 @@ def main():
     # Output results
     if json_entries:
         print(f"\n{'='*50}")
-        print(f"Generated {len(json_entries)} entries:")
+        print(f"Generated {len(json_entries)} entries and organized files:")
         print("="*50)
         
         # Pretty print the JSON
@@ -182,7 +211,8 @@ def main():
         with open(output_filename, "w") as f:
             f.write(json_output)
         
-        print(f"\n✓ Saved to '{output_filename}'")
+        print(f"\n✓ Files organized in 'output/' directory")
+        print(f"✓ JSON saved to '{output_filename}'")
         print("You can copy these entries and paste them into your main JSON file!")
         
     else:

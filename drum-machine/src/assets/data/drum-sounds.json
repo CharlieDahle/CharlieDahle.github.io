@@ -2,97 +2,97 @@
   {
     "name": "JUNA KICK 2",
     "category": "kicks",
-    "file": "KICK/JUNA KICK 2.wav",
+    "file": "kicks/JUNA KICK 2.wav",
     "kit": "charm"
   },
   {
     "name": "ADD UP MY LOVE KICK",
     "category": "kicks",
-    "file": "KICK/ADD UP MY LOVE KICK.wav",
+    "file": "kicks/ADD UP MY LOVE KICK.wav",
     "kit": "charm"
   },
   {
     "name": "JUNA KICK",
     "category": "kicks",
-    "file": "KICK/JUNA KICK.wav",
+    "file": "kicks/JUNA KICK.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE KICK 3",
     "category": "kicks",
-    "file": "KICK/SECOND NATURE KICK 3.wav",
+    "file": "kicks/SECOND NATURE KICK 3.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE KICK 2",
     "category": "kicks",
-    "file": "KICK/SECOND NATURE KICK 2.wav",
+    "file": "kicks/SECOND NATURE KICK 2.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE KICK",
     "category": "kicks",
-    "file": "KICK/SECOND NATURE KICK.wav",
+    "file": "kicks/SECOND NATURE KICK.wav",
     "kit": "charm"
   },
   {
     "name": "JUNA PERC ",
     "category": "percs",
-    "file": "PERCS/JUNA PERC .wav",
+    "file": "percs/JUNA PERC .wav",
     "kit": "charm"
   },
   {
     "name": "JUNA PERC 2",
     "category": "percs",
-    "file": "PERCS/JUNA PERC 2.wav",
+    "file": "percs/JUNA PERC 2.wav",
     "kit": "charm"
   },
   {
     "name": "ADD UP MY LOVE PERC",
     "category": "percs",
-    "file": "PERCS/ADD UP MY LOVE PERC.wav",
+    "file": "percs/ADD UP MY LOVE PERC.wav",
     "kit": "charm"
   },
   {
     "name": "JUNA HH",
     "category": "hihats",
-    "file": "HATS/JUNA HH.wav",
+    "file": "hihat/JUNA HH.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE HH",
     "category": "hihats",
-    "file": "HATS/SECOND NATURE HH.wav",
+    "file": "hihat/SECOND NATURE HH.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE RIDE 2",
     "category": "hihats",
-    "file": "HATS/SECOND NATURE RIDE 2.wav",
+    "file": "hihat/SECOND NATURE RIDE 2.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE SNARE 2",
     "category": "snares",
-    "file": "SNARES/SECOND NATURE SNARE 2.wav",
+    "file": "snares/SECOND NATURE SNARE 2.wav",
     "kit": "charm"
   },
   {
     "name": "SECOND NATURE SNARE",
     "category": "snares",
-    "file": "SNARES/SECOND NATURE SNARE.wav",
+    "file": "snares/SECOND NATURE SNARE.wav",
     "kit": "charm"
   },
   {
     "name": "ADD UP MY LOVE SNARE",
     "category": "snares",
-    "file": "SNARES/ADD UP MY LOVE SNARE.wav",
+    "file": "snares/ADD UP MY LOVE SNARE.wav",
     "kit": "charm"
   },
   {
     "name": "JUNA SNARE",
     "category": "snares",
-    "file": "SNARES/JUNA SNARE.wav",
+    "file": "snares/JUNA SNARE.wav",
     "kit": "charm"
   },
   {
