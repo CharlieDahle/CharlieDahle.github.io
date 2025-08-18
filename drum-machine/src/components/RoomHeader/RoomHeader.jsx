@@ -1,7 +1,7 @@
-// src/components/RoomHeader/RoomHeader.jsx - Enhanced version
+// src/components/RoomHeader/RoomHeader.jsx - Streamlined version
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Save, User, Plus, FileText } from "lucide-react";
+import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import "./RoomHeader.css";
@@ -18,12 +18,10 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
   // Get auth state
-  const { isAuthenticated, user } = useAppStore((state) => state.auth);
+  const { isAuthenticated } = useAppStore((state) => state.auth);
 
   // Get beat tracking info
-  const { getSaveButtonInfo, createNewBeat } = useAppStore(
-    (state) => state.beats
-  );
+  const { getSaveButtonInfo } = useAppStore((state) => state.beats);
   const saveButtonInfo = getSaveButtonInfo();
 
   // Save beat modal state
@@ -43,10 +41,8 @@ function RoomHeader({ debugMode, setDebugMode }) {
     }
   };
 
-  const handleCreateNew = () => {
-    if (isAuthenticated) {
-      createNewBeat();
-    }
+  const handleNavigateToBeats = () => {
+    navigate("/beats");
   };
 
   const handleSignInClick = () => {
@@ -88,45 +84,42 @@ function RoomHeader({ debugMode, setDebugMode }) {
   };
 
   const userCount = users.length;
+  const isConnected = connectionState === "connected";
 
-  // Determine badge content and styling based on connection state
-  const getBadgeConfig = () => {
-    switch (connectionState) {
-      case "connected":
-        return {
-          className: "user-count-badge user-count-badge--connected",
-          text: `${userCount} user${userCount !== 1 ? "s" : ""} online`,
-          showIndicator: true,
-        };
-      case "syncing":
-        return {
-          className: "user-count-badge user-count-badge--syncing",
-          text: "Syncing...",
-          showIndicator: false,
-        };
-      case "disconnected":
-        return {
-          className: "user-count-badge user-count-badge--disconnected",
-          text: "Disconnected",
-          showIndicator: false,
-        };
-      case "failed":
-        return {
-          className: "user-count-badge user-count-badge--failed",
-          text: "Connection Failed",
-          showIndicator: false,
-        };
-      default:
-        return {
-          className: "user-count-badge user-count-badge--disconnected",
-          text: "Connecting...",
-          showIndicator: false,
-        };
-    }
+  // Determine if we should show the save/update button
+  const shouldShowSaveButton = () => {
+    if (!isAuthenticated || !isConnected) return false;
+
+    // Don't show if explicitly hidden (saved beat with no changes)
+    if (saveButtonInfo.hideButton) return false;
+
+    // Show for new beats or existing beats with changes
+    return !saveButtonInfo.isUpdate || saveButtonInfo.showUnsavedIndicator;
   };
 
-  const badgeConfig = getBadgeConfig();
-  const isConnected = connectionState === "connected";
+  // Get the save button configuration
+  const getSaveButtonConfig = () => {
+    if (!saveButtonInfo.isUpdate) {
+      // New beat (not loaded from server)
+      return {
+        text: "Save",
+        icon: <Save size={16} />,
+        className: "header-action-btn header-action-btn--save",
+      };
+    } else if (saveButtonInfo.showUnsavedIndicator) {
+      // Existing beat with changes
+      return {
+        text: "Update",
+        icon: <Edit size={16} />,
+        className: "header-action-btn header-action-btn--update",
+      };
+    }
+
+    // This shouldn't render based on shouldShowSaveButton logic
+    return null;
+  };
+
+  const saveButtonConfig = getSaveButtonConfig();
 
   return (
     <>
@@ -152,96 +145,67 @@ function RoomHeader({ debugMode, setDebugMode }) {
               )}
             </div>
             <div className="room-info">
-              Room: {roomId}
-              {/* NEW: Show current beat info */}
-              {isAuthenticated && saveButtonInfo.isUpdate && (
-                <span className="beat-info">
-                  • Beat: <strong>"{saveButtonInfo.beatName}"</strong>
-                  {saveButtonInfo.showUnsavedIndicator && (
-                    <span className="unsaved-indicator">
-                      {" "}
-                      (unsaved changes)
-                    </span>
-                  )}
-                </span>
-              )}
-              {isAuthenticated && (
-                <span className="auth-info">
-                  • Signed in as <strong>{user?.username}</strong>
-                </span>
-              )}
+              <div className="room-code-line">
+                Room: {roomId}
+                <div className="user-count-badge">
+                  <Users size={16} />
+                  <span>
+                    {userCount} user{userCount !== 1 ? "s" : ""} online
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="header-badges">
-            {/* Beat Management - only show if authenticated */}
-            {isAuthenticated && (
-              <div className="beat-controls">
-                <button
-                  className="create-new-btn"
-                  onClick={handleCreateNew}
-                  disabled={!isConnected}
-                  title="Start a new beat"
-                >
-                  <Plus size={16} />
-                  <span>New</span>
-                </button>
-
-                <button
-                  className={`save-beat-btn ${
-                    saveButtonInfo.showUnsavedIndicator ? "has-changes" : ""
-                  } ${saveButtonInfo.isUpdate ? "update-mode" : ""}`}
-                  onClick={handleSaveBeat}
-                  disabled={!isConnected}
-                  title={
-                    saveButtonInfo.isUpdate
-                      ? saveButtonInfo.showUnsavedIndicator
-                        ? `Update "${saveButtonInfo.beatName}" with your changes`
-                        : `"${saveButtonInfo.beatName}" is saved`
-                      : "Save this beat to your library"
-                  }
-                >
-                  {saveButtonInfo.isUpdate ? (
-                    <FileText size={16} />
-                  ) : (
-                    <Save size={16} />
-                  )}
-                  <span className="save-btn-text">{saveButtonInfo.text}</span>
-                  {saveButtonInfo.showUnsavedIndicator && (
-                    <span className="unsaved-dot"></span>
-                  )}
-                </button>
-              </div>
+          <div className="header-actions">
+            {/* Save/Update Button - only show when needed */}
+            {shouldShowSaveButton() && saveButtonConfig && (
+              <button
+                className={saveButtonConfig.className}
+                onClick={handleSaveBeat}
+                disabled={!isConnected}
+                title={
+                  saveButtonInfo.isUpdate
+                    ? `Update "${saveButtonInfo.beatName}" with your changes`
+                    : "Save this beat to your library"
+                }
+              >
+                {saveButtonConfig.icon}
+                <span>{saveButtonConfig.text}</span>
+              </button>
             )}
 
-            {/* Auth Actions - only show if not authenticated */}
-            {!isAuthenticated && (
-              <div className="auth-actions">
-                <button
-                  className="auth-btn auth-btn--secondary"
-                  onClick={handleSignInClick}
-                >
-                  <User size={16} />
-                  Sign In
-                </button>
-              </div>
+            {/* Navigate to Beats (if authenticated) or Sign In (if not) */}
+            {isAuthenticated ? (
+              <button
+                className="header-action-btn header-action-btn--beats"
+                onClick={handleNavigateToBeats}
+                disabled={!isConnected}
+                title="View your saved beats"
+              >
+                <FileText size={16} />
+                <span>My Beats</span>
+              </button>
+            ) : (
+              <button
+                className="header-action-btn header-action-btn--signin"
+                onClick={handleSignInClick}
+                title="Sign in to save beats"
+              >
+                <User size={16} />
+                <span>Sign In</span>
+              </button>
             )}
 
+            {/* Leave Room Button */}
             <button
-              className="leave-room-badge"
+              className="header-action-btn header-action-btn--leave"
               onClick={handleLeaveRoom}
               disabled={!isConnected}
             >
               <ChevronLeft size={16} />
               <span>Leave Room</span>
             </button>
-
-            <div className={badgeConfig.className}>
-              {badgeConfig.showIndicator && (
-                <div className="status-indicator"></div>
-              )}
-              <span>{badgeConfig.text}</span>
-            </div>
           </div>
         </div>
       </div>

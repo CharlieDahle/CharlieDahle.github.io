@@ -1,4 +1,4 @@
-/* src/components/RoomHeader/RoomHeader.css - Updated with auth styles */
+/* src/components/RoomHeader/RoomHeader.css - Streamlined styles */
 
 /* Room Header Card - matching mockup design language */
 .room-header-card {
@@ -93,187 +93,113 @@
   }
 }
 
+/* Room Info Styling */
 .room-info {
   color: var(--text-secondary, #6c757d);
   font-size: 14px;
 }
 
-.auth-info {
-  color: #5bc0eb;
+.room-code-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* User Count - simple green text inline with room code */
+.user-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #28a745;
+  font-size: 14px;
   font-weight: 500;
 }
 
-/* Header Badges Container */
-.header-badges {
+/* Header Actions Container */
+.header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Save Beat Button */
-.save-beat-btn {
-  background: #28a745; /* Green to indicate saving */
+/* Universal Header Action Button Styles - matching original Leave Room */
+.header-action-btn {
+  background: #dc3545; /* Default red like original Leave Room */
   color: white;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.save-beat-btn:hover:not(:disabled) {
-  background: #218838;
+.header-action-btn:hover:not(:disabled) {
+  background: #c82333; /* Darker red on hover */
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
-.save-beat-btn:disabled {
+.header-action-btn:active {
+  transform: translateY(0);
+}
+
+.header-action-btn:disabled {
   background: #adb5bd;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-/* Auth Actions */
-.auth-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Save Button - Green */
+.header-action-btn--save {
+  background: #28a745;
 }
 
-.auth-btn {
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-decoration: none;
-  border: none;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+.header-action-btn--save:hover:not(:disabled) {
+  background: #218838;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
-.auth-btn--primary {
+/* Update Button - Blue */
+.header-action-btn--update {
+  background: #17a2b8;
+}
+
+.header-action-btn--update:hover:not(:disabled) {
+  background: #138496;
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+/* My Beats Button - Nice blue we've been using */
+.header-action-btn--beats {
   background: #5bc0eb;
   color: white;
 }
 
-.auth-btn--primary:hover {
+.header-action-btn--beats:hover:not(:disabled) {
   background: #4ba8cc;
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
-  color: white;
-  text-decoration: none;
 }
 
-.auth-btn--secondary {
-  background: #f8f9fa;
-  color: #495057;
-  border: 2px solid #dee2e6;
-}
-
-.auth-btn--secondary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  transform: translateY(-1px);
-  color: #495057;
-  text-decoration: none;
-}
-
-/* Leave Room Badge - styled like user count badge but red */
-.leave-room-badge {
-  background: #dc3545; /* Red blob color from your color palette */
-  color: white;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.leave-room-badge:hover:not(:disabled) {
-  background: rgb(198, 73, 45); /* Slightly darker red on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(229, 89, 52, 0.3);
-}
-
-.leave-room-badge:active {
-  transform: translateY(0);
-}
-
-.leave-room-badge:disabled {
-  background: #adb5bd;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Base User Badge Styles */
-.user-count-badge {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-
-/* Connected State - Green */
-.user-count-badge--connected {
-  background: #28a745;
+/* Sign In Button - Same blue as My Beats */
+.header-action-btn--signin {
+  background: #5bc0eb;
   color: white;
 }
 
-/* Syncing State - Yellow (same as pause button) */
-.user-count-badge--syncing {
-  background: #ffc107;
-  color: #212529; /* Dark text for better contrast on yellow */
+.header-action-btn--signin:hover:not(:disabled) {
+  background: #4ba8cc;
+  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
 }
 
-/* Disconnected State - Red */
-.user-count-badge--disconnected {
-  background: #e55934;
-  color: white;
-}
-
-/* Failed State - Darker Red */
-.user-count-badge--failed {
-  background: #dc3545;
-  color: white;
-}
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+/* Leave Room Button - Red (default styling) */
+.header-action-btn--leave {
+  /* Uses default red styling from base .header-action-btn */
 }
 
 /* Responsive adjustments */
@@ -292,7 +218,7 @@
     height: 32px;
   }
 
-  .header-badges {
+  .header-actions {
     gap: 8px;
     flex-wrap: wrap;
   }
@@ -307,171 +233,32 @@
     text-align: center;
   }
 
-  .auth-actions {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .save-beat-btn,
-  .auth-btn,
-  .leave-room-badge {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  .save-beat-btn span,
-  .leave-room-badge span {
-    display: none; /* Hide text on very small screens, show only icons */
-  }
-
-  .header-badges {
-    justify-content: center;
-  }
-}
-
-.beat-info {
-  color: #5bc0eb;
-  font-weight: 500;
-}
-
-.unsaved-indicator {
-  color: #ffc107;
-  font-weight: 600;
-}
-
-/* Beat Controls */
-.beat-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.create-new-btn {
-  background: #6c757d;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.create-new-btn:hover:not(:disabled) {
-  background: #5a6268;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
-}
-
-.create-new-btn:disabled {
-  background: #adb5bd;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Enhanced Save Button */
-.save-beat-btn {
-  position: relative;
-  min-width: 140px;
-  justify-content: flex-start;
-  overflow: hidden;
-}
-
-.save-beat-btn.update-mode {
-  background: #17a2b8; /* Info blue for updates */
-}
-
-.save-beat-btn.update-mode:hover:not(:disabled) {
-  background: #138496;
-  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
-}
-
-.save-beat-btn.has-changes {
-  background: #ffc107; /* Warning yellow for unsaved changes */
-  color: #212529;
-  animation: pulse-changes 2s ease-in-out infinite;
-}
-
-.save-beat-btn.has-changes:hover:not(:disabled) {
-  background: #e0a800;
-  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
-}
-
-@keyframes pulse-changes {
-  0%,
-  100% {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  }
-  50% {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075),
-      0 0 0 3px rgba(255, 193, 7, 0.3);
-  }
-}
-
-.save-btn-text {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
-}
-
-.unsaved-dot {
-  width: 8px;
-  height: 8px;
-  background: #dc3545;
-  border-radius: 50%;
-  flex-shrink: 0;
-  animation: blink 1.5s ease-in-out infinite;
-}
-
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
-/* Responsive adjustments for the new controls */
-@media (max-width: 768px) {
-  .beat-controls {
+  .room-code-line {
     flex-direction: column;
-    gap: 6px;
-    width: 100%;
+    gap: 8px;
+    align-items: center;
   }
 
-  .create-new-btn,
-  .save-beat-btn {
-    width: 100%;
+  .user-count-badge {
+    font-size: 12px;
+  }
+
+  .header-action-btn {
     justify-content: center;
-  }
-
-  .save-btn-text {
-    max-width: none;
-    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
-  .create-new-btn span,
-  .save-beat-btn .save-btn-text {
+  .header-action-btn {
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+
+  .header-action-btn span {
     display: none; /* Hide text on very small screens, show only icons */
   }
 
-  .save-beat-btn {
-    min-width: auto;
-    width: 44px;
+  .header-actions {
     justify-content: center;
   }
 }
