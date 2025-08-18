@@ -222,6 +222,15 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
               <MessageSquare size={16} />
               Messages ({messageLog.length})
             </button>
+            <button
+              className={`debug-tab ${
+                activeTab === "audio-files" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("audio-files")}
+            >
+              <Volume2 size={16} />
+              Audio Files
+            </button>
           </div>
 
           <div className="debug-body">
@@ -544,6 +553,110 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
                   <div className="no-data">
                     No audio engine data available. Make sure the scheduler is
                     running.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "audio-files" && (
+              <div>
+                <h3>Audio Files Status</h3>
+                {window.drumSoundDebugData ? (
+                  <>
+                    <div className="stats-grid">
+                      <div className="stat-item">
+                        <span className="stat-label">Total Files:</span>
+                        <span className="stat-value">
+                          {window.drumSoundDebugData.totalSounds}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Load Attempts:</span>
+                        <span className="stat-value">
+                          {window.drumSoundDebugData.attempted.length}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Successfully Loaded:</span>
+                        <span className="stat-value">
+                          {window.drumSoundDebugData.successful.length}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Failed to Load:</span>
+                        <span className="stat-value">
+                          {window.drumSoundDebugData.failed.length}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Success Rate:</span>
+                        <span className="stat-value">
+                          {window.drumSoundDebugData.successRate}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <h4>
+                      Successfully Loaded Files (
+                      {window.drumSoundDebugData.successful.length})
+                    </h4>
+                    {window.drumSoundDebugData.successful.length > 0 ? (
+                      <div className="audio-files">
+                        {window.drumSoundDebugData.successful.map((file) => (
+                          <div
+                            key={file}
+                            className="audio-file"
+                            style={{ color: "#28a745" }}
+                          >
+                            ✅ {file}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-data">No files loaded yet</div>
+                    )}
+
+                    <h4>
+                      Failed to Load ({window.drumSoundDebugData.failed.length})
+                    </h4>
+                    {window.drumSoundDebugData.failed.length > 0 ? (
+                      <div className="audio-files">
+                        {window.drumSoundDebugData.failed.map(
+                          ({ file, error }) => (
+                            <div
+                              key={file}
+                              className="audio-file"
+                              style={{ color: "#dc3545" }}
+                            >
+                              <div>❌ {file}</div>
+                              <div
+                                style={{
+                                  fontSize: "11px",
+                                  marginTop: "4px",
+                                  color: "#6c757d",
+                                }}
+                              >
+                                Error: {error}
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className="no-data">No failed loads</div>
+                    )}
+
+                    <details className="raw-data">
+                      <summary>Raw Audio Debug Data</summary>
+                      <pre className="json-display">
+                        {JSON.stringify(window.drumSoundDebugData, null, 2)}
+                      </pre>
+                    </details>
+                  </>
+                ) : (
+                  <div className="no-data">
+                    No audio debug data available. Open the sound selector to
+                    start loading sounds.
                   </div>
                 )}
               </div>
