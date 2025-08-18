@@ -18,6 +18,28 @@ function SoundSelectorModal({ drumSounds }) {
   const [loadedSounds, setLoadedSounds] = useState({});
   const [audioContext, setAudioContext] = useState(null);
 
+  // Debug tracking state
+  const [loadingAttempts, setLoadingAttempts] = useState(new Set());
+  const [successfulLoads, setSuccessfulLoads] = useState(new Set());
+  const [failedLoads, setFailedLoads] = useState(new Map()); // Map to store error details
+
+  // Expose debug data to global window for debug panel access
+  useEffect(() => {
+    window.drumSoundDebugData = {
+      attempted: Array.from(loadingAttempts),
+      successful: Array.from(successfulLoads),
+      failed: Array.from(failedLoads.entries()).map(([file, error]) => ({
+        file,
+        error,
+      })),
+      totalSounds: drumSounds ? drumSounds.length : 0,
+      successRate:
+        loadingAttempts.size > 0
+          ? ((successfulLoads.size / loadingAttempts.size) * 100).toFixed(1)
+          : 0,
+    };
+  }, [loadingAttempts, successfulLoads, failedLoads, drumSounds]);
+
   // Process drum sounds based on sort mode
   const processedSounds = React.useMemo(() => {
     if (!drumSounds || !Array.isArray(drumSounds))
@@ -119,12 +141,29 @@ function SoundSelectorModal({ drumSounds }) {
 
     for (const sound of sounds) {
       try {
+        // Track that we're attempting to load this sound
+        setLoadingAttempts((prev) => new Set([...prev, sound.file]));
+
         const response = await fetch(`/${sound.file}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         loadedBuffers[sound.file] = audioBuffer;
+
+        // Track successful load
+        setSuccessfulLoads((prev) => new Set([...prev, sound.file]));
+        console.log(`✅ Successfully loaded: ${sound.file}`);
       } catch (error) {
-        console.error(`Failed to load sound: ${sound.file}`, error);
+        console.error(`❌ Failed to load sound: ${sound.file}`, error);
+
+        // Track failed load with error details
+        setFailedLoads(
+          (prev) => new Map([...prev, [sound.file, error.message]])
+        );
       }
     }
 
@@ -301,12 +340,15 @@ function SoundSelectorModal({ drumSounds }) {
                     {currentSounds.map((sound) => {
                       const isLoaded =
                         loadedSounds[selectedCategory]?.[sound.file];
+                      const hasFailed = failedLoads.has(sound.file);
                       return (
                         <button
                           key={sound.file}
                           className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
                             selectedSound === sound.file ? "active" : ""
-                          } ${!isLoaded ? "text-muted" : ""}`}
+                          } ${!isLoaded ? "text-muted" : ""} ${
+                            hasFailed ? "border-danger" : ""
+                          }`}
                           onClick={() => handleSoundClick(sound.file)}
                           disabled={!isLoaded}
                         >
@@ -323,10 +365,14 @@ function SoundSelectorModal({ drumSounds }) {
                           </div>
                           <span
                             className={`badge ${
-                              isLoaded ? "bg-secondary" : "bg-warning"
+                              hasFailed
+                                ? "bg-danger"
+                                : isLoaded
+                                ? "bg-secondary"
+                                : "bg-warning"
                             }`}
                           >
-                            {isLoaded ? "♪" : "..."}
+                            {hasFailed ? "✗" : isLoaded ? "♪" : "..."}
                           </span>
                         </button>
                       );
