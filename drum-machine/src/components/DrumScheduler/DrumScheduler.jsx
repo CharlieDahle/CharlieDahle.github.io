@@ -48,6 +48,14 @@ class DrumScheduler {
     };
   }
 
+  // Helper function to properly encode file paths
+  encodeFilePath(filePath) {
+    return filePath
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+  }
+
   // Initialize Tone.js
   async init() {
     try {
@@ -379,7 +387,7 @@ class DrumScheduler {
   async loadAudioFile(filePath, trackId) {
     try {
       // Properly encode the file path for URL usage
-      const encodedPath = encodeURI(filePath);
+      const encodedPath = this.encodeFilePath(filePath);
       console.log(`Loading audio file:`, {
         originalPath: filePath,
         encodedPath: encodedPath,

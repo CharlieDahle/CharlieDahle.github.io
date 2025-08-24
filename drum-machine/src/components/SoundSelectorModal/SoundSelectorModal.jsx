@@ -23,6 +23,14 @@ function SoundSelectorModal({ drumSounds }) {
   const [successfulLoads, setSuccessfulLoads] = useState(new Set());
   const [failedLoads, setFailedLoads] = useState(new Map()); // Map to store error details
 
+  // Helper function to properly encode file paths
+  const encodeFilePath = (filePath) => {
+    return filePath
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+  };
+
   // Expose debug data to global window for debug panel access
   useEffect(() => {
     window.drumSoundDebugData = {
@@ -145,7 +153,7 @@ function SoundSelectorModal({ drumSounds }) {
         setLoadingAttempts((prev) => new Set([...prev, sound.file]));
 
         // Properly encode the file path for URL usage
-        const encodedPath = encodeURI(sound.file);
+        const encodedPath = encodeFilePath(sound.file);
         console.log(`Attempting to load:`, {
           original: sound.file,
           encoded: encodedPath,
