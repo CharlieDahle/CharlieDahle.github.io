@@ -421,29 +421,60 @@ export const useAppStore = create((set, get) => ({
         id: "kick",
         name: "Kick",
         color: "#e74c3c",
-        soundFile: drumSounds.kicks[0].file,
-        availableSounds: drumSounds.kicks,
+        soundFile: (() => {
+          // Find first kick sound from the flat array
+          const kickSound = drumSounds.find(
+            (sound) => sound.category === "kicks"
+          );
+          return kickSound ? kickSound.file : "kicks/Ac_K.wav"; // fallback
+        })(),
+        availableSounds: drumSounds.filter(
+          (sound) => sound.category === "kicks"
+        ),
       },
       {
         id: "snare",
         name: "Snare",
         color: "#f39c12",
-        soundFile: drumSounds.snares[0].file,
-        availableSounds: drumSounds.snares,
+        soundFile: (() => {
+          const snareSound = drumSounds.find(
+            (sound) => sound.category === "snares"
+          );
+          return snareSound ? snareSound.file : "snares/Box_Snr2.wav"; // fallback
+        })(),
+        availableSounds: drumSounds.filter(
+          (sound) => sound.category === "snares"
+        ),
       },
       {
         id: "hihat",
         name: "Hi-Hat",
         color: "#2ecc71",
-        soundFile: drumSounds.hihats[0].file,
-        availableSounds: drumSounds.hihats,
+        soundFile: (() => {
+          const hihatSound = drumSounds.find(
+            (sound) => sound.category === "hihats"
+          );
+          return hihatSound ? hihatSound.file : "hihats/Jls_H.wav"; // fallback
+        })(),
+        availableSounds: drumSounds.filter(
+          (sound) => sound.category === "hihats"
+        ),
       },
       {
         id: "openhat",
         name: "Open Hat",
         color: "#3498db",
-        soundFile: drumSounds.cymbals[0].file,
-        availableSounds: drumSounds.cymbals,
+        soundFile: (() => {
+          const openhatSound = drumSounds.find(
+            (sound) =>
+              sound.category === "openhats" || sound.category === "cymbals"
+          );
+          return openhatSound ? openhatSound.file : "cymbals/CL_OHH1.wav"; // fallback
+        })(),
+        availableSounds: drumSounds.filter(
+          (sound) =>
+            sound.category === "openhats" || sound.category === "cymbals"
+        ),
       },
     ],
 
@@ -480,7 +511,7 @@ export const useAppStore = create((set, get) => ({
       // Clean up pattern
       get().pattern.removeTrackFromPattern(trackId);
 
-      // Clean up effects - ADD THIS LINE:
+      // Clean up effects
       get().effects.removeTrackEffects(trackId);
 
       // Send to server
