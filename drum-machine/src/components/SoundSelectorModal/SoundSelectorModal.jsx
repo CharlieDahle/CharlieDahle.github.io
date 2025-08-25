@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { Music } from "lucide-react";
 import { useAppStore } from "../../stores";
+import "./SoundSelectorModal.css";
 
 function SoundSelectorModal({ drumSounds }) {
   // Get UI state and actions
@@ -17,6 +19,8 @@ function SoundSelectorModal({ drumSounds }) {
   const [selectedSound, setSelectedSound] = useState(null);
   const [loadedSounds, setLoadedSounds] = useState({});
   const [audioContext, setAudioContext] = useState(null);
+  const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+  const [focusedSoundIndex, setFocusedSoundIndex] = useState(-1);
 
   // Debug tracking state
   const [loadingAttempts, setLoadingAttempts] = useState(new Set());
@@ -144,6 +148,8 @@ function SoundSelectorModal({ drumSounds }) {
     if (loadedSounds[category] || !audioContext) return;
 
     console.log(`Loading sounds for category: ${category}`);
+    setIsLoadingCategory(true);
+
     const sounds = processedSounds.categories[category] || [];
     const loadedBuffers = {};
 
@@ -187,11 +193,14 @@ function SoundSelectorModal({ drumSounds }) {
       ...prev,
       [category]: loadedBuffers,
     }));
+
+    setIsLoadingCategory(false);
   };
 
   // Handle category selection
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
+    setFocusedSoundIndex(-1); // Reset focused index when changing categories
     loadCategorySounds(category);
   };
 
@@ -221,6 +230,11 @@ function SoundSelectorModal({ drumSounds }) {
     closeSoundModal();
   };
 
+  // Handle cancel
+  const handleCancel = () => {
+    closeSoundModal();
+  };
+
   // Load sounds for initial category when modal opens
   useEffect(() => {
     if (soundModalOpen && selectedCategory && audioContext) {
@@ -232,191 +246,227 @@ function SoundSelectorModal({ drumSounds }) {
   useEffect(() => {
     if (!soundModalOpen) return;
 
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        closeSoundModal();
+    const handleKeyDown = (e) => {
+      const currentSounds = processedSounds.categories[selectedCategory] || [];
+      const availableSounds = currentSounds.filter(
+        (sound) => loadedSounds[selectedCategory]?.[sound.file]
+      );
+
+      switch (e.key) {
+        case "Escape":
+          e.preventDefault();
+          e.stopPropagation();
+          closeSoundModal();
+          break;
+
+        case "ArrowDown":
+          e.preventDefault();
+          if (availableSounds.length > 0) {
+            const nextIndex =
+              focusedSoundIndex < availableSounds.length - 1
+                ? focusedSoundIndex + 1
+                : 0;
+            setFocusedSoundIndex(nextIndex);
+            const nextSound = availableSounds[nextIndex];
+            if (nextSound) {
+              setSelectedSound(nextSound.file);
+              playSound(nextSound.file);
+            }
+          }
+          break;
+
+        case "ArrowUp":
+          e.preventDefault();
+          if (availableSounds.length > 0) {
+            const nextIndex =
+              focusedSoundIndex > 0
+                ? focusedSoundIndex - 1
+                : availableSounds.length - 1;
+            setFocusedSoundIndex(nextIndex);
+            const nextSound = availableSounds[nextIndex];
+            if (nextSound) {
+              setSelectedSound(nextSound.file);
+              playSound(nextSound.file);
+            }
+          }
+          break;
+
+        case "Enter":
+          e.preventDefault();
+          if (selectedSound) {
+            handleApply();
+          }
+          break;
       }
     };
 
     const handleClickOutside = (e) => {
-      if (e.target.classList.contains("modal")) {
+      if (e.target.classList.contains("sound-modal-overlay")) {
         closeSoundModal();
       }
     };
 
-    document.addEventListener("keydown", handleEscape);
+    document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("click", handleClickOutside);
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [soundModalOpen, closeSoundModal]);
+  }, [
+    soundModalOpen,
+    closeSoundModal,
+    processedSounds,
+    selectedCategory,
+    loadedSounds,
+    focusedSoundIndex,
+    selectedSound,
+    handleApply,
+  ]);
 
-  if (!soundModalOpen) return null;
+  if (!soundModalOpen || !soundModalTrack) return null;
 
   const currentSounds = processedSounds.categories[selectedCategory] || [];
+  const loadedCount = Object.keys(loadedSounds[selectedCategory] || {}).length;
 
   return (
-    <div
-      className="modal show d-block"
-      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          closeSoundModal();
-        }
-      }}
-    >
-      <div className="modal-dialog modal-lg">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">
-              Select Sound for {soundModalTrack?.name}
-            </h5>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={closeSoundModal}
-            ></button>
-          </div>
+    <div className="sound-modal-overlay">
+      <div className="sound-modal">
+        <div className="sound-modal-header">
+          <h3 className="sound-modal-title">
+            <Music size={20} />
+            Select Sound for {soundModalTrack.name}
+          </h3>
+          <button className="sound-close-btn" onClick={handleCancel}>
+            &times;
+          </button>
+        </div>
 
+        <div className="sound-modal-body">
           {/* Sort Mode Toggle */}
-          <div className="modal-body" style={{ paddingBottom: "0" }}>
-            <div className="d-flex justify-content-center mb-3">
-              <div className="btn-group" role="group">
-                <input
-                  type="radio"
-                  className="btn-check"
-                  name="sortMode"
-                  id="sortBySound"
-                  checked={sortMode === "sound"}
-                  onChange={() => setSortMode("sound")}
-                />
-                <label
-                  className="btn btn-outline-primary"
-                  htmlFor="sortBySound"
-                >
-                  Sort by Sound
-                </label>
-
-                <input
-                  type="radio"
-                  className="btn-check"
-                  name="sortMode"
-                  id="sortByKit"
-                  checked={sortMode === "kit"}
-                  onChange={() => setSortMode("kit")}
-                />
-                <label className="btn btn-outline-primary" htmlFor="sortByKit">
-                  Sort by Kit
-                </label>
-              </div>
+          <div className="sort-mode-toggle">
+            <div className="sort-mode-buttons">
+              <button
+                className={`sort-mode-btn ${
+                  sortMode === "sound" ? "active" : ""
+                }`}
+                onClick={() => setSortMode("sound")}
+              >
+                Sort by Sound
+              </button>
+              <button
+                className={`sort-mode-btn ${
+                  sortMode === "kit" ? "active" : ""
+                }`}
+                onClick={() => setSortMode("kit")}
+              >
+                Sort by Kit
+              </button>
             </div>
           </div>
 
-          <div
-            className="modal-body"
-            style={{ height: "400px", paddingTop: "0" }}
-          >
-            <div className="row h-100">
-              {/* Categories */}
-              <div className="col-4 border-end">
-                <h6 className="text-muted mb-3">
-                  {sortMode === "sound" ? "Categories" : "Kits"}
-                </h6>
-                <div className="list-group list-group-flush">
-                  {processedSounds.categoryList.map((category) => (
-                    <button
-                      key={category}
-                      className={`list-group-item list-group-item-action ${
-                        selectedCategory === category ? "active" : ""
-                      }`}
-                      onClick={() => handleCategoryClick(category)}
-                    >
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </button>
-                  ))}
-                </div>
+          {/* Content Area */}
+          <div className="sound-content">
+            {/* Categories Sidebar */}
+            <div className="categories-sidebar">
+              <h6 className="categories-header">
+                {sortMode === "sound" ? "Categories" : "Kits"}
+              </h6>
+              <div className="categories-list">
+                {processedSounds.categoryList.map((category) => (
+                  <button
+                    key={category}
+                    className={`category-item ${
+                      selectedCategory === category ? "active" : ""
+                    }`}
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Sounds */}
-              <div className="col-8">
-                <h6 className="text-muted mb-3">
+            {/* Sounds Area */}
+            <div className="sounds-area">
+              <div className="sounds-header">
+                <h6 className="sounds-title">
                   {selectedCategory.charAt(0).toUpperCase() +
                     selectedCategory.slice(1)}{" "}
                   Sounds
-                  <small className="text-info ms-2">
-                    ({Object.keys(loadedSounds[selectedCategory] || {}).length}{" "}
-                    loaded)
-                  </small>
                 </h6>
-                <div style={{ height: "300px", overflowY: "auto" }}>
-                  <div className="list-group">
-                    {currentSounds.map((sound) => {
-                      const isLoaded =
-                        loadedSounds[selectedCategory]?.[sound.file];
-                      const hasFailed = failedLoads.has(sound.file);
-                      return (
-                        <button
-                          key={sound.file}
-                          className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
-                            selectedSound === sound.file ? "active" : ""
-                          } ${!isLoaded ? "text-muted" : ""} ${
-                            hasFailed ? "border-danger" : ""
-                          }`}
-                          onClick={() => handleSoundClick(sound.file)}
-                          disabled={!isLoaded}
-                        >
-                          <div className="d-flex flex-column align-items-start">
-                            <span>{sound.name}</span>
-                            {sortMode === "kit" && (
-                              <small className="text-muted">
-                                {sound.category}
-                              </small>
-                            )}
-                            {sortMode === "sound" && (
-                              <small className="text-muted">{sound.kit}</small>
-                            )}
-                          </div>
-                          <span
-                            className={`badge ${
-                              hasFailed
-                                ? "bg-danger"
-                                : isLoaded
-                                ? "bg-secondary"
-                                : "bg-warning"
-                            }`}
-                          >
-                            {hasFailed ? "✗" : isLoaded ? "♪" : "..."}
-                          </span>
-                        </button>
-                      );
-                    })}
+                {isLoadingCategory ? (
+                  <div className="loading-indicator">
+                    <div className="loading-spinner"></div>
+                    Loading sounds...
                   </div>
-                </div>
+                ) : (
+                  <span className="sounds-count">
+                    {loadedCount} of {currentSounds.length} loaded
+                  </span>
+                )}
+              </div>
+
+              <div className="sounds-list">
+                {currentSounds.map((sound) => {
+                  const isLoaded = loadedSounds[selectedCategory]?.[sound.file];
+                  const hasFailed = failedLoads.has(sound.file);
+                  const isLoading =
+                    loadingAttempts.has(sound.file) && !isLoaded && !hasFailed;
+
+                  return (
+                    <button
+                      key={sound.file}
+                      className={`sound-item ${
+                        selectedSound === sound.file ? "active" : ""
+                      }`}
+                      onClick={() => handleSoundClick(sound.file)}
+                      disabled={!isLoaded}
+                    >
+                      <div className="sound-info">
+                        <div className="sound-name">{sound.name}</div>
+                        {sortMode === "kit" && (
+                          <div className="sound-category">{sound.category}</div>
+                        )}
+                        {sortMode === "sound" && (
+                          <div className="sound-category">{sound.kit}</div>
+                        )}
+                      </div>
+                      <div
+                        className={`sound-status ${
+                          hasFailed ? "failed" : isLoaded ? "loaded" : "loading"
+                        }`}
+                      >
+                        {hasFailed
+                          ? "✗"
+                          : isLoaded
+                          ? "♪"
+                          : isLoading
+                          ? "..."
+                          : "○"}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={closeSoundModal}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleApply}
-              disabled={!selectedSound}
-            >
-              Apply
-            </button>
-          </div>
+        <div className="sound-modal-footer">
+          <button
+            className="sound-btn sound-btn--secondary"
+            onClick={handleCancel}
+          >
+            Cancel
+          </button>
+          <button
+            className="sound-btn sound-btn--primary"
+            onClick={handleApply}
+            disabled={!selectedSound}
+          >
+            Apply
+          </button>
         </div>
       </div>
     </div>
