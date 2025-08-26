@@ -25,6 +25,9 @@ class DrumScheduler {
 
     // Dynamic track to sound mapping
     this.trackSounds = {};
+    
+    // Track volumes mapping
+    this.trackVolumes = {};
 
     // RAF handle for cleanup
     this.schedulerRAF = null;
@@ -302,11 +305,13 @@ class DrumScheduler {
     // Clean up old players that are no longer needed
     this.cleanupUnusedPlayers(tracks);
 
-    // Update track sounds mapping
+    // Update track sounds and volumes mapping
     this.trackSounds = {};
+    this.trackVolumes = {};
 
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
+      this.trackVolumes[track.id] = track.volume || 1.0;
 
       // Initialize empty effect chain for this track if it doesn't exist
       if (!this.trackEffects[track.id]) {
@@ -432,8 +437,8 @@ class DrumScheduler {
     }
   }
 
-  // Play a sound at a specific time with velocity
-  playSound(soundFile, when, velocity = 4) {
+  // Play a sound at a specific time with velocity and track volume
+  playSound(soundFile, when, velocity = 4, trackVolume = 1.0) {
     const player = this.tonePlayers[soundFile];
     if (!player) {
       console.warn(`No player found for sound: ${soundFile}`);
@@ -446,19 +451,24 @@ class DrumScheduler {
       state: player.state,
       connected: player.numberOfOutputs > 0,
       velocity: velocity,
+      trackVolume: trackVolume,
     });
 
-    // Convert velocity (1-4) to volume in decibels
-    // velocity 1 = -12dB, velocity 4 = 0dB
-    const velocityGain = velocity / 4; // 0.25 to 1.0
-    const volumeDb = Tone.gainToDb(velocityGain);
+    // Convert velocity (1-4) to gain (0.25 to 1.0)
+    const velocityGain = velocity / 4;
+    
+    // Combine track volume and velocity
+    const finalGain = velocityGain * trackVolume;
+    
+    // Convert to decibels (with a minimum to avoid -Infinity)
+    const volumeDb = finalGain > 0 ? Tone.gainToDb(finalGain) : -60;
 
     // Set volume and play
     player.volume.value = volumeDb;
     player.start(when);
 
     console.log(
-      `Triggered sound ${soundFile} at ${when} with volume ${volumeDb}dB`
+      `Triggered sound ${soundFile} at ${when} with velocity ${velocity}, track volume ${trackVolume}, final volume ${volumeDb}dB`
     );
   }
 
@@ -579,10 +589,11 @@ class DrumScheduler {
         // Play each note found at this tick
         notesAtTick.forEach((note) => {
           const soundFile = this.trackSounds[trackId];
+          const trackVolume = this.trackVolumes[trackId] || 1.0;
           if (soundFile && this.tonePlayers[soundFile]) {
-            this.playSound(soundFile, when, note.velocity);
+            this.playSound(soundFile, when, note.velocity, trackVolume);
             console.log(
-              `Playing ${trackId} at tick ${tick} with velocity ${note.velocity}`
+              `Playing ${trackId} at tick ${tick} with velocity ${note.velocity}, track volume ${trackVolume}`
             );
           } else {
             console.warn(`No sound available for track ${trackId}`);

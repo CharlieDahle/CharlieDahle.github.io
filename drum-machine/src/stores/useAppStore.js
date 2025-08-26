@@ -431,6 +431,7 @@ export const useAppStore = create((set, get) => ({
         availableSounds: drumSounds.filter(
           (sound) => sound.category === "kicks"
         ),
+        volume: 1.0,
       },
       {
         id: "snare",
@@ -445,6 +446,7 @@ export const useAppStore = create((set, get) => ({
         availableSounds: drumSounds.filter(
           (sound) => sound.category === "snares"
         ),
+        volume: 1.0,
       },
       {
         id: "hihat",
@@ -459,6 +461,7 @@ export const useAppStore = create((set, get) => ({
         availableSounds: drumSounds.filter(
           (sound) => sound.category === "hihats"
         ),
+        volume: 1.0,
       },
       {
         id: "openhat",
@@ -475,6 +478,7 @@ export const useAppStore = create((set, get) => ({
           (sound) =>
             sound.category === "openhats" || sound.category === "cymbals"
         ),
+        volume: 1.0,
       },
     ],
 
@@ -485,6 +489,7 @@ export const useAppStore = create((set, get) => ({
         color: trackData?.color || "#9b59b6",
         soundFile: trackData?.soundFile || null,
         availableSounds: trackData?.availableSounds || [],
+        volume: trackData?.volume || 1.0,
       };
 
       set((state) => ({
@@ -532,6 +537,23 @@ export const useAppStore = create((set, get) => ({
       get().websocket.sendUpdateTrackSound(trackId, newSoundFile);
     },
 
+    updateTrackVolume: (trackId, volume) => {
+      // Clamp volume between 0.0 and 1.0
+      const clampedVolume = Math.max(0.0, Math.min(1.0, volume));
+
+      set((state) => ({
+        tracks: {
+          ...state.tracks,
+          list: state.tracks.list.map((track) =>
+            track.id === trackId ? { ...track, volume: clampedVolume } : track
+          ),
+        },
+      }));
+
+      // Send to server
+      get().websocket.sendUpdateTrackVolume(trackId, clampedVolume);
+    },
+
     updateTrack: (trackId, updates) => {
       set((state) => ({
         tracks: {
@@ -573,6 +595,17 @@ export const useAppStore = create((set, get) => ({
           ...state.tracks,
           list: state.tracks.list.map((track) =>
             track.id === trackId ? { ...track, soundFile: newSoundFile } : track
+          ),
+        },
+      }));
+    },
+
+    syncUpdateTrackVolume: (trackId, volume) => {
+      set((state) => ({
+        tracks: {
+          ...state.tracks,
+          list: state.tracks.list.map((track) =>
+            track.id === trackId ? { ...track, volume } : track
           ),
         },
       }));
@@ -949,6 +982,12 @@ export const useAppStore = create((set, get) => ({
         get().tracks.syncUpdateTrackSound(trackId, soundFile);
       });
 
+      newSocket.on("track-volume-updated", ({ trackId, volume }) => {
+        console.log("Track volume updated:", trackId, volume);
+        debugLog("in", "track-volume-updated", { trackId, volume });
+        get().tracks.syncUpdateTrackVolume(trackId, volume);
+      });
+
       set((state) => ({
         websocket: { ...state.websocket, socket: newSocket },
       }));
@@ -1309,6 +1348,20 @@ export const useAppStore = create((set, get) => ({
       console.log("Sending track sound update:", trackId, soundFile);
       debugLog("out", "update-track-sound", payload);
       socket.emit("update-track-sound", payload);
+    },
+
+    sendUpdateTrackVolume: (trackId, volume) => {
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        debugLog("out", "track-volume-failed", "Not connected");
+        console.log("Skipping track volume update - not connected");
+        return;
+      }
+
+      const payload = { roomId, trackId, volume };
+      console.log("Sending track volume update:", trackId, volume);
+      debugLog("out", "update-track-volume", payload);
+      socket.emit("update-track-volume", payload);
     },
 
     sendEffectChainUpdate: (trackId, enabledEffects) => {
