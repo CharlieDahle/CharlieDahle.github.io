@@ -628,10 +628,11 @@ export const useAppStore = create((set, get) => ({
     snapToGrid: true,
     soundModalOpen: false,
     soundModalTrack: null,
-    error: null,
-    isLoading: false,
     effectsModalOpen: false,
     effectsModalTrack: null,
+    volumePopupOpen: false,
+    volumePopupTrack: null,
+    volumePopupPosition: { x: 0, y: 0 },
     error: null,
     isLoading: false,
 
@@ -675,6 +676,28 @@ export const useAppStore = create((set, get) => ({
           ...state.ui,
           effectsModalOpen: false,
           effectsModalTrack: null,
+        },
+      }));
+    },
+
+    openVolumePopup: (track, position) => {
+      set((state) => ({
+        ui: {
+          ...state.ui,
+          volumePopupOpen: true,
+          volumePopupTrack: track,
+          volumePopupPosition: position,
+        },
+      }));
+    },
+
+    closeVolumePopup: () => {
+      set((state) => ({
+        ui: {
+          ...state.ui,
+          volumePopupOpen: false,
+          volumePopupTrack: null,
+          volumePopupPosition: { x: 0, y: 0 },
         },
       }));
     },
