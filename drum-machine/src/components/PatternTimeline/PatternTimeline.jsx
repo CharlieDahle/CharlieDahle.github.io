@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Drum, Sliders } from "lucide-react";
+import { Drum, Sliders, Volume2 } from "lucide-react";
 import { useAppStore } from "../../stores";
 import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
@@ -8,6 +8,16 @@ import "./PatternTimeline.css";
 function TrackLabel({ track, drumSounds }) {
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
   const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
+  const openVolumePopup = useAppStore((state) => state.ui.openVolumePopup);
+
+  const handleVolumeClick = (e, track) => {
+    e.stopPropagation();
+    const buttonRect = e.currentTarget.getBoundingClientRect();
+    openVolumePopup(track, {
+      x: buttonRect.left + buttonRect.width / 2,
+      y: buttonRect.top
+    });
+  };
 
   // Get display name - either sound name or "Choose Sound..."
   const getDisplayName = () => {
@@ -62,6 +72,66 @@ function TrackLabel({ track, drumSounds }) {
         >
           <Sliders size={16} />
         </button>
+        <button
+          className="track-volume-btn"
+          onClick={(e) => handleVolumeClick(e, track)}
+          title={`Volume: ${Math.round((track.volume || 1.0) * 100)}%`}
+        >
+          <Volume2 size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VolumePopup({ track, position, onClose, onVolumeChange }) {
+  const [localVolume, setLocalVolume] = useState((track?.volume || 1.0) * 100);
+
+  useEffect(() => {
+    setLocalVolume((track?.volume || 1.0) * 100);
+  }, [track]);
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseInt(e.target.value);
+    setLocalVolume(newVolume);
+    onVolumeChange(track.id, newVolume / 100);
+  };
+
+  const handleClickOutside = (e) => {
+    if (!e.target.closest('.volume-popup')) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!track) return null;
+
+  return (
+    <div 
+      className="volume-popup"
+      style={{
+        position: 'fixed',
+        left: `${position.x - 60}px`, // Center the popup (120px wide / 2)
+        top: `${position.y - 60}px`, // Position above the button
+        zIndex: 1000,
+      }}
+    >
+      <div className="volume-popup-content">
+        <div className="volume-label">
+          Volume: {Math.round(localVolume)}%
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={localVolume}
+          onChange={handleVolumeChange}
+          className="volume-slider"
+        />
       </div>
     </div>
   );
@@ -77,6 +147,13 @@ function PatternTimeline() {
   const TICKS_PER_BEAT = useAppStore((state) => state.transport.TICKS_PER_BEAT);
   const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
   const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
+  
+  // Volume popup state
+  const volumePopupOpen = useAppStore((state) => state.ui.volumePopupOpen);
+  const volumePopupTrack = useAppStore((state) => state.ui.volumePopupTrack);
+  const volumePopupPosition = useAppStore((state) => state.ui.volumePopupPosition);
+  const closeVolumePopup = useAppStore((state) => state.ui.closeVolumePopup);
+  const updateTrackVolume = useAppStore((state) => state.tracks.updateTrackVolume);
 
   // Get all pattern actions
   const addNote = useAppStore((state) => state.pattern.addNote);
@@ -567,6 +644,16 @@ function PatternTimeline() {
           </div>
         </div>
       </div>
+      
+      {/* Volume Popup */}
+      {volumePopupOpen && (
+        <VolumePopup
+          track={volumePopupTrack}
+          position={volumePopupPosition}
+          onClose={closeVolumePopup}
+          onVolumeChange={updateTrackVolume}
+        />
+      )}
     </div>
   );
 }
