@@ -2443,6 +2443,165 @@ export const useAppStore = create((set, get) => ({
     enabledEffects: {}, // { trackId: { effectType: boolean } }
     // Local pending changes before apply (NEW)
     pendingChanges: {}, // { trackId: { effectType: { param: value } } }
+    
+    // Effect presets organized by drum type
+    presets: {
+      kick: {
+        tight: {
+          name: "Tight",
+          description: "Punchy and controlled",
+          effects: {
+            eq: { high: -3, mid: 2, low: 4 },
+            compressor: { threshold: -20, ratio: 6, attack: 0.001, release: 0.05 },
+            filter: { frequency: 15000, Q: 1 }
+          }
+        },
+        punchy: {
+          name: "Punchy",
+          description: "Heavy and impactful",
+          effects: {
+            eq: { high: 0, mid: 4, low: 6 },
+            compressor: { threshold: -18, ratio: 8, attack: 0.005, release: 0.08 },
+            distortion: { amount: 0.1, oversample: "2x" }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Warm analog character",
+          effects: {
+            eq: { high: -4, mid: 1, low: 3 },
+            filter: { frequency: 8000, Q: 0.7 },
+            distortion: { amount: 0.15, oversample: "2x" },
+            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 }
+          }
+        },
+        sub: {
+          name: "808",
+          description: "Deep sub-bass",
+          effects: {
+            eq: { high: -6, mid: -2, low: 8 },
+            compressor: { threshold: -16, ratio: 4, attack: 0.01, release: 0.15 },
+            chorus: { rate: 1, depth: 0.2, wet: 0.3 }
+          }
+        }
+      },
+      snare: {
+        crispy: {
+          name: "Crispy",
+          description: "Bright and cutting",
+          effects: {
+            eq: { high: 6, mid: 2, low: -2 },
+            compressor: { threshold: -22, ratio: 5, attack: 0.002, release: 0.06 },
+            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 }
+          }
+        },
+        fat: {
+          name: "Fat",
+          description: "Full and powerful",
+          effects: {
+            eq: { high: 1, mid: 4, low: 1 },
+            compressor: { threshold: -18, ratio: 6, attack: 0.005, release: 0.1 },
+            distortion: { amount: 0.08, oversample: "2x" }
+          }
+        },
+        gated: {
+          name: "Gated",
+          description: "Tight and controlled",
+          effects: {
+            compressor: { threshold: -16, ratio: 10, attack: 0.001, release: 0.03 },
+            filter: { frequency: 200, Q: 1.2 },
+            eq: { high: 2, mid: 0, low: -4 }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Classic analog warmth",
+          effects: {
+            eq: { high: -2, mid: -1, low: 0 },
+            compressor: { threshold: -20, ratio: 4, attack: 0.01, release: 0.1 },
+            distortion: { amount: 0.12, oversample: "2x" },
+            filter: { frequency: 12000, Q: 0.8 }
+          }
+        }
+      },
+      hihat: {
+        bright: {
+          name: "Bright",
+          description: "Sparkly and present",
+          effects: {
+            eq: { high: 4, mid: 1, low: -3 },
+            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
+          }
+        },
+        sizzle: {
+          name: "Sizzle",
+          description: "Aggressive high-end",
+          effects: {
+            eq: { high: 8, mid: 3, low: -4 },
+            distortion: { amount: 0.06, oversample: "4x" },
+            filter: { frequency: 18000, Q: 1.5 }
+          }
+        },
+        tight: {
+          name: "Tight",
+          description: "Controlled and precise",
+          effects: {
+            compressor: { threshold: -20, ratio: 8, attack: 0.001, release: 0.02 },
+            filter: { frequency: 400, Q: 1.0 },
+            eq: { high: 0, mid: -2, low: -6 }
+          }
+        },
+        spacey: {
+          name: "Spacey",
+          description: "Wide and atmospheric",
+          effects: {
+            chorus: { rate: 3, depth: 0.4, wet: 0.4 },
+            reverb: { roomSize: 0.6, decay: 1.2, wet: 0.3 },
+            eq: { high: 2, mid: 0, low: -2 }
+          }
+        }
+      },
+      openhat: {
+        bright: {
+          name: "Bright",
+          description: "Sparkly and present",
+          effects: {
+            eq: { high: 4, mid: 1, low: -3 },
+            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
+          }
+        },
+        sizzle: {
+          name: "Sizzle",
+          description: "Aggressive high-end",
+          effects: {
+            eq: { high: 8, mid: 3, low: -4 },
+            distortion: { amount: 0.06, oversample: "4x" },
+            filter: { frequency: 18000, Q: 1.5 }
+          }
+        },
+        washy: {
+          name: "Washy",
+          description: "Long and atmospheric",
+          effects: {
+            reverb: { roomSize: 0.7, decay: 2.5, wet: 0.4 },
+            chorus: { rate: 1.5, depth: 0.3, wet: 0.25 },
+            eq: { high: 1, mid: -1, low: -4 }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Classic cymbal sound",
+          effects: {
+            eq: { high: -1, mid: 1, low: -2 },
+            filter: { frequency: 14000, Q: 0.9 },
+            distortion: { amount: 0.05, oversample: "2x" },
+            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 }
+          }
+        }
+      }
+    },
 
     // Default effect settings
     getDefaultEffects: () => ({
@@ -2914,6 +3073,125 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
+    },
+
+    // PRESET METHODS
+    
+    // Get available presets for a track type (kick, snare, hihat, openhat)
+    getPresetsForTrackType: (trackType) => {
+      const presets = get().effects.presets[trackType] || {};
+      return Object.entries(presets).map(([key, preset]) => ({
+        id: key,
+        ...preset
+      }));
+    },
+
+    // Apply a preset to a track
+    applyPreset: (trackId, trackType, presetId) => {
+      const presets = get().effects.presets[trackType];
+      if (!presets || !presets[presetId]) {
+        console.warn(`Preset ${presetId} not found for track type ${trackType}`);
+        return;
+      }
+
+      const preset = presets[presetId];
+      console.log(`Applying preset "${preset.name}" to track ${trackId}:`, preset.effects);
+
+      // Initialize if doesn't exist
+      get().effects.initializeTrackEffects(trackId);
+
+      // Get current effects state
+      const currentEffects = get().effects.getTrackEffects(trackId);
+      
+      // Merge preset effects with current effects (preset wins for specified parameters)
+      const newEffects = { ...currentEffects };
+      
+      Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
+        if (newEffects[effectType]) {
+          newEffects[effectType] = {
+            ...newEffects[effectType],
+            ...effectParams
+          };
+        }
+      });
+
+      // Apply the new effects state
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: newEffects,
+          },
+          // Clear pending changes since we're applying a preset
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+
+      // Send the complete effect state to other clients
+      get().websocket.sendEffectStateApply(trackId, newEffects);
+      
+      console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
+    },
+
+    // Get the track type from track name/id for preset matching
+    getTrackTypeFromId: (trackId) => {
+      // Map track IDs to preset categories
+      if (trackId.toLowerCase().includes('kick')) return 'kick';
+      if (trackId.toLowerCase().includes('snare')) return 'snare';
+      if (trackId.toLowerCase().includes('hihat') || trackId.toLowerCase().includes('hi-hat')) return 'hihat';
+      if (trackId.toLowerCase().includes('openhat') || trackId.toLowerCase().includes('open')) return 'openhat';
+      
+      // For custom tracks, try to match by track name
+      const track = get().tracks.getTrackById(trackId);
+      if (track) {
+        const trackName = track.name.toLowerCase();
+        if (trackName.includes('kick')) return 'kick';
+        if (trackName.includes('snare')) return 'snare';
+        if (trackName.includes('hihat') || trackName.includes('hi-hat')) return 'hihat';
+        if (trackName.includes('openhat') || trackName.includes('open') || trackName.includes('cymbal')) return 'openhat';
+      }
+      
+      // Default to kick if we can't determine
+      return 'kick';
+    },
+
+    // Check if current track effects match a preset
+    getCurrentPreset: (trackId) => {
+      const trackType = get().effects.getTrackTypeFromId(trackId);
+      const currentEffects = get().effects.getTrackEffects(trackId);
+      const presets = get().effects.presets[trackType] || {};
+      
+      // Check each preset to see if it matches current settings
+      for (const [presetId, preset] of Object.entries(presets)) {
+        let isMatch = true;
+        
+        // Check if all preset parameters match current effects
+        for (const [effectType, effectParams] of Object.entries(preset.effects)) {
+          if (!currentEffects[effectType]) {
+            isMatch = false;
+            break;
+          }
+          
+          for (const [param, value] of Object.entries(effectParams)) {
+            if (Math.abs(currentEffects[effectType][param] - value) > 0.01) {
+              isMatch = false;
+              break;
+            }
+          }
+          
+          if (!isMatch) break;
+        }
+        
+        if (isMatch) {
+          return { id: presetId, ...preset };
+        }
+      }
+      
+      return null; // No matching preset
     },
   },
 }));

@@ -524,6 +524,111 @@
   background: #a8a8a8;
 }
 
+/* ========================
+   PRESETS STYLES
+   ======================== */
+
+.presets-section {
+  padding: 0;
+}
+
+.presets-section-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.presets-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--effects-text-primary);
+  margin-bottom: 4px;
+}
+
+.presets-section-subtitle {
+  font-size: 13px;
+  color: var(--effects-text-secondary);
+  font-weight: 400;
+}
+
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.preset-card {
+  background: white;
+  border: 2px solid var(--effects-border-color);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--effects-transition);
+  text-align: left;
+  position: relative;
+  min-height: 80px;
+}
+
+.preset-card:hover {
+  border-color: var(--effects-primary-blue);
+  box-shadow: var(--effects-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.preset-card.active {
+  border-color: var(--effects-primary-blue);
+  background: linear-gradient(135deg, #f8fdff 0%, #e6f7ff 100%);
+  box-shadow: 0 2px 8px rgba(91, 192, 235, 0.15);
+}
+
+.preset-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--effects-text-primary);
+  margin-bottom: 4px;
+}
+
+.preset-description {
+  font-size: 12px;
+  color: var(--effects-text-secondary);
+  line-height: 1.4;
+}
+
+.preset-active-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--effects-primary-blue);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.presets-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.presets-info p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--effects-text-secondary);
+  line-height: 1.4;
+}
+
+.presets-info strong {
+  color: var(--effects-text-primary);
+}
+
 /* Responsive adjustments for smaller screens */
 @media (max-width: 900px) {
   .effects-modal {
@@ -538,5 +643,10 @@
 
   .slider-control {
     min-width: 80px;
+  }
+
+  /* Responsive grid for smaller modal */
+  .presets-grid {
+    grid-template-columns: 1fr;
   }
 }
