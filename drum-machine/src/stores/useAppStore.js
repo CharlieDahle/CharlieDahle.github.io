@@ -16,6 +16,32 @@ const clampVelocity = (velocity) => {
   return Math.max(1, Math.min(4, velocity || 4));
 };
 
+// Helper function for throttling
+const throttle = (func, limit) => {
+  let lastFunc;
+  let lastRan;
+  return function (...args) {
+    if (!lastRan) {
+      func.apply(this, args);
+      lastRan = Date.now();
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  };
+};
+
+// Create throttled function for real-time parameter updates
+const throttledParameterUpdate = throttle((store, trackId, effectType, parameter, value) => {
+  const { websocket } = store.getState();
+  websocket.sendEffectParameterUpdate(trackId, effectType, parameter, value);
+}, 50); // 50ms throttle = ~20fps
+
 export const useAppStore = create((set, get) => ({
   // ============================================================================
   // PATTERN SLICE
@@ -861,6 +887,34 @@ export const useAppStore = create((set, get) => ({
         }
       );
 
+      // NEW: Real-time effect parameter updates
+      newSocket.on("effect-parameter-update", ({ trackId, effectType, parameter, value }) => {
+        console.log("Real-time effect parameter update received:", {
+          trackId,
+          effectType,
+          parameter,
+          value,
+        });
+        debugLog("in", "effect-parameter-update", {
+          trackId,
+          effectType,
+          parameter,
+          value,
+        });
+        
+        // Apply the parameter change directly (no pending changes for remote updates)
+        get().effects.syncTrackEffect(trackId, effectType, parameter, value);
+      });
+      
+      // NEW: Complete effect state application
+      newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
+        console.log("Effect state apply received:", { trackId, effectsState });
+        debugLog("in", "effect-state-apply", { trackId, effectsState });
+        
+        // Sync the entire effect state for this track
+        get().effects.syncTrackEffectState(trackId, effectsState);
+      });
+
       // Pattern events - direct store updates
       newSocket.on("pattern-update", (change) => {
         console.log("Pattern update received:", change);
@@ -1427,6 +1481,36 @@ export const useAppStore = create((set, get) => ({
       console.log("Sending effect reset:", trackId);
       debugLog("out", "effect-reset", payload);
       socket.emit("effect-reset", payload);
+    },
+
+    // NEW: Send real-time effect parameter update (throttled)
+    sendEffectParameterUpdate: (trackId, effectType, parameter, value) => {
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        debugLog("out", "effect-parameter-failed", "Not connected");
+        console.log("Skipping effect parameter update - not connected");
+        return;
+      }
+
+      const payload = { roomId, trackId, effectType, parameter, value };
+      console.log("Sending real-time effect parameter update:", payload);
+      debugLog("out", "effect-parameter-update", payload);
+      socket.emit("effect-parameter-update", payload);
+    },
+    
+    // NEW: Send complete effect state (for apply button)
+    sendEffectStateApply: (trackId, effectsState) => {
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        debugLog("out", "effect-state-apply-failed", "Not connected");
+        console.log("Skipping effect state apply - not connected");
+        return;
+      }
+
+      const payload = { roomId, trackId, effectsState };
+      console.log("Sending effect state apply:", payload);
+      debugLog("out", "effect-state-apply", payload);
+      socket.emit("effect-state-apply", payload);
     },
 
     cleanup: () => {
@@ -2355,6 +2439,10 @@ export const useAppStore = create((set, get) => ({
   effects: {
     // Store effects state per track
     trackEffects: {},
+    // Track which effects are enabled/disabled (NEW)
+    enabledEffects: {}, // { trackId: { effectType: boolean } }
+    // Local pending changes before apply (NEW)
+    pendingChanges: {}, // { trackId: { effectType: { param: value } } }
 
     // Default effect settings
     getDefaultEffects: () => ({
@@ -2469,7 +2557,7 @@ export const useAppStore = create((set, get) => ({
       });
     },
 
-    // Update a specific effect parameter (triggers rebuild)
+    // Update a specific effect parameter (local only, real-time if enabled)
     updateTrackEffect: (trackId, effectType, parameter, value) => {
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
@@ -2487,12 +2575,22 @@ export const useAppStore = create((set, get) => ({
               },
             },
           },
+          // Track this as a pending change
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {
+              ...state.effects.pendingChanges[trackId],
+              [effectType]: {
+                ...state.effects.pendingChanges[trackId]?.[effectType],
+                [parameter]: value,
+              },
+            },
+          },
         },
       }));
 
-      // Send the ENTIRE enabled effects state to WebSocket for collaboration
-      const enabledEffects = get().effects.getEnabledEffects(trackId);
-      get().websocket.sendEffectChainUpdate(trackId, enabledEffects);
+      // Send throttled real-time parameter update
+      throttledParameterUpdate({ getState: get }, trackId, effectType, parameter, value);
     },
 
     // Enable an effect with specific settings
@@ -2507,6 +2605,14 @@ export const useAppStore = create((set, get) => ({
             [trackId]: {
               ...state.effects.trackEffects[trackId],
               [effectType]: { ...settings },
+            },
+          },
+          // Mark this effect as enabled
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {
+              ...state.effects.enabledEffects[trackId],
+              [effectType]: true,
             },
           },
         },
@@ -2530,6 +2636,22 @@ export const useAppStore = create((set, get) => ({
             [trackId]: {
               ...state.effects.trackEffects[trackId],
               [effectType]: { ...defaults[effectType] },
+            },
+          },
+          // Mark this effect as disabled
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {
+              ...state.effects.enabledEffects[trackId],
+              [effectType]: false,
+            },
+          },
+          // Clear pending changes for this effect
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {
+              ...state.effects.pendingChanges[trackId],
+              [effectType]: undefined,
             },
           },
         },
@@ -2590,11 +2712,19 @@ export const useAppStore = create((set, get) => ({
     removeTrackEffects: (trackId) => {
       set((state) => {
         const newTrackEffects = { ...state.effects.trackEffects };
+        const newEnabledEffects = { ...state.effects.enabledEffects };
+        const newPendingChanges = { ...state.effects.pendingChanges };
+        
         delete newTrackEffects[trackId];
+        delete newEnabledEffects[trackId];
+        delete newPendingChanges[trackId];
+        
         return {
           effects: {
             ...state.effects,
             trackEffects: newTrackEffects,
+            enabledEffects: newEnabledEffects,
+            pendingChanges: newPendingChanges,
           },
         };
       });
@@ -2634,6 +2764,153 @@ export const useAppStore = create((set, get) => ({
           trackEffects: {
             ...state.effects.trackEffects,
             [trackId]: state.effects.getDefaultEffects(),
+          },
+          // Clear enabled effects tracking
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {},
+          },
+          // Clear pending changes
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+    },
+
+    // NEW: Apply pending changes and broadcast to other clients
+    applyEffectChanges: (trackId) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId];
+      
+      if (!trackPendingChanges || Object.keys(trackPendingChanges).length === 0) {
+        console.log(`No pending changes to apply for track ${trackId}`);
+        return;
+      }
+      
+      console.log(`Applying effect changes for track ${trackId}:`, trackPendingChanges);
+      
+      // Clear pending changes since we're applying them
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+      
+      // Send the complete effect state to other clients (using new apply method)
+      const completeEffectsState = get().effects.getTrackEffects(trackId);
+      get().websocket.sendEffectStateApply(trackId, completeEffectsState);
+      
+      console.log(`✅ Applied and broadcast effect changes for track ${trackId}`);
+    },
+    
+    // NEW: Reset a single effect to default values
+    resetEffect: (trackId, effectType) => {
+      console.log(`Resetting ${effectType} effect for track ${trackId}`);
+      
+      get().effects.disableEffect(trackId, effectType);
+    },
+    
+    // NEW: Reset all effects for a track
+    resetAllEffects: (trackId) => {
+      console.log(`Resetting all effects for track ${trackId}`);
+      
+      get().effects.resetTrackEffects(trackId);
+    },
+    
+    // NEW: Check if there are pending changes for a track
+    hasPendingChanges: (trackId) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId];
+      
+      if (!trackPendingChanges) return false;
+      
+      // Check if any effect has pending changes
+      return Object.keys(trackPendingChanges).some(
+        (effectType) => 
+          trackPendingChanges[effectType] && 
+          Object.keys(trackPendingChanges[effectType]).length > 0
+      );
+    },
+    
+    // NEW: Get pending changes for a specific effect
+    getPendingChanges: (trackId, effectType = null) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId] || {};
+      
+      if (effectType) {
+        return trackPendingChanges[effectType] || {};
+      }
+      
+      return trackPendingChanges;
+    },
+    
+    // NEW: Clear pending changes without applying
+    clearPendingChanges: (trackId, effectType = null) => {
+      if (effectType) {
+        // Clear specific effect's pending changes
+        set((state) => ({
+          effects: {
+            ...state.effects,
+            pendingChanges: {
+              ...state.effects.pendingChanges,
+              [trackId]: {
+                ...state.effects.pendingChanges[trackId],
+                [effectType]: {},
+              },
+            },
+          },
+        }));
+      } else {
+        // Clear all pending changes for the track
+        set((state) => ({
+          effects: {
+            ...state.effects,
+            pendingChanges: {
+              ...state.effects.pendingChanges,
+              [trackId]: {},
+            },
+          },
+        }));
+      }
+    },
+    
+    // NEW: Sync complete effect state from remote (for apply button)
+    syncTrackEffectState: (trackId, effectsState) => {
+      console.log(`Syncing complete effect state for ${trackId}:`, effectsState);
+      
+      // Initialize if doesn't exist
+      get().effects.initializeTrackEffects(trackId);
+      
+      // Update enabled effects tracking
+      const newEnabledEffects = {};
+      Object.keys(effectsState).forEach((effectType) => {
+        newEnabledEffects[effectType] = get().effects.isEffectEnabled(
+          effectType, 
+          effectsState[effectType]
+        );
+      });
+      
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: { ...effectsState },
+          },
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: newEnabledEffects,
+          },
+          // Clear pending changes since we just got the authoritative state
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
           },
         },
       }));

@@ -21,6 +21,7 @@ class DrumScheduler {
     // Tone.js Players and Effects for loaded sounds
     this.tonePlayers = {};
     this.trackEffects = {}; // Store effect chains per track
+    this.trackEffectStates = {}; // Track which effects are enabled/disabled per track
     this.soundsLoaded = false;
 
     // Dynamic track to sound mapping
@@ -291,11 +292,254 @@ class DrumScheduler {
     }
 
     console.log(`Effect chain rebuilt for track: ${trackId}`);
+    
+    // Validate connections after rebuild
+    this.validateTrackConnections(trackId);
   }
 
-  // Update effect parameters (now triggers a rebuild)
+  // Validate that a track's connections are working properly
+  validateTrackConnections(trackId) {
+    const soundFile = this.trackSounds[trackId];
+    const player = this.tonePlayers[soundFile];
+    const effects = this.trackEffects[trackId];
+    
+    if (!player) {
+      console.warn(`No player found for track ${trackId}`);
+      return false;
+    }
+    
+    // Check if player is connected
+    const isConnected = player.numberOfOutputs > 0;
+    
+    if (!isConnected) {
+      console.warn(`Player for track ${trackId} is not connected, attempting reconnection`);
+      this.reconnectTrack(trackId);
+      return false;
+    }
+    
+    console.log(`✅ Track ${trackId} connections validated`);
+    return true;
+  }
+  
+  // Reconnect a track's player to its effect chain
+  reconnectTrack(trackId) {
+    const soundFile = this.trackSounds[trackId];
+    const player = this.tonePlayers[soundFile];
+    const effects = this.trackEffects[trackId];
+    
+    if (!player) return;
+    
+    try {
+      // Disconnect first
+      player.disconnect();
+      
+      // Reconnect to effect chain or destination
+      if (effects && effects.input) {
+        player.connect(effects.input);
+        console.log(`🔌 Reconnected player for ${trackId} to effect chain`);
+      } else {
+        player.toDestination();
+        console.log(`🔌 Reconnected player for ${trackId} directly to destination`);
+      }
+    } catch (error) {
+      console.error(`Failed to reconnect track ${trackId}:`, error);
+    }
+  }
+
+  // Smart effect update - only rebuilds if effects are enabled/disabled
   updateTrackEffects(trackId, effectsState) {
-    this.rebuildEffectChain(trackId, effectsState);
+    // Initialize effect state tracking if needed
+    if (!this.trackEffectStates[trackId]) {
+      this.trackEffectStates[trackId] = {};
+    }
+
+    const previousStates = this.trackEffectStates[trackId];
+    const newStates = {};
+    let needsRebuild = false;
+
+    // Check each effect type to see if it's enabled/disabled status changed
+    const effectOrder = [
+      "eq", "filter", "compressor", "chorus", "vibrato", 
+      "distortion", "pitchShift", "reverb", "delay"
+    ];
+
+    effectOrder.forEach((effectType) => {
+      const isEnabled = this.isEffectEnabled(effectType, effectsState[effectType]);
+      const wasEnabled = previousStates[effectType] || false;
+      
+      newStates[effectType] = isEnabled;
+      
+      // Check if enable/disable status changed
+      if (isEnabled !== wasEnabled) {
+        console.log(`${effectType} effect ${isEnabled ? 'enabled' : 'disabled'} for track ${trackId}`);
+        needsRebuild = true;
+      }
+    });
+
+    // Update our tracking
+    this.trackEffectStates[trackId] = newStates;
+
+    if (needsRebuild) {
+      console.log(`Rebuilding effect chain for ${trackId} due to enable/disable changes`);
+      this.rebuildEffectChain(trackId, effectsState);
+    } else {
+      console.log(`Updating parameters for ${trackId} without rebuilding`);
+      this.updateEffectParameters(trackId, effectsState);
+    }
+  }
+
+  // Update individual effect parameters without rebuilding the chain
+  updateEffectParameters(trackId, effectsState) {
+    const effects = this.trackEffects[trackId];
+    if (!effects) return;
+
+    // Update each enabled effect's parameters
+    Object.keys(effectsState).forEach((effectType) => {
+      const effect = effects[effectType];
+      const settings = effectsState[effectType];
+      
+      if (!effect || !settings || !this.isEffectEnabled(effectType, settings)) {
+        return;
+      }
+
+      try {
+        this.updateSingleEffectParameters(effect, effectType, settings);
+      } catch (error) {
+        console.warn(`Failed to update ${effectType} parameters for track ${trackId}:`, error);
+      }
+    });
+  }
+
+  // Update parameters for a single effect instance
+  updateSingleEffectParameters(effect, effectType, settings) {
+    switch (effectType) {
+      case "eq":
+        if (effect.high) effect.high.value = settings.high;
+        if (effect.mid) effect.mid.value = settings.mid;
+        if (effect.low) effect.low.value = settings.low;
+        break;
+        
+      case "filter":
+        if (effect.frequency) effect.frequency.value = settings.frequency;
+        if (effect.Q) effect.Q.value = settings.Q;
+        break;
+        
+      case "compressor":
+        if (effect.threshold) effect.threshold.value = settings.threshold;
+        if (effect.ratio) effect.ratio.value = settings.ratio;
+        if (effect.attack) effect.attack.value = settings.attack;
+        if (effect.release) effect.release.value = settings.release;
+        break;
+        
+      case "chorus":
+        if (effect.frequency) effect.frequency.value = settings.rate;
+        if (effect.depth) effect.depth.value = settings.depth;
+        if (effect.wet) effect.wet.value = settings.wet;
+        break;
+        
+      case "vibrato":
+        if (effect.frequency) effect.frequency.value = settings.rate;
+        if (effect.depth) effect.depth.value = settings.depth;
+        if (effect.wet) effect.wet.value = settings.wet;
+        break;
+        
+      case "distortion":
+        if (effect.distortion) effect.distortion.value = settings.amount;
+        if (effect.oversample !== undefined) effect.oversample = settings.oversample;
+        break;
+        
+      case "pitchShift":
+        if (effect.pitch) effect.pitch.value = settings.pitch;
+        if (effect.windowSize) effect.windowSize.value = settings.windowSize;
+        if (effect.wet) effect.wet.value = settings.wet;
+        break;
+        
+      case "reverb":
+        if (effect.wet) effect.wet.value = settings.wet;
+        // Note: roomSize/decay require recreation for Tone.Reverb
+        break;
+        
+      case "delay":
+        if (effect.delayTime) effect.delayTime.value = settings.delayTime;
+        if (effect.feedback) effect.feedback.value = settings.feedback;
+        if (effect.wet) effect.wet.value = settings.wet;
+        break;
+        
+      default:
+        console.warn(`Unknown effect type for parameter update: ${effectType}`);
+    }
+  }
+
+  // Enable a specific effect (forces rebuild)
+  enableEffect(trackId, effectType, settings) {
+    console.log(`Enabling ${effectType} effect for track ${trackId}`);
+    
+    // Update our state tracking
+    if (!this.trackEffectStates[trackId]) {
+      this.trackEffectStates[trackId] = {};
+    }
+    this.trackEffectStates[trackId][effectType] = true;
+    
+    // Get current effects state and update it
+    const currentEffectsState = this.getTrackEffectsState(trackId);
+    currentEffectsState[effectType] = { ...settings };
+    
+    // Rebuild the chain
+    this.rebuildEffectChain(trackId, currentEffectsState);
+  }
+
+  // Disable a specific effect (forces rebuild)
+  disableEffect(trackId, effectType) {
+    console.log(`Disabling ${effectType} effect for track ${trackId}`);
+    
+    // Update our state tracking
+    if (!this.trackEffectStates[trackId]) {
+      this.trackEffectStates[trackId] = {};
+    }
+    this.trackEffectStates[trackId][effectType] = false;
+    
+    // Get current effects state and reset this effect to defaults
+    const currentEffectsState = this.getTrackEffectsState(trackId);
+    const defaults = this.getDefaultEffectSettings(effectType);
+    if (defaults) {
+      currentEffectsState[effectType] = { ...defaults };
+    }
+    
+    // Rebuild the chain
+    this.rebuildEffectChain(trackId, currentEffectsState);
+  }
+
+  // Get current effects state for a track
+  getTrackEffectsState(trackId) {
+    // Get effects state from the store
+    if (this.transportStore) {
+      const state = this.transportStore.getState();
+      return state.effects.getTrackEffects(trackId);
+    }
+    
+    // Fallback to defaults if no store access
+    return this.getAllDefaultEffectSettings();
+  }
+  
+  // Get all default effect settings
+  getAllDefaultEffectSettings() {
+    return {
+      eq: { high: 0, mid: 0, low: 0 },
+      filter: { frequency: 20000, Q: 1 },
+      compressor: { threshold: -24, ratio: 4, attack: 0.01, release: 0.1 },
+      chorus: { rate: 2, depth: 0.3, wet: 0 },
+      vibrato: { rate: 5, depth: 0.1, wet: 0 },
+      distortion: { amount: 0, oversample: "2x" },
+      pitchShift: { pitch: 0, windowSize: 0.03, wet: 0 },
+      reverb: { roomSize: 0.3, decay: 1.5, wet: 0 },
+      delay: { delayTime: 0.25, feedback: 0.3, wet: 0 }
+    };
+  }
+
+  // Get default settings for a specific effect type
+  getDefaultEffectSettings(effectType) {
+    const allDefaults = this.getAllDefaultEffectSettings();
+    return allDefaults[effectType];
   }
 
   // Set tracks and load their sounds with effects
@@ -384,6 +628,7 @@ class DrumScheduler {
         });
 
         delete this.trackEffects[trackId];
+        delete this.trackEffectStates[trackId];
       }
     });
   }
@@ -642,6 +887,7 @@ class DrumScheduler {
       });
     });
     this.trackEffects = {};
+    this.trackEffectStates = {};
 
     console.log("DrumScheduler: Destroyed");
   }

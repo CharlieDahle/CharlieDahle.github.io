@@ -8,6 +8,7 @@ import {
   Zap,
   Waves,
   Settings,
+  RotateCcw,
 } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./EffectsModal.css";
@@ -26,6 +27,11 @@ function EffectsModal() {
     (state) => state.effects.resetTrackEffects
   );
   const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
+  const applyEffectChanges = useAppStore((state) => state.effects.applyEffectChanges);
+  const hasPendingChanges = useAppStore((state) => state.effects.hasPendingChanges);
+  const clearPendingChanges = useAppStore((state) => state.effects.clearPendingChanges);
+  const resetAllEffects = useAppStore((state) => state.effects.resetAllEffects);
+  const resetEffect = useAppStore((state) => state.effects.resetEffect);
 
   const [activeTab, setActiveTab] = useState("eq");
   const [tempEffects, setTempEffects] = useState(null);
@@ -55,70 +61,19 @@ function EffectsModal() {
     updateTrackEffect(effectsModalTrack.id, effectType, parameter, value);
   };
 
-  // Handle Apply - NOW we broadcast the changes
+  // Handle Apply - broadcast all pending changes using new store method
   const handleApply = () => {
-    if (effectsModalTrack && tempEffects) {
-      // Get the enabled effects (non-default values only)
-      const enabledEffects = {};
-
-      Object.keys(tempEffects).forEach((effectType) => {
-        const settings = tempEffects[effectType];
-
-        // Check if this effect is enabled (has non-default values)
-        let isEnabled = false;
-        switch (effectType) {
-          case "eq":
-            isEnabled =
-              settings.high !== 0 || settings.mid !== 0 || settings.low !== 0;
-            break;
-          case "filter":
-            isEnabled = settings.frequency !== 20000 || settings.Q !== 1;
-            break;
-          case "compressor":
-            isEnabled =
-              settings.threshold !== -24 ||
-              settings.ratio !== 4 ||
-              settings.attack !== 0.01 ||
-              settings.release !== 0.1;
-            break;
-          case "chorus":
-          case "vibrato":
-          case "reverb":
-          case "delay":
-            isEnabled = settings.wet > 0;
-            break;
-          case "distortion":
-            isEnabled = settings.amount > 0;
-            break;
-          case "pitchShift":
-            isEnabled = settings.wet > 0 || settings.pitch !== 0;
-            break;
-        }
-
-        // Only include enabled effects
-        if (isEnabled) {
-          enabledEffects[effectType] = settings;
-        }
-      });
-
-      console.log(
-        `Applying effects for ${effectsModalTrack.name}:`,
-        enabledEffects
-      );
-
-      // Send the enabled effects chain to trigger rebuild
-      const { websocket } = useAppStore.getState();
-      websocket.sendEffectChainUpdate(effectsModalTrack.id, enabledEffects);
-
-      // Also update local state for immediate feedback
-      const { effects } = useAppStore.getState();
-      effects.setTrackEffectChain(effectsModalTrack.id, enabledEffects);
+    if (effectsModalTrack) {
+      console.log(`Applying effects for ${effectsModalTrack.name}`);
+      
+      // Use the new store method that handles everything
+      applyEffectChanges(effectsModalTrack.id);
     }
 
     closeEffectsModal();
   };
 
-  // Handle Cancel - revert to original settings
+  // Handle Cancel - revert to original settings and clear pending changes
   const handleCancel = () => {
     if (originalEffects && effectsModalTrack) {
       // Revert all effects to original state
@@ -132,16 +87,28 @@ function EffectsModal() {
           );
         });
       });
+      
+      // Clear any pending changes
+      clearPendingChanges(effectsModalTrack.id);
     }
     closeEffectsModal();
   };
 
-  // Handle Reset - reset to defaults
+  // Handle Reset - reset to defaults using new store method
   const handleReset = () => {
     if (effectsModalTrack) {
-      resetTrackEffects(effectsModalTrack.id);
+      resetAllEffects(effectsModalTrack.id);
       const resetEffects = getTrackEffects(effectsModalTrack.id);
       setTempEffects({ ...resetEffects });
+    }
+  };
+
+  // Handle Reset Individual Effect
+  const handleResetEffect = (effectType) => {
+    if (effectsModalTrack) {
+      resetEffect(effectsModalTrack.id, effectType);
+      const updatedEffects = getTrackEffects(effectsModalTrack.id);
+      setTempEffects({ ...updatedEffects });
     }
   };
 
@@ -257,9 +224,18 @@ function EffectsModal() {
             {activeTab === "eq" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <BarChart3 size={18} />
-                    3-Band EQ
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <BarChart3 size={18} />
+                      3-Band EQ
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('eq')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset EQ
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -301,9 +277,18 @@ function EffectsModal() {
             {activeTab === "filter" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Filter size={18} />
-                    Low Pass Filter
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Filter size={18} />
+                      Low Pass Filter
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('filter')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Filter
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -336,9 +321,18 @@ function EffectsModal() {
             {activeTab === "reverb" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Volume2 size={18} />
-                    Reverb
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Volume2 size={18} />
+                      Reverb
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('reverb')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Reverb
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -382,9 +376,18 @@ function EffectsModal() {
             {activeTab === "delay" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Repeat size={18} />
-                    Delay
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Repeat size={18} />
+                      Delay
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('delay')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Delay
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -428,9 +431,18 @@ function EffectsModal() {
             {activeTab === "dynamics" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Zap size={18} />
-                    Compressor
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Zap size={18} />
+                      Compressor
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('compressor')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Compressor
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -482,9 +494,18 @@ function EffectsModal() {
             {activeTab === "modulation" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Waves size={18} />
-                    Chorus
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Waves size={18} />
+                      Chorus
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('chorus')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Chorus
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -523,9 +544,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Waves size={18} />
-                    Vibrato
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Waves size={18} />
+                      Vibrato
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('vibrato')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Vibrato
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -575,9 +605,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Zap size={18} />
-                    Distortion
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Zap size={18} />
+                      Distortion
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('distortion')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Distortion
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -612,9 +651,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Settings size={18} />
-                    Pitch Shift
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Settings size={18} />
+                      Pitch Shift
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('pitchShift')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Pitch Shift
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -656,25 +704,37 @@ function EffectsModal() {
         </div>
 
         <div className="effects-modal-footer">
-          <button
-            className="effects-btn effects-btn--danger"
-            onClick={handleReset}
-          >
-            Reset
-          </button>
-          <div className="button-spacer"></div>
-          <button
-            className="effects-btn effects-btn--secondary"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="effects-btn effects-btn--primary"
-            onClick={handleApply}
-          >
-            Apply
-          </button>
+          <div className="effects-footer-left">
+            <button
+              className="effects-btn effects-btn--danger"
+              onClick={handleReset}
+            >
+              Reset All Effects
+            </button>
+            {effectsModalTrack && hasPendingChanges(effectsModalTrack.id) && (
+              <div className="pending-changes-indicator">
+                <span>•</span> Unsaved changes
+              </div>
+            )}
+          </div>
+          <div className="effects-footer-right">
+            <button
+              className="effects-btn effects-btn--secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+            <button
+              className={`effects-btn effects-btn--primary ${
+                effectsModalTrack && hasPendingChanges(effectsModalTrack.id) 
+                  ? 'has-pending-changes' : ''
+              }`}
+              onClick={handleApply}
+              disabled={effectsModalTrack && !hasPendingChanges(effectsModalTrack.id)}
+            >
+              {effectsModalTrack && hasPendingChanges(effectsModalTrack.id) ? 'Apply Changes' : 'No Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
