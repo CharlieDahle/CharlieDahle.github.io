@@ -276,6 +276,7 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  padding-top: 4px;
 }
 
 .sound-item {

@@ -143,6 +143,20 @@ function SoundSelectorModal({ drumSounds }) {
     }
   }, [sortMode, processedSounds.categoryList, selectedCategory]);
 
+  // Update focused index when selected sound changes or category changes
+  useEffect(() => {
+    if (selectedSound && selectedCategory) {
+      const currentSounds = processedSounds.categories[selectedCategory] || [];
+      const availableSounds = currentSounds.filter(
+        (sound) => loadedSounds[selectedCategory]?.[sound.file]
+      );
+      const index = availableSounds.findIndex(sound => sound.file === selectedSound);
+      if (index !== -1) {
+        setFocusedSoundIndex(index);
+      }
+    }
+  }, [selectedSound, selectedCategory, processedSounds, loadedSounds]);
+
   // Load sounds for a category
   const loadCategorySounds = async (category) => {
     if (loadedSounds[category] || !audioContext) return;
@@ -271,6 +285,17 @@ function SoundSelectorModal({ drumSounds }) {
             if (nextSound) {
               setSelectedSound(nextSound.file);
               playSound(nextSound.file);
+              // Scroll the focused sound into view
+              setTimeout(() => {
+                const soundElements = document.querySelectorAll('.sound-item:not(:disabled)');
+                const focusedElement = soundElements[nextIndex];
+                if (focusedElement) {
+                  focusedElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                  });
+                }
+              }, 0);
             }
           }
           break;
@@ -287,6 +312,17 @@ function SoundSelectorModal({ drumSounds }) {
             if (nextSound) {
               setSelectedSound(nextSound.file);
               playSound(nextSound.file);
+              // Scroll the focused sound into view
+              setTimeout(() => {
+                const soundElements = document.querySelectorAll('.sound-item:not(:disabled)');
+                const focusedElement = soundElements[nextIndex];
+                if (focusedElement) {
+                  focusedElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                  });
+                }
+              }, 0);
             }
           }
           break;
@@ -408,17 +444,25 @@ function SoundSelectorModal({ drumSounds }) {
               </div>
 
               <div className="sounds-list">
-                {currentSounds.map((sound) => {
+                {currentSounds.map((sound, index) => {
                   const isLoaded = loadedSounds[selectedCategory]?.[sound.file];
                   const hasFailed = failedLoads.has(sound.file);
                   const isLoading =
                     loadingAttempts.has(sound.file) && !isLoaded && !hasFailed;
+                  
+                  // Only count loaded sounds for keyboard navigation
+                  const loadedSoundsBefore = currentSounds.slice(0, index).filter(
+                    (s) => loadedSounds[selectedCategory]?.[s.file]
+                  ).length;
+                  const isFocused = isLoaded && focusedSoundIndex === loadedSoundsBefore;
 
                   return (
                     <button
                       key={sound.file}
                       className={`sound-item ${
                         selectedSound === sound.file ? "active" : ""
+                      } ${
+                        isFocused ? "keyboard-focused" : ""
                       }`}
                       onClick={() => handleSoundClick(sound.file)}
                       disabled={!isLoaded}
