@@ -36,13 +36,16 @@ function EffectsModal() {
   
   // Preset actions
   const getPresetsForTrackType = useAppStore((state) => state.effects.getPresetsForTrackType);
-  const applyPreset = useAppStore((state) => state.effects.applyPreset);
   const getTrackTypeFromId = useAppStore((state) => state.effects.getTrackTypeFromId);
   const getCurrentPreset = useAppStore((state) => state.effects.getCurrentPreset);
+  const getTrackNumber = useAppStore((state) => state.effects.getTrackNumber);
+  const getDefaultEffects = useAppStore((state) => state.effects.getDefaultEffects);
+  const getCategoryDisplayName = useAppStore((state) => state.effects.getCategoryDisplayName);
 
   const [activeTab, setActiveTab] = useState("presets");
   const [tempEffects, setTempEffects] = useState(null);
   const [originalEffects, setOriginalEffects] = useState(null);
+  const [trackInfo, setTrackInfo] = useState(null);
 
   // Load current effects when modal opens
   useEffect(() => {
@@ -51,8 +54,20 @@ function EffectsModal() {
       setTempEffects({ ...currentEffects });
       setOriginalEffects({ ...currentEffects });
       setActiveTab("presets");
+      
+      // Compute and cache track info once
+      const trackType = getTrackTypeFromId(effectsModalTrack.id);
+      const categoryDisplayName = getCategoryDisplayName(effectsModalTrack.id);
+      const presets = trackType ? getPresetsForTrackType(trackType) : [];
+      
+      setTrackInfo({
+        trackType,
+        categoryDisplayName,
+        presets,
+        hasPresets: presets.length > 0
+      });
     }
-  }, [effectsModalOpen, effectsModalTrack, getTrackEffects]);
+  }, [effectsModalOpen, effectsModalTrack, getTrackEffects, getTrackTypeFromId, getCategoryDisplayName, getPresetsForTrackType]);
 
   const handleEffectChange = (effectType, parameter, value) => {
     const newEffects = {
@@ -123,11 +138,32 @@ function EffectsModal() {
   const handleApplyPreset = (presetId) => {
     if (effectsModalTrack) {
       const trackType = getTrackTypeFromId(effectsModalTrack.id);
-      applyPreset(effectsModalTrack.id, trackType, presetId);
+      const currentPreset = getCurrentPreset(effectsModalTrack.id);
       
-      // Update temp effects to reflect the applied preset
-      const updatedEffects = getTrackEffects(effectsModalTrack.id);
-      setTempEffects({ ...updatedEffects });
+      // If clicking on already active preset, toggle it off (reset to defaults)
+      if (currentPreset && currentPreset.id === presetId) {
+        // Apply default values through handleEffectChange to trigger pending changes
+        const defaultEffects = getDefaultEffects();
+        Object.entries(defaultEffects).forEach(([effectType, effectParams]) => {
+          Object.entries(effectParams).forEach(([parameter, value]) => {
+            handleEffectChange(effectType, parameter, value);
+          });
+        });
+        return;
+      }
+      
+      // Get preset data
+      const presetsForType = getPresetsForTrackType(trackType);
+      const preset = presetsForType.find(p => p.id === presetId);
+      
+      if (preset && preset.effects) {
+        // Apply each parameter individually to trigger pending changes
+        Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
+          Object.entries(effectParams).forEach(([parameter, value]) => {
+            handleEffectChange(effectType, parameter, value);
+          });
+        });
+      }
     }
   };
 
@@ -166,7 +202,7 @@ function EffectsModal() {
         <div className="effects-modal-header">
           <h3 className="effects-modal-title">
             <Sliders size={20} />
-            <span>{effectsModalTrack.name}</span> Effects
+            {trackInfo?.categoryDisplayName || 'Track'} Effects
           </h3>
           <button className="effects-close-btn" onClick={handleCancel}>
             &times;
@@ -252,36 +288,50 @@ function EffectsModal() {
                 <div className="presets-section">
                   <div className="presets-section-header">
                     <div className="presets-section-title">
-                      <Palette size={18} />
-                      Character Presets for {effectsModalTrack.name}
-                    </div>
-                    <div className="presets-section-subtitle">
-                      Quick-apply professional sound treatments
+                      Presets
                     </div>
                   </div>
                   
-                  <div className="presets-grid">
-                    {getPresetsForTrackType(getTrackTypeFromId(effectsModalTrack.id)).map((preset) => {
-                      const currentPreset = getCurrentPreset(effectsModalTrack.id);
-                      const isActive = currentPreset && currentPreset.id === preset.id;
-                      
+                  {(() => {
+                    const trackType = getTrackTypeFromId(effectsModalTrack.id);
+                    const presets = trackType ? getPresetsForTrackType(trackType) : [];
+                    
+                    if (!trackType || presets.length === 0) {
                       return (
-                        <button
-                          key={preset.id}
-                          className={`preset-card ${isActive ? 'active' : ''}`}
-                          onClick={() => handleApplyPreset(preset.id)}
-                        >
-                          <div className="preset-name">{preset.name}</div>
-                          <div className="preset-description">{preset.description}</div>
-                          {isActive && <div className="preset-active-indicator">✓ Active</div>}
-                        </button>
+                        <div className="presets-empty">
+                          <p>No presets available for this sound category.</p>
+                          <p>You can still use the individual effect tabs to customize your sound.</p>
+                        </div>
                       );
-                    })}
-                  </div>
-                  
-                  <div className="presets-info">
-                    <p>💡 <strong>Tip:</strong> Presets set multiple effect parameters at once. You can still tweak individual effects in the other tabs after applying a preset.</p>
-                  </div>
+                    }
+                    
+                    return (
+                      <>
+                        <div className="presets-grid">
+                          {presets.map((preset) => {
+                            const currentPreset = getCurrentPreset(effectsModalTrack.id);
+                            const isActive = currentPreset && currentPreset.id === preset.id;
+                            
+                            return (
+                              <button
+                                key={preset.id}
+                                className={`preset-card ${isActive ? 'active' : ''}`}
+                                onClick={() => handleApplyPreset(preset.id)}
+                              >
+                                <div className="preset-name">{preset.name}</div>
+                                <div className="preset-description">{preset.description}</div>
+                                {isActive && <div className="preset-active-indicator">✓ Active</div>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <div className="presets-info">
+                          <p><strong>Tip:</strong> Presets set multiple effect parameters at once. You can still tweak individual effects in the other tabs after applying a preset.</p>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}

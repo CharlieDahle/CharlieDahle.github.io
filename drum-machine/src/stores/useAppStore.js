@@ -3137,26 +3137,60 @@ export const useAppStore = create((set, get) => ({
       console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
     },
 
-    // Get the track type from track name/id for preset matching
-    getTrackTypeFromId: (trackId) => {
-      // Map track IDs to preset categories
-      if (trackId.toLowerCase().includes('kick')) return 'kick';
-      if (trackId.toLowerCase().includes('snare')) return 'snare';
-      if (trackId.toLowerCase().includes('hihat') || trackId.toLowerCase().includes('hi-hat')) return 'hihat';
-      if (trackId.toLowerCase().includes('openhat') || trackId.toLowerCase().includes('open')) return 'openhat';
+    // Get sound category from sound file path
+    getSoundCategoryFromPath: (soundFile) => {
+      if (!soundFile) return null;
       
-      // For custom tracks, try to match by track name
+      // Extract category from file path (e.g., "kicks/kick01.wav" -> "kicks")
+      const pathParts = soundFile.split('/');
+      return pathParts.length > 1 ? pathParts[0] : null;
+    },
+
+    // Get display-friendly category name for UI
+    getCategoryDisplayName: (trackId) => {
       const track = get().tracks.getTrackById(trackId);
-      if (track) {
-        const trackName = track.name.toLowerCase();
-        if (trackName.includes('kick')) return 'kick';
-        if (trackName.includes('snare')) return 'snare';
-        if (trackName.includes('hihat') || trackName.includes('hi-hat')) return 'hihat';
-        if (trackName.includes('openhat') || trackName.includes('open') || trackName.includes('cymbal')) return 'openhat';
-      }
+      if (!track || !track.soundFile) return 'Track';
       
-      // Default to kick if we can't determine
-      return 'kick';
+      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
+      
+      // Map categories to display names
+      switch (soundCategory) {
+        case 'kicks': return 'Kick';
+        case 'snares': return 'Snare';
+        case 'hihats': return 'Hi-Hat';
+        case 'openhats': return 'Open Hat';
+        case 'cymbals': return 'Cymbal';
+        case '808s': return '808';
+        case 'claps': return 'Clap';
+        case 'percs': return 'Percussion';
+        case 'vox': return 'Vocal';
+        default: return 'Track';
+      }
+    },
+
+    // Get the track type for preset matching based on sound category
+    getTrackTypeFromId: (trackId) => {
+      const track = get().tracks.getTrackById(trackId);
+      if (!track || !track.soundFile) return null;
+      
+      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
+      
+      // Map sound categories to preset categories
+      switch (soundCategory) {
+        case 'kicks': return 'kick';
+        case 'snares': return 'snare';
+        case 'hihats': return 'hihat';
+        case 'openhats':
+        case 'cymbals': return 'openhat';
+        default: return null; // No presets for this category
+      }
+    },
+
+    // Get track number (1-based) from track ID
+    getTrackNumber: (trackId) => {
+      const tracks = get().tracks.list;
+      const trackIndex = tracks.findIndex(track => track.id === trackId);
+      return trackIndex + 1; // Convert to 1-based numbering
     },
 
     // Check if current track effects match a preset
