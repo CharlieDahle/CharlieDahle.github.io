@@ -53,19 +53,22 @@ function EffectsModal() {
       const currentEffects = getTrackEffects(effectsModalTrack.id);
       setTempEffects({ ...currentEffects });
       setOriginalEffects({ ...currentEffects });
-      setActiveTab("presets");
       
       // Compute and cache track info once
       const trackType = getTrackTypeFromId(effectsModalTrack.id);
       const categoryDisplayName = getCategoryDisplayName(effectsModalTrack.id);
       const presets = trackType ? getPresetsForTrackType(trackType) : [];
       
+      const hasPresets = presets.length > 0;
       setTrackInfo({
         trackType,
         categoryDisplayName,
         presets,
-        hasPresets: presets.length > 0
+        hasPresets
       });
+      
+      // Set default tab based on whether presets are available
+      setActiveTab(hasPresets ? "presets" : "eq");
     }
   }, [effectsModalOpen, effectsModalTrack, getTrackEffects, getTrackTypeFromId, getCategoryDisplayName, getPresetsForTrackType]);
 
@@ -136,8 +139,7 @@ function EffectsModal() {
 
   // Handle Preset Application
   const handleApplyPreset = (presetId) => {
-    if (effectsModalTrack) {
-      const trackType = getTrackTypeFromId(effectsModalTrack.id);
+    if (effectsModalTrack && trackInfo) {
       const currentPreset = getCurrentPreset(effectsModalTrack.id);
       
       // If clicking on already active preset, toggle it off (reset to defaults)
@@ -152,9 +154,8 @@ function EffectsModal() {
         return;
       }
       
-      // Get preset data
-      const presetsForType = getPresetsForTrackType(trackType);
-      const preset = presetsForType.find(p => p.id === presetId);
+      // Get preset data from cached trackInfo
+      const preset = trackInfo.presets.find(p => p.id === presetId);
       
       if (preset && preset.effects) {
         // Apply each parameter individually to trigger pending changes
@@ -212,13 +213,15 @@ function EffectsModal() {
         <div className="effects-modal-body">
           {/* Effect Tabs */}
           <div className="effects-tabs">
-            <button
-              className={`effects-tab ${activeTab === "presets" ? "active" : ""}`}
-              onClick={() => setActiveTab("presets")}
-            >
-              <Palette size={14} />
-              Presets
-            </button>
+            {trackInfo?.hasPresets && (
+              <button
+                className={`effects-tab ${activeTab === "presets" ? "active" : ""}`}
+                onClick={() => setActiveTab("presets")}
+              >
+                <Palette size={14} />
+                Presets
+              </button>
+            )}
             <button
               className={`effects-tab ${activeTab === "eq" ? "active" : ""}`}
               onClick={() => setActiveTab("eq")}
@@ -292,46 +295,37 @@ function EffectsModal() {
                     </div>
                   </div>
                   
-                  {(() => {
-                    const trackType = getTrackTypeFromId(effectsModalTrack.id);
-                    const presets = trackType ? getPresetsForTrackType(trackType) : [];
-                    
-                    if (!trackType || presets.length === 0) {
-                      return (
-                        <div className="presets-empty">
-                          <p>No presets available for this sound category.</p>
-                          <p>You can still use the individual effect tabs to customize your sound.</p>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <>
-                        <div className="presets-grid">
-                          {presets.map((preset) => {
-                            const currentPreset = getCurrentPreset(effectsModalTrack.id);
-                            const isActive = currentPreset && currentPreset.id === preset.id;
-                            
-                            return (
-                              <button
-                                key={preset.id}
-                                className={`preset-card ${isActive ? 'active' : ''}`}
-                                onClick={() => handleApplyPreset(preset.id)}
-                              >
-                                <div className="preset-name">{preset.name}</div>
-                                <div className="preset-description">{preset.description}</div>
-                                {isActive && <div className="preset-active-indicator">✓ Active</div>}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        
-                        <div className="presets-info">
-                          <p><strong>Tip:</strong> Presets set multiple effect parameters at once. You can still tweak individual effects in the other tabs after applying a preset.</p>
-                        </div>
-                      </>
-                    );
-                  })()}
+                  {!trackInfo?.hasPresets ? (
+                    <div className="presets-empty">
+                      <p>No presets available for this sound category.</p>
+                      <p>You can still use the individual effect tabs to customize your sound.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="presets-grid">
+                        {trackInfo.presets.map((preset) => {
+                          const currentPreset = getCurrentPreset(effectsModalTrack.id);
+                          const isActive = currentPreset && currentPreset.id === preset.id;
+                          
+                          return (
+                            <button
+                              key={preset.id}
+                              className={`preset-card ${isActive ? 'active' : ''}`}
+                              onClick={() => handleApplyPreset(preset.id)}
+                            >
+                              <div className="preset-name">{preset.name}</div>
+                              <div className="preset-description">{preset.description}</div>
+                              {isActive && <div className="preset-active-indicator">✓ Active</div>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="presets-info">
+                        <p><strong>Tip:</strong> Presets set multiple effect parameters at once. You can still tweak individual effects in the other tabs after applying a preset.</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
