@@ -16,6 +16,32 @@ const clampVelocity = (velocity) => {
   return Math.max(1, Math.min(4, velocity || 4));
 };
 
+// Helper function for throttling
+const throttle = (func, limit) => {
+  let lastFunc;
+  let lastRan;
+  return function (...args) {
+    if (!lastRan) {
+      func.apply(this, args);
+      lastRan = Date.now();
+    } else {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  };
+};
+
+// Create throttled function for real-time parameter updates
+const throttledParameterUpdate = throttle((store, trackId, effectType, parameter, value) => {
+  const { websocket } = store.getState();
+  websocket.sendEffectParameterUpdate(trackId, effectType, parameter, value);
+}, 50); // 50ms throttle = ~20fps
+
 export const useAppStore = create((set, get) => ({
   // ============================================================================
   // PATTERN SLICE
@@ -861,6 +887,34 @@ export const useAppStore = create((set, get) => ({
         }
       );
 
+      // NEW: Real-time effect parameter updates
+      newSocket.on("effect-parameter-update", ({ trackId, effectType, parameter, value }) => {
+        console.log("Real-time effect parameter update received:", {
+          trackId,
+          effectType,
+          parameter,
+          value,
+        });
+        debugLog("in", "effect-parameter-update", {
+          trackId,
+          effectType,
+          parameter,
+          value,
+        });
+        
+        // Apply the parameter change directly (no pending changes for remote updates)
+        get().effects.syncTrackEffect(trackId, effectType, parameter, value);
+      });
+      
+      // NEW: Complete effect state application
+      newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
+        console.log("Effect state apply received:", { trackId, effectsState });
+        debugLog("in", "effect-state-apply", { trackId, effectsState });
+        
+        // Sync the entire effect state for this track
+        get().effects.syncTrackEffectState(trackId, effectsState);
+      });
+
       // Pattern events - direct store updates
       newSocket.on("pattern-update", (change) => {
         console.log("Pattern update received:", change);
@@ -1427,6 +1481,36 @@ export const useAppStore = create((set, get) => ({
       console.log("Sending effect reset:", trackId);
       debugLog("out", "effect-reset", payload);
       socket.emit("effect-reset", payload);
+    },
+
+    // NEW: Send real-time effect parameter update (throttled)
+    sendEffectParameterUpdate: (trackId, effectType, parameter, value) => {
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        debugLog("out", "effect-parameter-failed", "Not connected");
+        console.log("Skipping effect parameter update - not connected");
+        return;
+      }
+
+      const payload = { roomId, trackId, effectType, parameter, value };
+      console.log("Sending real-time effect parameter update:", payload);
+      debugLog("out", "effect-parameter-update", payload);
+      socket.emit("effect-parameter-update", payload);
+    },
+    
+    // NEW: Send complete effect state (for apply button)
+    sendEffectStateApply: (trackId, effectsState) => {
+      const { socket, connectionState, roomId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !roomId) {
+        debugLog("out", "effect-state-apply-failed", "Not connected");
+        console.log("Skipping effect state apply - not connected");
+        return;
+      }
+
+      const payload = { roomId, trackId, effectsState };
+      console.log("Sending effect state apply:", payload);
+      debugLog("out", "effect-state-apply", payload);
+      socket.emit("effect-state-apply", payload);
     },
 
     cleanup: () => {
@@ -2355,6 +2439,169 @@ export const useAppStore = create((set, get) => ({
   effects: {
     // Store effects state per track
     trackEffects: {},
+    // Track which effects are enabled/disabled (NEW)
+    enabledEffects: {}, // { trackId: { effectType: boolean } }
+    // Local pending changes before apply (NEW)
+    pendingChanges: {}, // { trackId: { effectType: { param: value } } }
+    
+    // Effect presets organized by drum type
+    presets: {
+      kick: {
+        tight: {
+          name: "Tight",
+          description: "Punchy and controlled",
+          effects: {
+            eq: { high: -3, mid: 2, low: 4 },
+            compressor: { threshold: -20, ratio: 6, attack: 0.001, release: 0.05 },
+            filter: { frequency: 15000, Q: 1 }
+          }
+        },
+        punchy: {
+          name: "Punchy",
+          description: "Heavy and impactful",
+          effects: {
+            eq: { high: 0, mid: 4, low: 6 },
+            compressor: { threshold: -18, ratio: 8, attack: 0.005, release: 0.08 },
+            distortion: { amount: 0.1, oversample: "2x" }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Warm analog character",
+          effects: {
+            eq: { high: -4, mid: 1, low: 3 },
+            filter: { frequency: 8000, Q: 0.7 },
+            distortion: { amount: 0.15, oversample: "2x" },
+            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 }
+          }
+        },
+        sub: {
+          name: "808",
+          description: "Deep sub-bass",
+          effects: {
+            eq: { high: -6, mid: -2, low: 8 },
+            compressor: { threshold: -16, ratio: 4, attack: 0.01, release: 0.15 },
+            chorus: { rate: 1, depth: 0.2, wet: 0.3 }
+          }
+        }
+      },
+      snare: {
+        crispy: {
+          name: "Crispy",
+          description: "Bright and cutting",
+          effects: {
+            eq: { high: 6, mid: 2, low: -2 },
+            compressor: { threshold: -22, ratio: 5, attack: 0.002, release: 0.06 },
+            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 }
+          }
+        },
+        fat: {
+          name: "Fat",
+          description: "Full and powerful",
+          effects: {
+            eq: { high: 1, mid: 4, low: 1 },
+            compressor: { threshold: -18, ratio: 6, attack: 0.005, release: 0.1 },
+            distortion: { amount: 0.08, oversample: "2x" }
+          }
+        },
+        gated: {
+          name: "Gated",
+          description: "Tight and controlled",
+          effects: {
+            compressor: { threshold: -16, ratio: 10, attack: 0.001, release: 0.03 },
+            filter: { frequency: 200, Q: 1.2 },
+            eq: { high: 2, mid: 0, low: -4 }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Classic analog warmth",
+          effects: {
+            eq: { high: -2, mid: -1, low: 0 },
+            compressor: { threshold: -20, ratio: 4, attack: 0.01, release: 0.1 },
+            distortion: { amount: 0.12, oversample: "2x" },
+            filter: { frequency: 12000, Q: 0.8 }
+          }
+        }
+      },
+      hihat: {
+        bright: {
+          name: "Bright",
+          description: "Sparkly and present",
+          effects: {
+            eq: { high: 4, mid: 1, low: -3 },
+            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
+          }
+        },
+        sizzle: {
+          name: "Sizzle",
+          description: "Aggressive high-end",
+          effects: {
+            eq: { high: 8, mid: 3, low: -4 },
+            distortion: { amount: 0.06, oversample: "4x" },
+            filter: { frequency: 18000, Q: 1.5 }
+          }
+        },
+        tight: {
+          name: "Tight",
+          description: "Controlled and precise",
+          effects: {
+            compressor: { threshold: -20, ratio: 8, attack: 0.001, release: 0.02 },
+            filter: { frequency: 400, Q: 1.0 },
+            eq: { high: 0, mid: -2, low: -6 }
+          }
+        },
+        spacey: {
+          name: "Spacey",
+          description: "Wide and atmospheric",
+          effects: {
+            chorus: { rate: 3, depth: 0.4, wet: 0.4 },
+            reverb: { roomSize: 0.6, decay: 1.2, wet: 0.3 },
+            eq: { high: 2, mid: 0, low: -2 }
+          }
+        }
+      },
+      openhat: {
+        bright: {
+          name: "Bright",
+          description: "Sparkly and present",
+          effects: {
+            eq: { high: 4, mid: 1, low: -3 },
+            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
+          }
+        },
+        sizzle: {
+          name: "Sizzle",
+          description: "Aggressive high-end",
+          effects: {
+            eq: { high: 8, mid: 3, low: -4 },
+            distortion: { amount: 0.06, oversample: "4x" },
+            filter: { frequency: 18000, Q: 1.5 }
+          }
+        },
+        washy: {
+          name: "Washy",
+          description: "Long and atmospheric",
+          effects: {
+            reverb: { roomSize: 0.7, decay: 2.5, wet: 0.4 },
+            chorus: { rate: 1.5, depth: 0.3, wet: 0.25 },
+            eq: { high: 1, mid: -1, low: -4 }
+          }
+        },
+        vintage: {
+          name: "Vintage",
+          description: "Classic cymbal sound",
+          effects: {
+            eq: { high: -1, mid: 1, low: -2 },
+            filter: { frequency: 14000, Q: 0.9 },
+            distortion: { amount: 0.05, oversample: "2x" },
+            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 }
+          }
+        }
+      }
+    },
 
     // Default effect settings
     getDefaultEffects: () => ({
@@ -2469,7 +2716,7 @@ export const useAppStore = create((set, get) => ({
       });
     },
 
-    // Update a specific effect parameter (triggers rebuild)
+    // Update a specific effect parameter (local only, real-time if enabled)
     updateTrackEffect: (trackId, effectType, parameter, value) => {
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
@@ -2487,12 +2734,22 @@ export const useAppStore = create((set, get) => ({
               },
             },
           },
+          // Track this as a pending change
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {
+              ...state.effects.pendingChanges[trackId],
+              [effectType]: {
+                ...state.effects.pendingChanges[trackId]?.[effectType],
+                [parameter]: value,
+              },
+            },
+          },
         },
       }));
 
-      // Send the ENTIRE enabled effects state to WebSocket for collaboration
-      const enabledEffects = get().effects.getEnabledEffects(trackId);
-      get().websocket.sendEffectChainUpdate(trackId, enabledEffects);
+      // Send throttled real-time parameter update
+      throttledParameterUpdate({ getState: get }, trackId, effectType, parameter, value);
     },
 
     // Enable an effect with specific settings
@@ -2507,6 +2764,14 @@ export const useAppStore = create((set, get) => ({
             [trackId]: {
               ...state.effects.trackEffects[trackId],
               [effectType]: { ...settings },
+            },
+          },
+          // Mark this effect as enabled
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {
+              ...state.effects.enabledEffects[trackId],
+              [effectType]: true,
             },
           },
         },
@@ -2530,6 +2795,22 @@ export const useAppStore = create((set, get) => ({
             [trackId]: {
               ...state.effects.trackEffects[trackId],
               [effectType]: { ...defaults[effectType] },
+            },
+          },
+          // Mark this effect as disabled
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {
+              ...state.effects.enabledEffects[trackId],
+              [effectType]: false,
+            },
+          },
+          // Clear pending changes for this effect
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {
+              ...state.effects.pendingChanges[trackId],
+              [effectType]: undefined,
             },
           },
         },
@@ -2590,11 +2871,19 @@ export const useAppStore = create((set, get) => ({
     removeTrackEffects: (trackId) => {
       set((state) => {
         const newTrackEffects = { ...state.effects.trackEffects };
+        const newEnabledEffects = { ...state.effects.enabledEffects };
+        const newPendingChanges = { ...state.effects.pendingChanges };
+        
         delete newTrackEffects[trackId];
+        delete newEnabledEffects[trackId];
+        delete newPendingChanges[trackId];
+        
         return {
           effects: {
             ...state.effects,
             trackEffects: newTrackEffects,
+            enabledEffects: newEnabledEffects,
+            pendingChanges: newPendingChanges,
           },
         };
       });
@@ -2635,8 +2924,308 @@ export const useAppStore = create((set, get) => ({
             ...state.effects.trackEffects,
             [trackId]: state.effects.getDefaultEffects(),
           },
+          // Clear enabled effects tracking
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: {},
+          },
+          // Clear pending changes
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
         },
       }));
+    },
+
+    // NEW: Apply pending changes and broadcast to other clients
+    applyEffectChanges: (trackId) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId];
+      
+      if (!trackPendingChanges || Object.keys(trackPendingChanges).length === 0) {
+        console.log(`No pending changes to apply for track ${trackId}`);
+        return;
+      }
+      
+      console.log(`Applying effect changes for track ${trackId}:`, trackPendingChanges);
+      
+      // Clear pending changes since we're applying them
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+      
+      // Send the complete effect state to other clients (using new apply method)
+      const completeEffectsState = get().effects.getTrackEffects(trackId);
+      get().websocket.sendEffectStateApply(trackId, completeEffectsState);
+      
+      console.log(`✅ Applied and broadcast effect changes for track ${trackId}`);
+    },
+    
+    // NEW: Reset a single effect to default values
+    resetEffect: (trackId, effectType) => {
+      console.log(`Resetting ${effectType} effect for track ${trackId}`);
+      
+      get().effects.disableEffect(trackId, effectType);
+    },
+    
+    // NEW: Reset all effects for a track
+    resetAllEffects: (trackId) => {
+      console.log(`Resetting all effects for track ${trackId}`);
+      
+      get().effects.resetTrackEffects(trackId);
+    },
+    
+    // NEW: Check if there are pending changes for a track
+    hasPendingChanges: (trackId) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId];
+      
+      if (!trackPendingChanges) return false;
+      
+      // Check if any effect has pending changes
+      return Object.keys(trackPendingChanges).some(
+        (effectType) => 
+          trackPendingChanges[effectType] && 
+          Object.keys(trackPendingChanges[effectType]).length > 0
+      );
+    },
+    
+    // NEW: Get pending changes for a specific effect
+    getPendingChanges: (trackId, effectType = null) => {
+      const { pendingChanges } = get().effects;
+      const trackPendingChanges = pendingChanges[trackId] || {};
+      
+      if (effectType) {
+        return trackPendingChanges[effectType] || {};
+      }
+      
+      return trackPendingChanges;
+    },
+    
+    // NEW: Clear pending changes without applying
+    clearPendingChanges: (trackId, effectType = null) => {
+      if (effectType) {
+        // Clear specific effect's pending changes
+        set((state) => ({
+          effects: {
+            ...state.effects,
+            pendingChanges: {
+              ...state.effects.pendingChanges,
+              [trackId]: {
+                ...state.effects.pendingChanges[trackId],
+                [effectType]: {},
+              },
+            },
+          },
+        }));
+      } else {
+        // Clear all pending changes for the track
+        set((state) => ({
+          effects: {
+            ...state.effects,
+            pendingChanges: {
+              ...state.effects.pendingChanges,
+              [trackId]: {},
+            },
+          },
+        }));
+      }
+    },
+    
+    // NEW: Sync complete effect state from remote (for apply button)
+    syncTrackEffectState: (trackId, effectsState) => {
+      console.log(`Syncing complete effect state for ${trackId}:`, effectsState);
+      
+      // Initialize if doesn't exist
+      get().effects.initializeTrackEffects(trackId);
+      
+      // Update enabled effects tracking
+      const newEnabledEffects = {};
+      Object.keys(effectsState).forEach((effectType) => {
+        newEnabledEffects[effectType] = get().effects.isEffectEnabled(
+          effectType, 
+          effectsState[effectType]
+        );
+      });
+      
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: { ...effectsState },
+          },
+          enabledEffects: {
+            ...state.effects.enabledEffects,
+            [trackId]: newEnabledEffects,
+          },
+          // Clear pending changes since we just got the authoritative state
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+    },
+
+    // PRESET METHODS
+    
+    // Get available presets for a track type (kick, snare, hihat, openhat)
+    getPresetsForTrackType: (trackType) => {
+      const presets = get().effects.presets[trackType] || {};
+      return Object.entries(presets).map(([key, preset]) => ({
+        id: key,
+        ...preset
+      }));
+    },
+
+    // Apply a preset to a track
+    applyPreset: (trackId, trackType, presetId) => {
+      const presets = get().effects.presets[trackType];
+      if (!presets || !presets[presetId]) {
+        console.warn(`Preset ${presetId} not found for track type ${trackType}`);
+        return;
+      }
+
+      const preset = presets[presetId];
+      console.log(`Applying preset "${preset.name}" to track ${trackId}:`, preset.effects);
+
+      // Initialize if doesn't exist
+      get().effects.initializeTrackEffects(trackId);
+
+      // Get current effects state
+      const currentEffects = get().effects.getTrackEffects(trackId);
+      
+      // Merge preset effects with current effects (preset wins for specified parameters)
+      const newEffects = { ...currentEffects };
+      
+      Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
+        if (newEffects[effectType]) {
+          newEffects[effectType] = {
+            ...newEffects[effectType],
+            ...effectParams
+          };
+        }
+      });
+
+      // Apply the new effects state
+      set((state) => ({
+        effects: {
+          ...state.effects,
+          trackEffects: {
+            ...state.effects.trackEffects,
+            [trackId]: newEffects,
+          },
+          // Clear pending changes since we're applying a preset
+          pendingChanges: {
+            ...state.effects.pendingChanges,
+            [trackId]: {},
+          },
+        },
+      }));
+
+      // Send the complete effect state to other clients
+      get().websocket.sendEffectStateApply(trackId, newEffects);
+      
+      console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
+    },
+
+    // Get sound category from sound file path
+    getSoundCategoryFromPath: (soundFile) => {
+      if (!soundFile) return null;
+      
+      // Extract category from file path (e.g., "kicks/kick01.wav" -> "kicks")
+      const pathParts = soundFile.split('/');
+      return pathParts.length > 1 ? pathParts[0] : null;
+    },
+
+    // Get display-friendly category name for UI
+    getCategoryDisplayName: (trackId) => {
+      const track = get().tracks.getTrackById(trackId);
+      if (!track || !track.soundFile) return 'Track';
+      
+      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
+      
+      // Map categories to display names
+      switch (soundCategory) {
+        case 'kicks': return 'Kick';
+        case 'snares': return 'Snare';
+        case 'hihats': return 'Hi-Hat';
+        case 'openhats': return 'Open Hat';
+        case 'cymbals': return 'Cymbal';
+        case '808s': return '808';
+        case 'claps': return 'Clap';
+        case 'percs': return 'Percussion';
+        case 'vox': return 'Vocal';
+        default: return 'Track';
+      }
+    },
+
+    // Get the track type for preset matching based on sound category
+    getTrackTypeFromId: (trackId) => {
+      const track = get().tracks.getTrackById(trackId);
+      if (!track || !track.soundFile) return null;
+      
+      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
+      
+      // Map sound categories to preset categories
+      switch (soundCategory) {
+        case 'kicks': return 'kick';
+        case 'snares': return 'snare';
+        case 'hihats': return 'hihat';
+        case 'openhats':
+        case 'cymbals': return 'openhat';
+        default: return null; // No presets for this category
+      }
+    },
+
+    // Get track number (1-based) from track ID
+    getTrackNumber: (trackId) => {
+      const tracks = get().tracks.list;
+      const trackIndex = tracks.findIndex(track => track.id === trackId);
+      return trackIndex + 1; // Convert to 1-based numbering
+    },
+
+    // Check if current track effects match a preset
+    getCurrentPreset: (trackId) => {
+      const trackType = get().effects.getTrackTypeFromId(trackId);
+      const currentEffects = get().effects.getTrackEffects(trackId);
+      const presets = get().effects.presets[trackType] || {};
+      
+      // Check each preset to see if it matches current settings
+      for (const [presetId, preset] of Object.entries(presets)) {
+        let isMatch = true;
+        
+        // Check if all preset parameters match current effects
+        for (const [effectType, effectParams] of Object.entries(preset.effects)) {
+          if (!currentEffects[effectType]) {
+            isMatch = false;
+            break;
+          }
+          
+          for (const [param, value] of Object.entries(effectParams)) {
+            if (Math.abs(currentEffects[effectType][param] - value) > 0.01) {
+              isMatch = false;
+              break;
+            }
+          }
+          
+          if (!isMatch) break;
+        }
+        
+        if (isMatch) {
+          return { id: presetId, ...preset };
+        }
+      }
+      
+      return null; // No matching preset
     },
   },
 }));

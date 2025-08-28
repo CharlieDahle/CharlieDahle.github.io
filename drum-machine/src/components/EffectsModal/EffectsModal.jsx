@@ -8,6 +8,8 @@ import {
   Zap,
   Waves,
   Settings,
+  RotateCcw,
+  Palette,
 } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./EffectsModal.css";
@@ -26,10 +28,24 @@ function EffectsModal() {
     (state) => state.effects.resetTrackEffects
   );
   const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
+  const applyEffectChanges = useAppStore((state) => state.effects.applyEffectChanges);
+  const hasPendingChanges = useAppStore((state) => state.effects.hasPendingChanges);
+  const clearPendingChanges = useAppStore((state) => state.effects.clearPendingChanges);
+  const resetAllEffects = useAppStore((state) => state.effects.resetAllEffects);
+  const resetEffect = useAppStore((state) => state.effects.resetEffect);
+  
+  // Preset actions
+  const getPresetsForTrackType = useAppStore((state) => state.effects.getPresetsForTrackType);
+  const getTrackTypeFromId = useAppStore((state) => state.effects.getTrackTypeFromId);
+  const getCurrentPreset = useAppStore((state) => state.effects.getCurrentPreset);
+  const getTrackNumber = useAppStore((state) => state.effects.getTrackNumber);
+  const getDefaultEffects = useAppStore((state) => state.effects.getDefaultEffects);
+  const getCategoryDisplayName = useAppStore((state) => state.effects.getCategoryDisplayName);
 
-  const [activeTab, setActiveTab] = useState("eq");
+  const [activeTab, setActiveTab] = useState("presets");
   const [tempEffects, setTempEffects] = useState(null);
   const [originalEffects, setOriginalEffects] = useState(null);
+  const [trackInfo, setTrackInfo] = useState(null);
 
   // Load current effects when modal opens
   useEffect(() => {
@@ -37,9 +53,24 @@ function EffectsModal() {
       const currentEffects = getTrackEffects(effectsModalTrack.id);
       setTempEffects({ ...currentEffects });
       setOriginalEffects({ ...currentEffects });
-      setActiveTab("eq");
+      
+      // Compute and cache track info once
+      const trackType = getTrackTypeFromId(effectsModalTrack.id);
+      const categoryDisplayName = getCategoryDisplayName(effectsModalTrack.id);
+      const presets = trackType ? getPresetsForTrackType(trackType) : [];
+      
+      const hasPresets = presets.length > 0;
+      setTrackInfo({
+        trackType,
+        categoryDisplayName,
+        presets,
+        hasPresets
+      });
+      
+      // Set default tab based on whether presets are available
+      setActiveTab(hasPresets ? "presets" : "eq");
     }
-  }, [effectsModalOpen, effectsModalTrack, getTrackEffects]);
+  }, [effectsModalOpen, effectsModalTrack, getTrackEffects, getTrackTypeFromId, getCategoryDisplayName, getPresetsForTrackType]);
 
   const handleEffectChange = (effectType, parameter, value) => {
     const newEffects = {
@@ -55,70 +86,19 @@ function EffectsModal() {
     updateTrackEffect(effectsModalTrack.id, effectType, parameter, value);
   };
 
-  // Handle Apply - NOW we broadcast the changes
+  // Handle Apply - broadcast all pending changes using new store method
   const handleApply = () => {
-    if (effectsModalTrack && tempEffects) {
-      // Get the enabled effects (non-default values only)
-      const enabledEffects = {};
-
-      Object.keys(tempEffects).forEach((effectType) => {
-        const settings = tempEffects[effectType];
-
-        // Check if this effect is enabled (has non-default values)
-        let isEnabled = false;
-        switch (effectType) {
-          case "eq":
-            isEnabled =
-              settings.high !== 0 || settings.mid !== 0 || settings.low !== 0;
-            break;
-          case "filter":
-            isEnabled = settings.frequency !== 20000 || settings.Q !== 1;
-            break;
-          case "compressor":
-            isEnabled =
-              settings.threshold !== -24 ||
-              settings.ratio !== 4 ||
-              settings.attack !== 0.01 ||
-              settings.release !== 0.1;
-            break;
-          case "chorus":
-          case "vibrato":
-          case "reverb":
-          case "delay":
-            isEnabled = settings.wet > 0;
-            break;
-          case "distortion":
-            isEnabled = settings.amount > 0;
-            break;
-          case "pitchShift":
-            isEnabled = settings.wet > 0 || settings.pitch !== 0;
-            break;
-        }
-
-        // Only include enabled effects
-        if (isEnabled) {
-          enabledEffects[effectType] = settings;
-        }
-      });
-
-      console.log(
-        `Applying effects for ${effectsModalTrack.name}:`,
-        enabledEffects
-      );
-
-      // Send the enabled effects chain to trigger rebuild
-      const { websocket } = useAppStore.getState();
-      websocket.sendEffectChainUpdate(effectsModalTrack.id, enabledEffects);
-
-      // Also update local state for immediate feedback
-      const { effects } = useAppStore.getState();
-      effects.setTrackEffectChain(effectsModalTrack.id, enabledEffects);
+    if (effectsModalTrack) {
+      console.log(`Applying effects for ${effectsModalTrack.name}`);
+      
+      // Use the new store method that handles everything
+      applyEffectChanges(effectsModalTrack.id);
     }
 
     closeEffectsModal();
   };
 
-  // Handle Cancel - revert to original settings
+  // Handle Cancel - revert to original settings and clear pending changes
   const handleCancel = () => {
     if (originalEffects && effectsModalTrack) {
       // Revert all effects to original state
@@ -132,16 +112,59 @@ function EffectsModal() {
           );
         });
       });
+      
+      // Clear any pending changes
+      clearPendingChanges(effectsModalTrack.id);
     }
     closeEffectsModal();
   };
 
-  // Handle Reset - reset to defaults
+  // Handle Reset - reset to defaults using new store method
   const handleReset = () => {
     if (effectsModalTrack) {
-      resetTrackEffects(effectsModalTrack.id);
+      resetAllEffects(effectsModalTrack.id);
       const resetEffects = getTrackEffects(effectsModalTrack.id);
       setTempEffects({ ...resetEffects });
+    }
+  };
+
+  // Handle Reset Individual Effect
+  const handleResetEffect = (effectType) => {
+    if (effectsModalTrack) {
+      resetEffect(effectsModalTrack.id, effectType);
+      const updatedEffects = getTrackEffects(effectsModalTrack.id);
+      setTempEffects({ ...updatedEffects });
+    }
+  };
+
+  // Handle Preset Application
+  const handleApplyPreset = (presetId) => {
+    if (effectsModalTrack && trackInfo) {
+      const currentPreset = getCurrentPreset(effectsModalTrack.id);
+      
+      // If clicking on already active preset, toggle it off (reset to defaults)
+      if (currentPreset && currentPreset.id === presetId) {
+        // Apply default values through handleEffectChange to trigger pending changes
+        const defaultEffects = getDefaultEffects();
+        Object.entries(defaultEffects).forEach(([effectType, effectParams]) => {
+          Object.entries(effectParams).forEach(([parameter, value]) => {
+            handleEffectChange(effectType, parameter, value);
+          });
+        });
+        return;
+      }
+      
+      // Get preset data from cached trackInfo
+      const preset = trackInfo.presets.find(p => p.id === presetId);
+      
+      if (preset && preset.effects) {
+        // Apply each parameter individually to trigger pending changes
+        Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
+          Object.entries(effectParams).forEach(([parameter, value]) => {
+            handleEffectChange(effectType, parameter, value);
+          });
+        });
+      }
     }
   };
 
@@ -180,7 +203,7 @@ function EffectsModal() {
         <div className="effects-modal-header">
           <h3 className="effects-modal-title">
             <Sliders size={20} />
-            <span>{effectsModalTrack.name}</span> Effects
+            {trackInfo?.categoryDisplayName || 'Track'} Effects
           </h3>
           <button className="effects-close-btn" onClick={handleCancel}>
             &times;
@@ -190,6 +213,15 @@ function EffectsModal() {
         <div className="effects-modal-body">
           {/* Effect Tabs */}
           <div className="effects-tabs">
+            {trackInfo?.hasPresets && (
+              <button
+                className={`effects-tab ${activeTab === "presets" ? "active" : ""}`}
+                onClick={() => setActiveTab("presets")}
+              >
+                <Palette size={14} />
+                Presets
+              </button>
+            )}
             <button
               className={`effects-tab ${activeTab === "eq" ? "active" : ""}`}
               onClick={() => setActiveTab("eq")}
@@ -253,13 +285,67 @@ function EffectsModal() {
 
           {/* Scrollable Content Area */}
           <div className="effects-content">
+            {/* Presets Panel */}
+            {activeTab === "presets" && effectsModalTrack && (
+              <div className="effects-panel">
+                <div className="presets-section">
+                  <div className="presets-section-header">
+                    <div className="presets-section-title">
+                      Presets
+                    </div>
+                  </div>
+                  
+                  {!trackInfo?.hasPresets ? (
+                    <div className="presets-empty">
+                      <p>No presets available for this sound category.</p>
+                      <p>You can still use the individual effect tabs to customize your sound.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="presets-grid">
+                        {trackInfo.presets.map((preset) => {
+                          const currentPreset = getCurrentPreset(effectsModalTrack.id);
+                          const isActive = currentPreset && currentPreset.id === preset.id;
+                          
+                          return (
+                            <button
+                              key={preset.id}
+                              className={`preset-card ${isActive ? 'active' : ''}`}
+                              onClick={() => handleApplyPreset(preset.id)}
+                            >
+                              <div className="preset-name">{preset.name}</div>
+                              <div className="preset-description">{preset.description}</div>
+                              {isActive && <div className="preset-active-indicator">✓ Active</div>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="presets-info">
+                        <p><strong>Tip:</strong> Presets set multiple effect parameters at once. You can still tweak individual effects in the other tabs after applying a preset.</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* EQ Panel */}
             {activeTab === "eq" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <BarChart3 size={18} />
-                    3-Band EQ
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <BarChart3 size={18} />
+                      3-Band EQ
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('eq')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset EQ
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -301,9 +387,18 @@ function EffectsModal() {
             {activeTab === "filter" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Filter size={18} />
-                    Low Pass Filter
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Filter size={18} />
+                      Low Pass Filter
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('filter')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Filter
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -336,9 +431,18 @@ function EffectsModal() {
             {activeTab === "reverb" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Volume2 size={18} />
-                    Reverb
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Volume2 size={18} />
+                      Reverb
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('reverb')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Reverb
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -382,9 +486,18 @@ function EffectsModal() {
             {activeTab === "delay" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Repeat size={18} />
-                    Delay
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Repeat size={18} />
+                      Delay
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('delay')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Delay
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -428,9 +541,18 @@ function EffectsModal() {
             {activeTab === "dynamics" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Zap size={18} />
-                    Compressor
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Zap size={18} />
+                      Compressor
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('compressor')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Compressor
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -482,9 +604,18 @@ function EffectsModal() {
             {activeTab === "modulation" && (
               <div className="effects-panel">
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Waves size={18} />
-                    Chorus
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Waves size={18} />
+                      Chorus
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('chorus')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Chorus
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -523,9 +654,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Waves size={18} />
-                    Vibrato
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Waves size={18} />
+                      Vibrato
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('vibrato')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Vibrato
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -575,9 +715,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Zap size={18} />
-                    Distortion
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Zap size={18} />
+                      Distortion
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('distortion')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Distortion
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -612,9 +761,18 @@ function EffectsModal() {
                 </div>
 
                 <div className="effects-section">
-                  <div className="effects-section-title">
-                    <Settings size={18} />
-                    Pitch Shift
+                  <div className="effects-section-header">
+                    <div className="effects-section-title">
+                      <Settings size={18} />
+                      Pitch Shift
+                    </div>
+                    <button 
+                      className="effect-reset-btn"
+                      onClick={() => handleResetEffect('pitchShift')}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Pitch Shift
+                    </button>
                   </div>
                   <div className="slider-row">
                     <SliderControl
@@ -656,25 +814,37 @@ function EffectsModal() {
         </div>
 
         <div className="effects-modal-footer">
-          <button
-            className="effects-btn effects-btn--danger"
-            onClick={handleReset}
-          >
-            Reset
-          </button>
-          <div className="button-spacer"></div>
-          <button
-            className="effects-btn effects-btn--secondary"
-            onClick={handleCancel}
-          >
-            Cancel
-          </button>
-          <button
-            className="effects-btn effects-btn--primary"
-            onClick={handleApply}
-          >
-            Apply
-          </button>
+          <div className="effects-footer-left">
+            <button
+              className="effects-btn effects-btn--danger"
+              onClick={handleReset}
+            >
+              Reset All Effects
+            </button>
+            {effectsModalTrack && hasPendingChanges(effectsModalTrack.id) && (
+              <div className="pending-changes-indicator">
+                <span>•</span> Unsaved changes
+              </div>
+            )}
+          </div>
+          <div className="effects-footer-right">
+            <button
+              className="effects-btn effects-btn--secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </button>
+            <button
+              className={`effects-btn effects-btn--primary ${
+                effectsModalTrack && hasPendingChanges(effectsModalTrack.id) 
+                  ? 'has-pending-changes' : ''
+              }`}
+              onClick={handleApply}
+              disabled={effectsModalTrack && !hasPendingChanges(effectsModalTrack.id)}
+            >
+              {effectsModalTrack && hasPendingChanges(effectsModalTrack.id) ? 'Apply Changes' : 'No Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
