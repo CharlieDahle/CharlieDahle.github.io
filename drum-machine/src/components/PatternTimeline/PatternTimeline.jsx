@@ -638,9 +638,7 @@ function PatternTimeline() {
               ref={playheadRef}
               className={`playhead ${isPlaying ? "playhead--playing" : ""}`}
               style={{ height: `${tracks.length * TRACK_HEIGHT}px` }}
-            >
-              <div className="playhead-indicator" />
-            </div>
+            />
           </div>
         </div>
       </div>

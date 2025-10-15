@@ -62,7 +62,13 @@ function TransportControls() {
           >
             ⏹ Stop
           </button>
-          <button className="transport-btn transport-btn--loop">Loop</button>
+          <button
+            className="transport-btn transport-btn--loop"
+            disabled
+            title="The feature is coming soon!"
+          >
+            Loop
+          </button>
         </div>
 
         {/* Measure Controls */}

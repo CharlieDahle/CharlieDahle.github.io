@@ -381,38 +381,14 @@
 .playhead {
   position: absolute;
   width: 3px;
-  background: linear-gradient(to bottom, var(--playhead-color), #0056b3);
+  background: var(--playhead-color);
   z-index: 10;
   pointer-events: none;
-  box-shadow: 0 0 8px var(--playhead-shadow);
-  border-radius: 1px;
   top: 0;
   transition: none;
 }
 
-.playhead-indicator {
-  position: absolute;
-  top: -8px;
-  left: -6px;
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 8px solid var(--playhead-color);
-}
 
-.playhead--playing {
-  animation: playhead-pulse 2s ease-in-out infinite alternate;
-}
-
-@keyframes playhead-pulse {
-  from {
-    box-shadow: 0 0 8px var(--playhead-shadow);
-  }
-  to {
-    box-shadow: 0 0 16px var(--playhead-shadow), 0 0 24px rgba(0, 123, 255, 0.3);
-  }
-}
 
 /* Volume Popup Styles */
 .volume-popup {

@@ -21,6 +21,7 @@ import "./Beats.css";
 function Beats() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingBeatId, setLoadingBeatId] = useState(null);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const navigate = useNavigate();
 
   const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
@@ -65,6 +66,20 @@ function Beats() {
     });
   }, [isConnected, connectionState]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.user-menu')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileDropdown]);
+
   const handleLoadBeat = async (beat) => {
     if (!isConnected) {
       console.error("Not connected to server");
@@ -99,6 +114,15 @@ function Beats() {
   const handleLogout = () => {
     logout();
     navigate("/", { replace: true });
+  };
+
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleDropdownLogout = () => {
+    setShowProfileDropdown(false);
+    handleLogout();
   };
 
   const formatDate = (dateString) => {
@@ -158,14 +182,12 @@ function Beats() {
         <div className="beats-header">
           <div className="beats-header-content">
             <div className="header-left">
-              <img src="/idk.png" alt="Drum Machine" className="beats-logo" />
+              <img src="/mygod.png" alt="Drum Machine" className="beats-logo" />
               <div className="header-text">
-                <h1 className="beats-title">My Beats</h1>
-                <p className="beats-subtitle">
-                  Welcome back, <strong>{user?.username}</strong>
-                  {saveButtonInfo.isUpdate && (
+                {saveButtonInfo.isUpdate && (
+                  <p className="beats-subtitle">
                     <span className="current-beat-info">
-                      • Currently working on:{" "}
+                      Currently working on:{" "}
                       <strong>"{saveButtonInfo.beatName}"</strong>
                       {saveButtonInfo.showUnsavedIndicator && (
                         <span className="unsaved-changes-indicator">
@@ -174,37 +196,46 @@ function Beats() {
                         </span>
                       )}
                     </span>
-                  )}
-                </p>
+                  </p>
+                )}
+              </div>
+              <div className="header-buttons">
+                {saveButtonInfo.isUpdate && (
+                  <button
+                    className="continue-editing-btn"
+                    onClick={() => navigate("/DrumMachine")}
+                  >
+                    <Edit size={18} />
+                    Continue Editing
+                  </button>
+                )}
+                <button className="create-new-btn" onClick={handleCreateNew}>
+                  <Plus size={18} />
+                  Create New Beat
+                </button>
               </div>
             </div>
 
             <div className="header-actions">
-              {/* Connection Status Display */}
-              <div
-                className={`connection-status ${connectionStatus.className}`}
-              >
-                {connectionStatus.icon}
-                <span>{connectionStatus.text}</span>
-              </div>
-
-              <button className="create-new-btn" onClick={handleCreateNew}>
-                <Plus size={18} />
-                Create New Beat
-              </button>
-
               <div className="user-menu">
-                <div className="user-info">
+                <div
+                  className={`user-info ${showProfileDropdown ? 'user-info--active' : ''}`}
+                  onClick={handleProfileClick}
+                >
                   <User size={16} />
                   {user?.username}
                 </div>
-                <button
-                  className="logout-btn"
-                  onClick={handleLogout}
-                  title="Sign Out"
-                >
-                  <LogOut size={16} />
-                </button>
+                {showProfileDropdown && (
+                  <div className="profile-dropdown">
+                    <button
+                      className="dropdown-item"
+                      onClick={handleDropdownLogout}
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -258,7 +289,7 @@ function Beats() {
             {!isConnected && (
               <div className="error-banner">
                 <p>
-                  ⚠️ Not connected to server. Please wait for connection before
+                  Not connected to server. Please wait for connection before
                   loading beats.
                 </p>
               </div>
@@ -331,21 +362,6 @@ function Beats() {
                             </span>
                           )}
                         </h3>
-                        <button
-                          className="play-btn"
-                          onClick={() => handleLoadBeat(beat)}
-                          disabled={!isConnected || isLoadingThisBeat}
-                          title="Load and play this beat"
-                        >
-                          {isLoadingThisBeat ? (
-                            <div
-                              className="loading-spinner"
-                              style={{ width: 20, height: 20 }}
-                            ></div>
-                          ) : (
-                            <Play size={20} />
-                          )}
-                        </button>
                       </div>
 
                       <div className="beat-info">

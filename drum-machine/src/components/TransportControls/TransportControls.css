@@ -93,6 +93,17 @@
   box-shadow: var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 }
 
+.transport-btn:disabled {
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.transport-btn--loop:disabled {
+  background: #6f42c1 !important;
+  color: white !important;
+  box-shadow: none !important;
+}
+
 /* Snap Control */
 .snap-control {
   display: flex;

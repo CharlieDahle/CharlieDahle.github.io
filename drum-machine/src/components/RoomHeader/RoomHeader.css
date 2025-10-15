@@ -122,13 +122,13 @@
   gap: 12px;
 }
 
-/* Universal Header Action Button Styles - matching original Leave Room */
+/* Universal Header Action Button Styles - matching beats page */
 .header-action-btn {
   background: #dc3545; /* Default red like original Leave Room */
   color: white;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 16px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -136,12 +136,13 @@
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 .header-action-btn:hover:not(:disabled) {
   background: #c82333; /* Darker red on hover */
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 .header-action-btn:active {
@@ -162,17 +163,19 @@
 
 .header-action-btn--save:hover:not(:disabled) {
   background: #218838;
-  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-/* Update Button - Blue */
+/* Update Button - Green */
 .header-action-btn--update {
-  background: #17a2b8;
+  background: #28a745;
 }
 
 .header-action-btn--update:hover:not(:disabled) {
-  background: #138496;
-  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 /* My Beats Button - Nice blue we've been using */
@@ -183,7 +186,8 @@
 
 .header-action-btn--beats:hover:not(:disabled) {
   background: #4ba8cc;
-  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
 }
 
 /* Sign In Button - Same blue as My Beats */
@@ -194,7 +198,8 @@
 
 .header-action-btn--signin:hover:not(:disabled) {
   background: #4ba8cc;
-  box-shadow: 0 4px 8px rgba(91, 192, 235, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
 }
 
 /* Leave Room Button - Red (default styling) */
