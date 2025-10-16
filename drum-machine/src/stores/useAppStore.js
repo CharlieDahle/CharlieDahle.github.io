@@ -36,11 +36,6 @@ const throttle = (func, limit) => {
   };
 };
 
-// Create throttled function for real-time parameter updates
-const throttledParameterUpdate = throttle((store, trackId, effectType, parameter, value) => {
-  const { websocket } = store.getState();
-  websocket.sendEffectParameterUpdate(trackId, effectType, parameter, value);
-}, 50); // 50ms throttle = ~20fps
 
 export const useAppStore = create((set, get) => ({
   // ============================================================================
@@ -867,44 +862,7 @@ export const useAppStore = create((set, get) => ({
         get().effects.syncTrackEffectReset(trackId);
       });
 
-      // LEGACY: Keep for backward compatibility
-      newSocket.on(
-        "effect-change",
-        ({ trackId, effectType, parameter, value }) => {
-          console.log("Legacy effect change received:", {
-            trackId,
-            effectType,
-            parameter,
-            value,
-          });
-          debugLog("in", "effect-change", {
-            trackId,
-            effectType,
-            parameter,
-            value,
-          });
-          get().effects.syncTrackEffect(trackId, effectType, parameter, value);
-        }
-      );
 
-      // NEW: Real-time effect parameter updates
-      newSocket.on("effect-parameter-update", ({ trackId, effectType, parameter, value }) => {
-        console.log("Real-time effect parameter update received:", {
-          trackId,
-          effectType,
-          parameter,
-          value,
-        });
-        debugLog("in", "effect-parameter-update", {
-          trackId,
-          effectType,
-          parameter,
-          value,
-        });
-        
-        // Apply the parameter change directly (no pending changes for remote updates)
-        get().effects.syncTrackEffect(trackId, effectType, parameter, value);
-      });
       
       // NEW: Complete effect state application
       newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
@@ -1455,19 +1413,6 @@ export const useAppStore = create((set, get) => ({
       socket.emit("effect-chain-update", payload);
     },
 
-    sendEffectChange: (trackId, effectType, parameter, value) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
-        debugLog("out", "effect-change-failed", "Not connected");
-        console.log("Skipping legacy effect change - not connected");
-        return;
-      }
-
-      const payload = { roomId, trackId, effectType, parameter, value };
-      console.log("Sending legacy effect change:", payload);
-      debugLog("out", "effect-change", payload);
-      socket.emit("effect-change", payload);
-    },
 
     sendEffectReset: (trackId) => {
       const { socket, connectionState, roomId } = get().websocket;
@@ -1483,20 +1428,6 @@ export const useAppStore = create((set, get) => ({
       socket.emit("effect-reset", payload);
     },
 
-    // NEW: Send real-time effect parameter update (throttled)
-    sendEffectParameterUpdate: (trackId, effectType, parameter, value) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
-        debugLog("out", "effect-parameter-failed", "Not connected");
-        console.log("Skipping effect parameter update - not connected");
-        return;
-      }
-
-      const payload = { roomId, trackId, effectType, parameter, value };
-      console.log("Sending real-time effect parameter update:", payload);
-      debugLog("out", "effect-parameter-update", payload);
-      socket.emit("effect-parameter-update", payload);
-    },
     
     // NEW: Send complete effect state (for apply button)
     sendEffectStateApply: (trackId, effectsState) => {
@@ -2748,8 +2679,6 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
-      // Send throttled real-time parameter update
-      throttledParameterUpdate({ getState: get }, trackId, effectType, parameter, value);
     },
 
     // Enable an effect with specific settings

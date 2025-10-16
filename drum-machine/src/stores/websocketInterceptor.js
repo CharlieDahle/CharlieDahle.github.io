@@ -37,7 +37,7 @@ export function interceptWebSocketMessages(socket) {
     "track-removed",
     "track-sound-updated",
     "effect-chain-update",
-    "effect-change",
+    "effect-state-apply",
     "effect-reset",
   ];
 
