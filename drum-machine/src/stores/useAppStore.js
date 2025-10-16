@@ -1665,6 +1665,8 @@ export const useAppStore = create((set, get) => ({
     logout: () => {
       localStorage.removeItem("drum_machine_token");
       localStorage.removeItem("drum_machine_user");
+      // Also clear any pending state on logout
+      localStorage.removeItem("drum_machine_pending_state");
 
       set((state) => ({
         auth: {
@@ -1682,6 +1684,129 @@ export const useAppStore = create((set, get) => ({
       set((state) => ({
         auth: { ...state.auth, error: null },
       }));
+    },
+
+    // Save current drum machine state before redirecting to login
+    saveStateBeforeLogin: () => {
+      const state = get();
+      const drumMachineState = {
+        pattern: state.pattern.data,
+        tracks: state.tracks.list,
+        bpm: state.transport.bpm,
+        measureCount: state.transport.measureCount,
+        effects: state.effects.trackEffects,
+        timestamp: Date.now(), // Add timestamp for expiration
+      };
+
+      try {
+        const stateString = JSON.stringify(drumMachineState);
+        const sizeInKB = (new Blob([stateString]).size / 1024).toFixed(2);
+
+        // Warn if state is getting large (> 500KB)
+        if (sizeInKB > 500) {
+          console.warn(`⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`);
+        }
+
+        localStorage.setItem('drum_machine_pending_state', stateString);
+        console.log(`💾 Saved drum machine state before login (${sizeInKB}KB)`);
+      } catch (error) {
+        // Handle QuotaExceededError
+        if (error.name === 'QuotaExceededError') {
+          console.error('❌ localStorage quota exceeded! Cannot save state.');
+          alert('Unable to save your beat - storage is full. Please clear browser data or simplify your beat.');
+        } else {
+          console.error('Failed to save drum machine state:', error);
+        }
+      }
+    },
+
+    // Restore drum machine state after login
+    restoreStateAfterLogin: () => {
+      const savedStateString = localStorage.getItem('drum_machine_pending_state');
+
+      if (!savedStateString) {
+        return null;
+      }
+
+      try {
+        const savedState = JSON.parse(savedStateString);
+
+        // Check if state is expired (older than 1 hour)
+        const ONE_HOUR = 60 * 60 * 1000;
+        const isExpired = savedState.timestamp && (Date.now() - savedState.timestamp > ONE_HOUR);
+
+        if (isExpired) {
+          console.log('⏰ Saved state expired (>1 hour old), discarding');
+          localStorage.removeItem('drum_machine_pending_state');
+          return null;
+        }
+
+        console.log('🔄 Restoring drum machine state after login:', savedState);
+
+        // Restore the state
+        const state = get();
+        state.pattern.setPattern(savedState.pattern);
+        state.tracks.setTracks(savedState.tracks);
+        state.transport.syncBpm(savedState.bpm);
+        state.transport.syncMeasureCount(savedState.measureCount);
+
+        // Restore effects for each track
+        if (savedState.effects) {
+          Object.entries(savedState.effects).forEach(([trackId, effects]) => {
+            set((s) => ({
+              effects: {
+                ...s.effects,
+                trackEffects: {
+                  ...s.effects.trackEffects,
+                  [trackId]: effects,
+                },
+              },
+            }));
+          });
+        }
+
+        // Clear the saved state
+        localStorage.removeItem('drum_machine_pending_state');
+
+        return savedState;
+      } catch (error) {
+        console.error('Failed to restore drum machine state:', error);
+        localStorage.removeItem('drum_machine_pending_state');
+        return null;
+      }
+    },
+
+    // Helper to clear all app-related localStorage
+    clearAllLocalStorage: () => {
+      const keysToRemove = [
+        'drum_machine_token',
+        'drum_machine_user',
+        'drum_machine_pending_state',
+      ];
+
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log('🗑️ Cleared all drum machine localStorage');
+    },
+
+    // Helper to check localStorage usage
+    getLocalStorageStats: () => {
+      const stats = {};
+      let totalSize = 0;
+
+      ['drum_machine_token', 'drum_machine_user', 'drum_machine_pending_state'].forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item) {
+          const sizeInKB = (new Blob([item]).size / 1024).toFixed(2);
+          stats[key] = `${sizeInKB}KB`;
+          totalSize += parseFloat(sizeInKB);
+        } else {
+          stats[key] = 'not set';
+        }
+      });
+
+      stats.total = `${totalSize.toFixed(2)}KB`;
+      console.table(stats);
+      return stats;
     },
 
     // Helper to get auth headers for API calls
@@ -2180,6 +2305,37 @@ export const useAppStore = create((set, get) => ({
         beatName: currentlyLoadedBeat.name,
         hideButton: false,
       };
+    },
+
+    // Check if there's unsaved work that user should be warned about
+    hasUnsavedWork: () => {
+      const state = get();
+      const { currentlyLoadedBeat, hasUnsavedChanges } = state.beats;
+      const { pattern, tracks } = state;
+
+      // If we have a loaded beat with unsaved changes, warn
+      if (currentlyLoadedBeat && hasUnsavedChanges) {
+        return true;
+      }
+
+      // If no beat is loaded, check if user has created any content
+      if (!currentlyLoadedBeat) {
+        // Check if there are any notes in the pattern
+        const hasNotes = Object.keys(pattern.data).some(
+          (trackId) => pattern.data[trackId] && pattern.data[trackId].length > 0
+        );
+
+        // Check if tracks have been modified from defaults
+        const hasCustomTracks = tracks.list.length > 4 ||
+          tracks.list.some((track) => {
+            // Check if track has non-default properties
+            return track.volume !== undefined && track.volume !== 1.0;
+          });
+
+        return hasNotes || hasCustomTracks;
+      }
+
+      return false;
     },
 
     // Also update the loadBeat method to ensure proper state reset:

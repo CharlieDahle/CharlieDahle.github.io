@@ -17,7 +17,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // Get auth state from store
-  const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
+  const { isAuthenticated, user, logout, saveStateBeforeLogin } = useAppStore((state) => state.auth);
 
   const handleCreateRoom = async () => {
     setCreateError("");
@@ -64,6 +64,8 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   };
 
   const handleSignInClick = () => {
+    // Save current drum machine state before redirecting to login
+    saveStateBeforeLogin();
     navigate("/login");
   };
 

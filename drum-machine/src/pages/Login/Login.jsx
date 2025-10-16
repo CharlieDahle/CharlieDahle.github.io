@@ -11,8 +11,10 @@ function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
-  const { isAuthenticated, isLoading, error, login, register, clearError } =
+  const { isAuthenticated, isLoading, error, login, register, clearError, restoreStateAfterLogin } =
     useAppStore((state) => state.auth);
+  const createRoom = useAppStore((state) => state.websocket.createRoom);
+  const isConnected = useAppStore((state) => state.websocket.isConnected);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -36,9 +38,28 @@ function Login() {
     try {
       if (isRegistering) {
         await register(username.trim(), password);
-        navigate("/beats", { replace: true });
       } else {
         await login(username.trim(), password);
+      }
+
+      // Check if there's saved drum machine state to restore
+      const savedState = restoreStateAfterLogin();
+
+      if (savedState) {
+        // User was working on a beat - create a new room and restore their work
+        console.log("🎵 Restoring previous beat and creating room...");
+
+        // Wait for WebSocket to be connected before creating room
+        if (!isConnected) {
+          console.log("Waiting for WebSocket connection...");
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Create a room with the restored state
+        const roomState = await createRoom();
+        navigate(`/DrumMachine/${roomState.id}`, { replace: true });
+      } else {
+        // No saved state - just go to beats page
         navigate("/beats", { replace: true });
       }
     } catch (err) {
@@ -67,9 +88,6 @@ function Login() {
           <div className="login-card">
             <div className="login-header">
               <img src="/pablo.png" alt="Drum Machine" className="login-logo" />
-              <h1 className="login-title">
-                {isRegistering ? "Create Account" : "Welcome Back"}
-              </h1>
               <p className="login-subtitle">
                 {isRegistering
                   ? "Create an account to save your beats"
@@ -145,17 +163,17 @@ function Login() {
               <div className="mode-switch">
                 <p className="mode-text">
                   {isRegistering
-                    ? "Already have an account?"
-                    : "Don't have an account?"}
+                    ? "Already have an account? "
+                    : "Don't have an account? "}
+                  <button
+                    type="button"
+                    className="mode-btn"
+                    onClick={toggleMode}
+                    disabled={isLoading}
+                  >
+                    {isRegistering ? "Sign In" : "Create Account"}
+                  </button>
                 </p>
-                <button
-                  type="button"
-                  className="mode-btn"
-                  onClick={toggleMode}
-                  disabled={isLoading}
-                >
-                  {isRegistering ? "Sign In" : "Create Account"}
-                </button>
               </div>
 
               <div className="guest-option">

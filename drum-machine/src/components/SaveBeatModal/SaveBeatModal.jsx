@@ -4,7 +4,7 @@ import { Save, X, Plus, Edit } from "lucide-react";
 import { useAppStore } from "../../stores";
 import "./SaveBeatModal.css";
 
-function SaveBeatModal({ isOpen, onClose }) {
+function SaveBeatModal({ isOpen, onClose, onSaveSuccess }) {
   const [beatName, setBeatName] = useState("");
   const [error, setError] = useState("");
   const [saveMode, setSaveMode] = useState("update"); // "update" or "new"
@@ -91,6 +91,11 @@ function SaveBeatModal({ isOpen, onClose }) {
       }
 
       onClose();
+
+      // Call success callback if provided (for navigation after save)
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
     } catch (err) {
       setError(err.message || "Failed to save beat");
     }

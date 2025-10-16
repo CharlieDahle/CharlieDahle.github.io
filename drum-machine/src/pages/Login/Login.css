@@ -30,7 +30,7 @@
 }
 
 .login-header {
-  padding: 40px 40px 32px;
+  padding: 32px 40px 24px;
   text-align: center;
   background: white;
 }
@@ -38,11 +38,11 @@
 .login-logo {
   width: 200px;
   height: auto;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .login-title {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #333;
   margin: 0 0 12px 0;
@@ -50,22 +50,22 @@
 }
 
 .login-subtitle {
-  font-size: 16px;
+  font-size: 15px;
   color: #6c757d;
   margin: 0;
   line-height: 1.5;
 }
 
 .login-body {
-  padding: 0 40px 40px;
+  padding: 0 40px 32px;
 }
 
 .login-form {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-label {
@@ -173,7 +173,7 @@
 .login-divider {
   position: relative;
   text-align: center;
-  margin: 24px 0;
+  margin: 20px 0 16px;
 }
 
 .login-divider::before {
@@ -197,13 +197,13 @@
 
 .mode-switch {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .mode-text {
   font-size: 14px;
   color: #6c757d;
-  margin: 0 0 8px 0;
+  margin: 0;
 }
 
 .mode-btn {
@@ -215,6 +215,8 @@
   cursor: pointer;
   text-decoration: underline;
   transition: color 0.15s ease;
+  padding: 0;
+  display: inline;
 }
 
 .mode-btn:hover:not(:disabled) {
@@ -228,14 +230,14 @@
 
 .guest-option {
   text-align: center;
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid #e9ecef;
 }
 
 .guest-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #6c757d;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
 }
 
 .guest-btn {
@@ -267,11 +269,11 @@
   }
 
   .login-header {
-    padding: 32px 24px 24px;
+    padding: 24px 24px 20px;
   }
 
   .login-body {
-    padding: 0 24px 32px;
+    padding: 0 24px 24px;
   }
 
   .login-logo {
@@ -279,6 +281,6 @@
   }
 
   .login-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 }

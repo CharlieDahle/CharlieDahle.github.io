@@ -502,6 +502,53 @@ class DrumRoom {
     }
   }
 
+  // Check if room is completely blank (no user modifications)
+  isBlank() {
+    // Check if BPM is at default
+    if (this.bpm !== 120) return false;
+
+    // Check if measure count is at default
+    if (this.measureCount !== 4) return false;
+
+    // Check if there are more than 4 tracks (default tracks)
+    if (this.tracks.size !== 4) return false;
+
+    // Check if any track has notes
+    for (const [trackId, notes] of this.pattern.entries()) {
+      if (notes.length > 0) return false;
+    }
+
+    // Check if any effects are non-default
+    const defaultEffects = this.getDefaultEffects();
+    for (const [trackId, trackEffects] of this.trackEffects.entries()) {
+      for (const [effectType, effectParams] of Object.entries(trackEffects)) {
+        if (defaultEffects[effectType]) {
+          for (const [param, value] of Object.entries(effectParams)) {
+            if (value !== defaultEffects[effectType][param]) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    // Check if any tracks have non-default sounds
+    const defaultSounds = {
+      kick: "kicks/Ac_K.wav",
+      snare: "snares/Box_Snr2.wav",
+      hihat: "hihats/Jls_H.wav",
+      openhat: "cymbals/CL_OHH1.wav",
+    };
+
+    for (const [trackId, track] of this.tracks.entries()) {
+      if (defaultSounds[trackId] && track.soundFile !== defaultSounds[trackId]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // Add a note at specific tick position with velocity
   addNote(trackId, tick, velocity = 4) {
     if (!this.pattern.has(trackId)) {
@@ -1156,16 +1203,23 @@ io.on("connection", (socket) => {
   });
 });
 
-// Updated cleanup with 2-minute grace period for empty rooms only
+// Updated cleanup with instant deletion for blank rooms, 2-minute grace for modified rooms
 setInterval(() => {
   const now = Date.now();
-  const EMPTY_ROOM_TIMEOUT = 1000 * 60 * 2; // 2 minutes for empty rooms
+  const MODIFIED_ROOM_TIMEOUT = 1000 * 60 * 2; // 2 minutes for rooms with changes
 
   rooms.forEach((room, roomId) => {
-    // Only clean up empty rooms after 2 minutes
-    if (room.users.size === 0 && now - room.lastActivity > EMPTY_ROOM_TIMEOUT) {
-      rooms.delete(roomId);
-      console.log(`Cleaned up empty room: ${roomId} (empty for 2+ minutes)`);
+    // Only check empty rooms
+    if (room.users.size === 0) {
+      if (room.isBlank()) {
+        // Blank room with no users - delete immediately
+        rooms.delete(roomId);
+        console.log(`Cleaned up blank room: ${roomId} (no changes, no users)`);
+      } else if (now - room.lastActivity > MODIFIED_ROOM_TIMEOUT) {
+        // Modified room that's been empty for 2+ minutes - delete
+        rooms.delete(roomId);
+        console.log(`Cleaned up modified room: ${roomId} (empty for 2+ minutes)`);
+      }
     }
     // Active rooms with users are NEVER auto-deleted
   });

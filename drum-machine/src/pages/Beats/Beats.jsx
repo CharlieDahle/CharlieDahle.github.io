@@ -12,13 +12,24 @@ import {
   LogOut,
   FileText,
   Edit,
+  ChevronDown,
+  DoorOpen,
+  History,
 } from "lucide-react";
+import { getRecentRooms } from "../../utils/recentRooms";
 import "./Beats.css";
 
 function Beats() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingBeatId, setLoadingBeatId] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showCreateDropdown, setShowCreateDropdown] = useState(false);
+  const [joinRoomId, setJoinRoomId] = useState("");
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinRoomError, setJoinRoomError] = useState("");
+  const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+  const [recentRooms, setRecentRooms] = useState([]);
+  const [isCheckingRooms, setIsCheckingRooms] = useState(false);
   const navigate = useNavigate();
 
   const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
@@ -33,8 +44,10 @@ function Beats() {
     createNewBeat,
   } = useAppStore((state) => state.beats);
 
-  // WebSocket functions for creating room
+  // WebSocket functions for creating/joining room
   const createRoom = useAppStore((state) => state.websocket.createRoom);
+  const joinRoom = useAppStore((state) => state.websocket.joinRoom);
+  const checkRooms = useAppStore((state) => state.websocket.checkRooms);
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
@@ -53,13 +66,19 @@ function Beats() {
 
     // Fetch user's beats when component loads
     fetchUserBeats();
+
+    // Load recent rooms
+    setRecentRooms(getRecentRooms());
   }, [isAuthenticated, fetchUserBeats, navigate]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showProfileDropdown && !event.target.closest('.user-menu')) {
         setShowProfileDropdown(false);
+      }
+      if (showCreateDropdown && !event.target.closest('.create-btn-group')) {
+        setShowCreateDropdown(false);
       }
     };
 
@@ -67,7 +86,7 @@ function Beats() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showProfileDropdown]);
+  }, [showProfileDropdown, showCreateDropdown]);
 
   const handleLoadBeat = async (beat) => {
     if (!isConnected) {
@@ -128,6 +147,85 @@ function Beats() {
     handleLogout();
   };
 
+  const handleJoinRoom = async () => {
+    if (!isConnected || !joinRoomId.trim()) {
+      return;
+    }
+
+    setJoinRoomError("");
+    setIsJoiningRoom(true);
+
+    try {
+      // Try to join the room - this will fail if room doesn't exist
+      await joinRoom(joinRoomId.trim());
+
+      // Only navigate if join was successful
+      navigate(`/DrumMachine/${joinRoomId.trim()}`);
+      setShowJoinModal(false);
+      setJoinRoomId("");
+    } catch (error) {
+      console.error("Failed to join room:", error);
+      setJoinRoomError(error.message || "Room not found. Please check the code and try again.");
+    } finally {
+      setIsJoiningRoom(false);
+    }
+  };
+
+  const handleCreateDropdownToggle = async (e) => {
+    e.stopPropagation();
+
+    // If closing dropdown, just close it
+    if (showCreateDropdown) {
+      setShowCreateDropdown(false);
+      return;
+    }
+
+    // Opening dropdown - check which recent rooms still exist first
+    if (isConnected) {
+      const allRecentRooms = getRecentRooms();
+
+      if (allRecentRooms.length > 0) {
+        setIsCheckingRooms(true);
+        setShowCreateDropdown(true);
+
+        // Check which rooms still exist on the server
+        const roomIds = allRecentRooms.map(room => room.roomId);
+        const results = await checkRooms(roomIds);
+
+        // Filter to only show rooms that exist
+        const activeRooms = allRecentRooms.filter(room => {
+          const result = results.find(r => r.roomId === room.roomId);
+          return result && result.exists;
+        });
+
+        setRecentRooms(activeRooms);
+        setIsCheckingRooms(false);
+      } else {
+        setRecentRooms([]);
+        setShowCreateDropdown(true);
+      }
+    } else {
+      setShowCreateDropdown(true);
+    }
+  };
+
+  const handleJoinRecentRoom = async (roomId) => {
+    setShowCreateDropdown(false);
+
+    if (!isConnected) {
+      console.error("Not connected to server");
+      return;
+    }
+
+    try {
+      await joinRoom(roomId);
+      navigate(`/DrumMachine/${roomId}`);
+    } catch (error) {
+      console.error("Failed to join recent room:", error);
+      // If room doesn't exist anymore, could show an error or remove from recents
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -180,10 +278,52 @@ function Beats() {
                     Continue Editing
                   </button>
                 )}
-                <button className="create-new-btn" onClick={handleCreateNew}>
-                  <Plus size={18} />
-                  Create New Beat
-                </button>
+                <div className="create-btn-group">
+                  <button className="create-new-btn" onClick={handleCreateNew}>
+                    <Plus size={18} />
+                    Create New Beat
+                  </button>
+                  <button
+                    className="create-dropdown-toggle"
+                    onClick={handleCreateDropdownToggle}
+                    aria-label="More options"
+                  >
+                    <ChevronDown size={16} />
+                  </button>
+                  {showCreateDropdown && (
+                    <div className="create-dropdown">
+                      <button
+                        className="create-dropdown-item"
+                        onClick={() => {
+                          setShowCreateDropdown(false);
+                          setShowJoinModal(true);
+                        }}
+                      >
+                        <DoorOpen size={16} />
+                        Join Room
+                      </button>
+
+                      {!isCheckingRooms && recentRooms.length > 0 && (
+                        <>
+                          <div className="dropdown-divider" />
+                          <div className="dropdown-section-header">
+                            <History size={14} />
+                            Recent Sessions
+                          </div>
+                          {recentRooms.slice(0, 10).map((room) => (
+                            <button
+                              key={room.roomId}
+                              className="create-dropdown-item recent-room-item"
+                              onClick={() => handleJoinRecentRoom(room.roomId)}
+                            >
+                              {room.roomId}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -281,9 +421,6 @@ function Beats() {
                   <Music size={64} />
                 </div>
                 <h2>No beats yet!</h2>
-                <p>
-                  Create your first beat and start building your rhythm library.
-                </p>
                 <button className="empty-action-btn" onClick={handleCreateNew}>
                   <Plus size={18} />
                   Create Your First Beat
@@ -387,6 +524,60 @@ function Beats() {
           </div>
         </div>
       </div>
+
+      {/* Join Room Modal */}
+      {showJoinModal && (
+        <div className="join-room-modal-overlay" onClick={() => setShowJoinModal(false)}>
+          <div className="join-room-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="join-room-header">
+              <h2>Join Room</h2>
+              <button className="modal-close-btn" onClick={() => setShowJoinModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="join-room-body">
+              <p>Enter the room code to join an existing session:</p>
+              <input
+                type="text"
+                className="join-room-input"
+                placeholder="Enter room code"
+                value={joinRoomId}
+                onChange={(e) => {
+                  setJoinRoomId(e.target.value.replace(/[^A-Za-z0-9]/g, ""));
+                  setJoinRoomError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && !isJoiningRoom && handleJoinRoom()}
+                maxLength={8}
+                autoFocus
+                disabled={isJoiningRoom}
+              />
+              {joinRoomError && (
+                <div className="join-room-error">{joinRoomError}</div>
+              )}
+            </div>
+            <div className="join-room-footer">
+              <button
+                className="join-cancel-btn"
+                onClick={() => {
+                  setShowJoinModal(false);
+                  setJoinRoomError("");
+                  setJoinRoomId("");
+                }}
+                disabled={isJoiningRoom}
+              >
+                Cancel
+              </button>
+              <button
+                className="join-submit-btn"
+                onClick={handleJoinRoom}
+                disabled={!isConnected || !joinRoomId.trim() || isJoiningRoom}
+              >
+                {isJoiningRoom ? "Joining..." : "Join Room"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

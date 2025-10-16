@@ -190,16 +190,18 @@
   box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
 }
 
-/* Sign In Button - Same blue as My Beats */
+/* Sign In Button - Match RoomInterface style */
 .header-action-btn--signin {
-  background: #5bc0eb;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
 }
 
 .header-action-btn--signin:hover:not(:disabled) {
-  background: #4ba8cc;
+  background: #e9ecef;
+  border-color: #adb5bd;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Leave Room Button - Red (default styling) */

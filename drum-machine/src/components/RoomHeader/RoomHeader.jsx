@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
+import UnsavedWorkModal from "../UnsavedWorkModal/UnsavedWorkModal";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
@@ -18,14 +19,16 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
 
   // Get auth state
-  const { isAuthenticated } = useAppStore((state) => state.auth);
+  const { isAuthenticated, saveStateBeforeLogin } = useAppStore((state) => state.auth);
 
   // Get beat tracking info
-  const { getSaveButtonInfo } = useAppStore((state) => state.beats);
+  const { getSaveButtonInfo, hasUnsavedWork } = useAppStore((state) => state.beats);
   const saveButtonInfo = getSaveButtonInfo();
 
   // Save beat modal state
   const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
+  const [showUnsavedWorkModal, setShowUnsavedWorkModal] = useState(false);
+  const [shouldNavigateAfterSave, setShouldNavigateAfterSave] = useState(false);
 
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
@@ -41,15 +44,45 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   const handleSaveBeat = () => {
     if (isAuthenticated) {
+      setShouldNavigateAfterSave(false);
       setShowSaveBeatModal(true);
     }
   };
 
   const handleNavigateToBeats = () => {
+    // Check if there's unsaved work
+    if (hasUnsavedWork()) {
+      setShowUnsavedWorkModal(true);
+    } else {
+      navigate("/beats");
+    }
+  };
+
+  const handleSaveAndNavigate = () => {
+    setShowUnsavedWorkModal(false);
+    setShouldNavigateAfterSave(true);
+    setShowSaveBeatModal(true);
+  };
+
+  const handleAfterSave = () => {
+    if (shouldNavigateAfterSave) {
+      navigate("/beats");
+      setShouldNavigateAfterSave(false);
+    }
+  };
+
+  const handleDiscardAndNavigate = () => {
+    setShowUnsavedWorkModal(false);
     navigate("/beats");
   };
 
+  const handleCancelNavigation = () => {
+    setShowUnsavedWorkModal(false);
+  };
+
   const handleSignInClick = () => {
+    // Save current drum machine state before redirecting to login
+    saveStateBeforeLogin();
     navigate("/login");
   };
 
@@ -218,6 +251,15 @@ function RoomHeader({ debugMode, setDebugMode }) {
       <SaveBeatModal
         isOpen={showSaveBeatModal}
         onClose={() => setShowSaveBeatModal(false)}
+        onSaveSuccess={handleAfterSave}
+      />
+
+      {/* Unsaved Work Modal */}
+      <UnsavedWorkModal
+        isOpen={showUnsavedWorkModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
       />
     </>
   );
