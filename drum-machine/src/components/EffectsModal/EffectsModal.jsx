@@ -710,7 +710,7 @@ function EffectsModal() {
               <div className="effects-panel">
                 {/* CPU Warning */}
                 <div className="effects-warning">
-                  ⚠️ <strong>Performance Warning:</strong> These effects are CPU
+                  <strong>Performance Warning:</strong> These effects are CPU
                   intensive and may cause audio dropouts on slower devices.
                 </div>
 

@@ -555,7 +555,7 @@ class DrumScheduler {
 
     for (const track of tracks) {
       this.trackSounds[track.id] = track.soundFile;
-      this.trackVolumes[track.id] = track.volume || 1.0;
+      this.trackVolumes[track.id] = track.volume ?? 1.0;
 
       // Initialize empty effect chain for this track if it doesn't exist
       if (!this.trackEffects[track.id]) {
@@ -834,7 +834,7 @@ class DrumScheduler {
         // Play each note found at this tick
         notesAtTick.forEach((note) => {
           const soundFile = this.trackSounds[trackId];
-          const trackVolume = this.trackVolumes[trackId] || 1.0;
+          const trackVolume = this.trackVolumes[trackId] ?? 1.0;
           if (soundFile && this.tonePlayers[soundFile]) {
             this.playSound(soundFile, when, note.velocity, trackVolume);
             console.log(

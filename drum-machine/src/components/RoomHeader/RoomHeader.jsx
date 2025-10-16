@@ -32,7 +32,11 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const [clickTimer, setClickTimer] = useState(null);
 
   const handleLeaveRoom = () => {
+    // Call the leaveRoom function from the store
     leaveRoom();
+    // Navigate back to room selection (removes room ID from URL)
+    // Use replace: true to avoid adding to history stack
+    navigate('/DrumMachine', { replace: true });
   };
 
   const handleSaveBeat = () => {

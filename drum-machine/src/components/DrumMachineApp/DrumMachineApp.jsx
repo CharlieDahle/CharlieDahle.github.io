@@ -1,5 +1,6 @@
 // src/components/DrumMachineApp/DrumMachineApp.jsx - Updated without duplicate WebSocket init
 import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "../../stores/useAppStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
@@ -14,6 +15,10 @@ import drumSounds from "../../assets/data/drum-sounds.json";
 const DRUM_MACHINE_BLOB_COUNT = [4, 6];
 
 function DrumMachineApp() {
+  // URL parameters and navigation
+  const { roomId: urlRoomId } = useParams();
+  const navigate = useNavigate();
+
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const isInRoom = useAppStore((state) => state.websocket.isInRoom);
@@ -67,6 +72,39 @@ function DrumMachineApp() {
   // NOTE: WebSocket initialization is now handled in main.jsx AppInitializer
   // So we don't need to call initializeConnection() here anymore
 
+  // Sync room state with URL
+  useEffect(() => {
+    // If URL has a room ID but we're not in that room, auto-join
+    if (urlRoomId && roomId !== urlRoomId && isConnected && connectionState !== "connecting") {
+      console.log(`Auto-joining room from URL: ${urlRoomId}`);
+      handleJoinRoom(urlRoomId).catch((err) => {
+        console.error("Failed to auto-join room from URL:", err);
+        // Error will be handled by room-not-found modal
+      });
+    }
+
+    // If URL has no room ID but we're in a room, leave it
+    if (!urlRoomId && isInRoom) {
+      console.log("URL room ID removed - leaving room");
+      // Note: We don't need to call leaveRoom() on the WebSocket here
+      // because the user already clicked "Leave Room" which did that.
+      // We just need to clean up local state.
+      useAppStore.setState((state) => ({
+        websocket: {
+          ...state.websocket,
+          isInRoom: false,
+          roomId: null,
+          users: [],
+          connectionState: state.websocket.isConnected
+            ? "connected"
+            : "disconnected",
+          error: null,
+          lastRemoteTransportCommand: null,
+        },
+      }));
+    }
+  }, [urlRoomId, roomId, isInRoom, isConnected, connectionState]);
+
   // Room management handlers
   const handleCreateRoom = async () => {
     try {
@@ -80,6 +118,8 @@ function DrumMachineApp() {
       if (roomState.tracks) {
         setTracks(roomState.tracks);
       }
+      // Update URL to include room ID
+      navigate(`/DrumMachine/${roomState.id}`);
       return roomState;
     } catch (err) {
       // Let errors bubble up to RoomInterface
@@ -98,6 +138,10 @@ function DrumMachineApp() {
       }
       if (roomState.tracks) {
         setTracks(roomState.tracks);
+      }
+      // Update URL to include room ID (if not already there)
+      if (urlRoomId !== targetRoomId) {
+        navigate(`/DrumMachine/${targetRoomId}`);
       }
       return roomState;
     } catch (err) {
@@ -122,8 +166,8 @@ function DrumMachineApp() {
         tracks: currentTracks,
       });
 
-      // Create new room
-      await createRoom();
+      // Create new room (this will also update the URL)
+      await handleCreateRoom();
 
       // Restore the local state AFTER room creation
       setPattern(currentPattern);
@@ -162,23 +206,17 @@ function DrumMachineApp() {
         lastRemoteTransportCommand: null,
       },
     }));
+    // Navigate back to room selection (removes room ID from URL)
+    navigate('/DrumMachine');
   };
 
   // Check if we should show the room not found modal
   const showRoomNotFoundModal =
     connectionState === "failed" && error === "room-not-found";
 
-  // Debug logging
-  console.log("Modal debug:", {
-    connectionState,
-    error,
-    showRoomNotFoundModal,
-    isInRoom,
-    isConnected,
-  });
-
-  // If not connected or not in room, show connection interface
-  if (!isInRoom) {
+  // Use URL as source of truth: if no room ID in URL, show room selection
+  // This makes navigation instant and avoids the "double render" issue
+  if (!urlRoomId) {
     return (
       <AnimatePresence mode="wait">
         <motion.div

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Drum, Sliders, Volume2 } from "lucide-react";
+import { Drum, Sliders, Volume2, VolumeX } from "lucide-react";
 import { useAppStore } from "../../stores";
 import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
@@ -75,9 +75,13 @@ function TrackLabel({ track, drumSounds }) {
         <button
           className="track-volume-btn"
           onClick={(e) => handleVolumeClick(e, track)}
-          title={`Volume: ${Math.round((track.volume || 1.0) * 100)}%`}
+          title={`Volume: ${Math.round((track.volume ?? 1.0) * 100)}%`}
         >
-          <Volume2 size={16} />
+          {(track.volume ?? 1.0) === 0 ? (
+            <VolumeX size={16} />
+          ) : (
+            <Volume2 size={16} />
+          )}
         </button>
       </div>
     </div>
@@ -85,10 +89,10 @@ function TrackLabel({ track, drumSounds }) {
 }
 
 function VolumePopup({ track, position, onClose, onVolumeChange }) {
-  const [localVolume, setLocalVolume] = useState((track?.volume || 1.0) * 100);
+  const [localVolume, setLocalVolume] = useState((track?.volume ?? 1.0) * 100);
 
   useEffect(() => {
-    setLocalVolume((track?.volume || 1.0) * 100);
+    setLocalVolume((track?.volume ?? 1.0) * 100);
   }, [track]);
 
   const handleVolumeChange = (e) => {

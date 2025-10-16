@@ -5,14 +5,11 @@ import { useAppStore } from "../../stores";
 import AnimatedBackground from "../../components/AnimatedBackground/AnimatedBackground";
 import {
   Music,
-  Play,
   Clock,
   Calendar,
   Plus,
   User,
   LogOut,
-  Wifi,
-  WifiOff,
   FileText,
   Edit,
 } from "lucide-react";
@@ -42,6 +39,7 @@ function Beats() {
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
+  const roomId = useAppStore((state) => state.websocket.roomId);
 
   // Get current beat info
   const saveButtonInfo = getSaveButtonInfo();
@@ -56,15 +54,6 @@ function Beats() {
     // Fetch user's beats when component loads
     fetchUserBeats();
   }, [isAuthenticated, fetchUserBeats, navigate]);
-
-  // Log connection state changes for debugging
-  useEffect(() => {
-    console.log("🔌 Beats page - Connection state:", {
-      isConnected,
-      connectionState,
-      timestamp: new Date().toISOString(),
-    });
-  }, [isConnected, connectionState]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -95,20 +84,34 @@ function Beats() {
 
       // Then create a new room with this beat data
       console.log("Creating room with loaded beat...");
-      await createRoom();
+      const roomState = await createRoom();
 
-      // Navigate to drum machine (now with the room created and beat loaded)
-      navigate("/DrumMachine");
+      // Navigate to drum machine with room ID in URL
+      navigate(`/DrumMachine/${roomState.id}`);
     } catch (error) {
       console.error("Failed to load beat and create room:", error);
       setLoadingBeatId(null);
     }
   };
 
-  const handleCreateNew = () => {
-    // Clear current beat tracking and navigate
-    createNewBeat();
-    navigate("/DrumMachine");
+  const handleCreateNew = async () => {
+    if (!isConnected) {
+      console.error("Not connected to server");
+      return;
+    }
+
+    try {
+      // Clear current beat tracking
+      createNewBeat();
+
+      // Create a new room
+      const roomState = await createRoom();
+
+      // Navigate to drum machine with room ID in URL
+      navigate(`/DrumMachine/${roomState.id}`);
+    } catch (error) {
+      console.error("Failed to create room:", error);
+    }
   };
 
   const handleLogout = () => {
@@ -136,38 +139,6 @@ function Beats() {
   const filteredBeats = userBeats.filter((beat) =>
     beat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Get connection status display info
-  const getConnectionStatus = () => {
-    switch (connectionState) {
-      case "connected":
-        return {
-          icon: <Wifi size={16} />,
-          text: "Connected",
-          className: "connection-status-connected",
-        };
-      case "disconnected":
-        return {
-          icon: <WifiOff size={16} />,
-          text: "Disconnected",
-          className: "connection-status-disconnected",
-        };
-      case "syncing":
-        return {
-          icon: <Wifi size={16} />,
-          text: "Connecting...",
-          className: "connection-status-connecting",
-        };
-      default:
-        return {
-          icon: <WifiOff size={16} />,
-          text: "No Connection",
-          className: "connection-status-disconnected",
-        };
-    }
-  };
-
-  const connectionStatus = getConnectionStatus();
 
   if (!isAuthenticated) {
     return <div>Redirecting to login...</div>;
@@ -203,7 +174,7 @@ function Beats() {
                 {saveButtonInfo.isUpdate && (
                   <button
                     className="continue-editing-btn"
-                    onClick={() => navigate("/DrumMachine")}
+                    onClick={() => navigate(roomId ? `/DrumMachine/${roomId}` : "/DrumMachine")}
                   >
                     <Edit size={18} />
                     Continue Editing
