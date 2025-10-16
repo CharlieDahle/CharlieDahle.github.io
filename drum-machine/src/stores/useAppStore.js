@@ -2,6 +2,7 @@ import { create } from "zustand";
 import io from "socket.io-client";
 import drumSounds from "../assets/data/drum-sounds.json";
 import { interceptWebSocketMessages, debugLog } from "./websocketInterceptor";
+import { addRecentRoom } from "../utils/recentRooms";
 
 // Helper function to normalize notes - converts old format to new format
 const normalizeNote = (note) => {
@@ -1192,6 +1193,10 @@ export const useAppStore = create((set, get) => ({
           if (response.success) {
             console.log("Room created:", response.roomId);
             debugLog("in", "create-room-success", response);
+
+            // Save to recent rooms
+            addRecentRoom(response.roomId);
+
             set((state) => ({
               websocket: {
                 ...state.websocket,
@@ -1239,6 +1244,10 @@ export const useAppStore = create((set, get) => ({
             if (response && response.success) {
               console.log("Successfully joined room:", targetRoomId);
               debugLog("in", "join-room-success", response);
+
+              // Save to recent rooms
+              addRecentRoom(targetRoomId.trim());
+
               set((state) => ({
                 websocket: {
                   ...state.websocket,
@@ -1283,6 +1292,35 @@ export const useAppStore = create((set, get) => ({
           lastRemoteTransportCommand: null,
         },
       }));
+    },
+
+    // Check if rooms still exist on server (for quick rejoin feature)
+    checkRooms: (roomIds) => {
+      const { socket, isConnected } = get().websocket;
+      if (!socket || !isConnected || !roomIds || roomIds.length === 0) {
+        return Promise.resolve([]);
+      }
+
+      return new Promise((resolve) => {
+        console.log("Checking rooms:", roomIds);
+        debugLog("out", "check-rooms", { roomIds });
+
+        const timeout = setTimeout(() => {
+          console.warn("Check rooms request timed out");
+          resolve([]);
+        }, 5000);
+
+        socket.emit("check-rooms", { roomIds }, (response) => {
+          clearTimeout(timeout);
+          if (response && response.results) {
+            debugLog("in", "check-rooms-success", response);
+            resolve(response.results);
+          } else {
+            console.warn("Invalid check-rooms response");
+            resolve([]);
+          }
+        });
+      });
     },
 
     // Safe send methods - only send if connected

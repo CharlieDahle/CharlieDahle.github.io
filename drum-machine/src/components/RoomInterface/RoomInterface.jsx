@@ -1,14 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, LogOut, FileText } from "lucide-react";
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground";
+import QuickRejoin from "../QuickRejoin/QuickRejoin";
+import { useAppStore } from "../../stores";
 import "./RoomInterface.css";
 
 // Define blob count range outside component to prevent recreating on every render
 const ROOM_BLOB_COUNT = [2, 5];
 
 function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
+  const navigate = useNavigate();
   const [joinRoomId, setJoinRoomId] = useState("");
   const [createError, setCreateError] = useState("");
   const [joinError, setJoinError] = useState("");
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  // Get auth state from store
+  const { isAuthenticated, user, logout } = useAppStore((state) => state.auth);
 
   const handleCreateRoom = async () => {
     setCreateError("");
@@ -40,19 +49,98 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
     return value.replace(/[^A-Za-z0-9]/g, "");
   };
 
+  const handleProfileClick = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  const handleNavigateToBeats = () => {
+    setShowProfileDropdown(false);
+    navigate("/beats");
+  };
+
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    logout();
+  };
+
+  const handleSignInClick = () => {
+    navigate("/login");
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showProfileDropdown &&
+        !event.target.closest(".room-user-menu")
+      ) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showProfileDropdown]);
+
   return (
     <div className="room-interface">
       {/* Animated Background Blobs - Now using the reusable component */}
       <AnimatedBackground blobCount={ROOM_BLOB_COUNT} placement="room" />
 
-      {/* Connection Status - Top Right of Screen */}
-      <div
-        className={`connection-status ${
-          isConnected ? "connected" : "disconnected"
-        }`}
-      >
-        <div className="status-indicator"></div>
-        <span>{isConnected ? "Connected" : "Disconnected"}</span>
+      {/* Quick Rejoin Tab - Bottom Left */}
+      <QuickRejoin onJoinRoom={onJoinRoom} />
+
+      {/* Status Badges - Top Right of Screen */}
+      <div className="room-status-badges">
+        {/* Connection Status */}
+        <div
+          className={`connection-status ${
+            isConnected ? "connected" : "disconnected"
+          }`}
+        >
+          <div className="status-indicator"></div>
+          <span>{isConnected ? "Connected" : "Disconnected"}</span>
+        </div>
+
+        {/* User Badge */}
+        {isAuthenticated ? (
+          <div className="room-user-menu">
+            <div
+              className={`room-user-info ${
+                showProfileDropdown ? "room-user-info--active" : ""
+              }`}
+              onClick={handleProfileClick}
+            >
+              <User size={16} />
+              {user?.username}
+            </div>
+            {showProfileDropdown && (
+              <div className="room-profile-dropdown">
+                <button
+                  className="room-dropdown-item"
+                  onClick={handleNavigateToBeats}
+                >
+                  <FileText size={16} />
+                  My Beats
+                </button>
+                <button
+                  className="room-dropdown-item"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={16} />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button className="room-signin-btn" onClick={handleSignInClick}>
+            <User size={16} />
+            Sign In
+          </button>
+        )}
       </div>
 
       {/* Main Room Card */}
@@ -119,7 +207,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                     onChange={(e) =>
                       setJoinRoomId(formatRoomCode(e.target.value))
                     }
-                    onKeyPress={(e) => e.key === "Enter" && handleJoinRoom()}
+                    onKeyDown={(e) => e.key === "Enter" && handleJoinRoom()}
                     maxLength="8"
                   />
                   <button
