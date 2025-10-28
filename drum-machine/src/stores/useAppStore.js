@@ -271,10 +271,25 @@ export const useAppStore = create((set, get) => ({
     TICKS_PER_BEAT: 480,
     BEATS_PER_LOOP: 16,
     measureCount: 4,
+    loopEnabled: false,
+    loopStart: 0,
+    loopEnd: null, // null means use getTotalTicks()
 
     // Transport control actions (user-initiated)
     play: () => {
-      set((state) => ({ transport: { ...state.transport, isPlaying: true } }));
+      set((state) => {
+        const { loopEnabled, loopStart, currentTick } = state.transport;
+        // If loop is enabled and we're not already inside the loop, start at loop start
+        const shouldResetToLoopStart = loopEnabled && (currentTick < loopStart || currentTick >= get().transport.getLoopEnd());
+
+        return {
+          transport: {
+            ...state.transport,
+            isPlaying: true,
+            currentTick: shouldResetToLoopStart ? loopStart : currentTick,
+          },
+        };
+      });
       get().websocket.sendTransportCommand({ type: "play" });
     },
 
@@ -364,6 +379,41 @@ export const useAppStore = create((set, get) => ({
           BEATS_PER_LOOP: clampedCount * 4,
         },
       }));
+    },
+
+    // Loop control actions
+    toggleLoop: () => {
+      set((state) => ({
+        transport: { ...state.transport, loopEnabled: !state.transport.loopEnabled },
+      }));
+    },
+
+    setLoopStart: (tick) => {
+      set((state) => {
+        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        const loopEnd = state.transport.loopEnd ?? totalTicks;
+        // Ensure loopStart is before loopEnd
+        const clampedTick = Math.max(0, Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT));
+        return {
+          transport: { ...state.transport, loopStart: clampedTick },
+        };
+      });
+    },
+
+    setLoopEnd: (tick) => {
+      set((state) => {
+        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        // Ensure loopEnd is after loopStart and within bounds
+        const clampedTick = Math.max(state.transport.loopStart + state.transport.TICKS_PER_BEAT, Math.min(tick, totalTicks));
+        return {
+          transport: { ...state.transport, loopEnd: clampedTick },
+        };
+      });
+    },
+
+    getLoopEnd: () => {
+      const { loopEnd } = get().transport;
+      return loopEnd ?? get().transport.getTotalTicks();
     },
 
     // Sync methods (for WebSocket updates - these DON'T trigger change tracking)

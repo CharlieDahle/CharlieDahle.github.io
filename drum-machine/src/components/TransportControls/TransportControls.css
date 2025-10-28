@@ -93,33 +93,47 @@
   box-shadow: var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 }
 
+.transport-btn--loop-active {
+  background: #5a32a3 !important;
+  box-shadow: 0 0 12px rgba(111, 66, 193, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.transport-btn--loop-active:hover {
+  background: #5a32a3 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(111, 66, 193, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.2), var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15)) !important;
+}
+
 .transport-btn:disabled {
   cursor: not-allowed;
   transform: none !important;
 }
 
-.transport-btn--loop:disabled {
-  background: #6f42c1 !important;
-  color: white !important;
-  box-shadow: none !important;
-}
-
 /* Snap Control */
-.snap-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.snap-btn {
+  background: #f8f9fa;
+  color: #212529;
+  box-shadow: inset 0 0 0 3px transparent;
 }
 
-.snap-checkbox {
-  margin: 0;
+.snap-btn--enabled {
+  box-shadow: inset 0 0 0 3px #28a745;
 }
 
-.snap-label {
-  margin: 0;
-  font-weight: 500;
-  color: #495057;
-  cursor: pointer;
+.snap-btn--enabled:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 3px #28a745, var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+}
+
+.snap-btn--disabled {
+  box-shadow: inset 0 0 0 3px #dc3545;
+}
+
+.snap-btn--disabled:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: inset 0 0 0 3px #dc3545, var(--shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 }
 
 /* BPM Control */
@@ -220,7 +234,6 @@
 
 /* Focus states for accessibility */
 .transport-btn:focus,
-.snap-checkbox:focus,
 .bmp-slider:focus {
   outline: 2px solid var(--playhead-color, #007bff);
   outline-offset: 2px;

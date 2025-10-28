@@ -1,4 +1,5 @@
 import React from "react";
+import { Repeat2 } from "lucide-react";
 import { useAppStore } from "../../stores/useAppStore";
 import "./TransportControls.css";
 
@@ -14,6 +15,10 @@ function TransportControls() {
   const setBpm = useAppStore((state) => state.transport.setBpm);
   const addMeasure = useAppStore((state) => state.transport.addMeasure);
   const removeMeasure = useAppStore((state) => state.transport.removeMeasure);
+
+  // Get loop state
+  const loopEnabled = useAppStore((state) => state.transport.loopEnabled);
+  const toggleLoop = useAppStore((state) => state.transport.toggleLoop);
 
   // Get UI state
   const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
@@ -63,10 +68,13 @@ function TransportControls() {
             ⏹ Stop
           </button>
           <button
-            className="transport-btn transport-btn--loop"
-            disabled
-            title="The feature is coming soon!"
+            className={`transport-btn transport-btn--loop ${
+              loopEnabled ? "transport-btn--loop-active" : ""
+            }`}
+            onClick={toggleLoop}
+            title={loopEnabled ? "Loop enabled" : "Loop disabled"}
           >
+            <Repeat2 size={16} />
             Loop
           </button>
         </div>
@@ -99,18 +107,14 @@ function TransportControls() {
 
       <div className="controls-section">
         {/* Snap Toggle */}
-        <div className="snap-control">
-          <input
-            className="snap-checkbox"
-            type="checkbox"
-            id="snapToggle"
-            checked={snapToGrid}
-            onChange={(e) => setSnapToGrid(e.target.checked)}
-          />
-          <label className="snap-label" htmlFor="snapToggle">
-            Snap to grid
-          </label>
-        </div>
+        <button
+          className={`transport-btn snap-btn ${
+            snapToGrid ? "snap-btn--enabled" : "snap-btn--disabled"
+          }`}
+          onClick={() => setSnapToGrid(!snapToGrid)}
+        >
+          Snap to grid
+        </button>
 
         {/* BPM Control */}
         <div className="bpm-control">

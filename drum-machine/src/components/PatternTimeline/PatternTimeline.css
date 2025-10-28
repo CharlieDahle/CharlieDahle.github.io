@@ -388,7 +388,52 @@
   transition: none;
 }
 
+/* Loop Markers */
+.loop-region {
+  position: absolute;
+  top: 0;
+  background: rgba(111, 66, 193, 0.08);
+  z-index: 4;
+  pointer-events: none;
+  transition: all 0.15s ease;
+}
 
+.loop-marker {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  z-index: 11;
+  cursor: ew-resize;
+  transition: width 0.15s ease;
+  background: #6f42c1;
+  box-shadow: 0 0 8px rgba(111, 66, 193, 0.4);
+}
+
+.loop-marker:hover {
+  width: 6px;
+}
+
+.loop-marker-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  transition: all 0.15s ease;
+  background: #6f42c1;
+  box-shadow: 0 2px 6px rgba(111, 66, 193, 0.4);
+}
+
+.loop-marker-handle:hover {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 2px 8px rgba(111, 66, 193, 0.6);
+}
 
 /* Volume Popup Styles */
 .volume-popup {

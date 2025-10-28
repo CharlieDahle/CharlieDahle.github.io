@@ -855,7 +855,27 @@ class DrumScheduler {
     const secondsPerTick = secondsPerBeat / TICKS_PER_BEAT;
 
     this.nextNoteTime += secondsPerTick;
-    this.currentTick = (this.currentTick + 1) % TOTAL_TICKS;
+
+    // Check if loop is enabled and get loop points
+    if (this.transportStore) {
+      const state = this.transportStore.getState();
+      const { loopEnabled, loopStart } = state.transport;
+      const loopEnd = state.transport.getLoopEnd();
+
+      if (loopEnabled && loopEnd > loopStart) {
+        // Loop mode: wrap between loopStart and loopEnd
+        this.currentTick = this.currentTick + 1;
+        if (this.currentTick >= loopEnd) {
+          this.currentTick = loopStart;
+        }
+      } else {
+        // Normal mode: wrap at TOTAL_TICKS
+        this.currentTick = (this.currentTick + 1) % TOTAL_TICKS;
+      }
+    } else {
+      // Fallback if no store
+      this.currentTick = (this.currentTick + 1) % TOTAL_TICKS;
+    }
   }
 
   // Get current playback state

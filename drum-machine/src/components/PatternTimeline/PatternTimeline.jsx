@@ -151,7 +151,15 @@ function PatternTimeline() {
   const TICKS_PER_BEAT = useAppStore((state) => state.transport.TICKS_PER_BEAT);
   const BEATS_PER_LOOP = useAppStore((state) => state.transport.BEATS_PER_LOOP);
   const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
-  
+
+  // Loop state
+  const loopEnabled = useAppStore((state) => state.transport.loopEnabled);
+  const loopStart = useAppStore((state) => state.transport.loopStart);
+  const getLoopEnd = useAppStore((state) => state.transport.getLoopEnd);
+  const setLoopStart = useAppStore((state) => state.transport.setLoopStart);
+  const setLoopEnd = useAppStore((state) => state.transport.setLoopEnd);
+  const loopEnd = getLoopEnd();
+
   // Volume popup state
   const volumePopupOpen = useAppStore((state) => state.ui.volumePopupOpen);
   const volumePopupTrack = useAppStore((state) => state.ui.volumePopupTrack);
@@ -176,6 +184,9 @@ function PatternTimeline() {
   const [draggedNote, setDraggedNote] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
+
+  // Loop marker drag state
+  const [draggedLoopMarker, setDraggedLoopMarker] = useState(null); // 'start' or 'end'
 
   // Ghost note state
   const [ghostNote, setGhostNote] = useState(null);
@@ -334,8 +345,55 @@ function PatternTimeline() {
     });
   };
 
+  // Handle loop marker drag start
+  const handleLoopMarkerMouseDown = (e, markerType) => {
+    e.stopPropagation();
+    setDraggedLoopMarker(markerType);
+  };
+
+  // Handle loop marker dragging
+  const handleLoopMarkerMove = (e) => {
+    if (!draggedLoopMarker) return;
+
+    const rect = gridRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+
+    // Convert to tick
+    let newTick = x / PIXELS_PER_TICK;
+
+    // Apply snap-to-grid if enabled
+    if (snapToGrid) {
+      const eighthNoteIndex = Math.round(newTick / (TICKS_PER_BEAT / 2));
+      newTick = eighthNoteIndex * (TICKS_PER_BEAT / 2);
+    } else {
+      newTick = Math.round(newTick);
+    }
+
+    // Clamp to valid range
+    newTick = Math.max(0, Math.min(TOTAL_TICKS, newTick));
+
+    // Update the appropriate loop marker
+    if (draggedLoopMarker === 'start') {
+      setLoopStart(newTick);
+    } else if (draggedLoopMarker === 'end') {
+      setLoopEnd(newTick);
+    }
+  };
+
+  // Handle loop marker drag end
+  const handleLoopMarkerMouseUp = () => {
+    setDraggedLoopMarker(null);
+  };
+
   // Handle mouse move during drag
   const handleMouseMove = (e) => {
+    // Handle loop marker dragging
+    if (draggedLoopMarker) {
+      handleLoopMarkerMove(e);
+      return;
+    }
+
+    // Handle note dragging
     if (!isDragging || !draggedNote) return;
 
     setHasDragged(true);
@@ -365,6 +423,13 @@ function PatternTimeline() {
 
   // Handle mouse up - finish drag
   const handleMouseUp = () => {
+    // Handle loop marker release
+    if (draggedLoopMarker) {
+      handleLoopMarkerMouseUp();
+      return;
+    }
+
+    // Handle note drag release
     if (isDragging && draggedNote && hasDragged) {
       // Move note - store handles WebSocket automatically
       moveNote(
@@ -412,7 +477,7 @@ function PatternTimeline() {
 
   // Add global mouse event listeners for dragging
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || draggedLoopMarker) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
 
@@ -424,6 +489,7 @@ function PatternTimeline() {
   }, [
     isDragging,
     draggedNote,
+    draggedLoopMarker,
     snapToGrid,
     PIXELS_PER_TICK,
     TICKS_PER_BEAT,
@@ -643,6 +709,45 @@ function PatternTimeline() {
               className={`playhead ${isPlaying ? "playhead--playing" : ""}`}
               style={{ height: `${tracks.length * TRACK_HEIGHT}px` }}
             />
+
+            {/* Loop Markers */}
+            {loopEnabled && (
+              <>
+                {/* Loop Region Background */}
+                <div
+                  className="loop-region"
+                  style={{
+                    left: `${loopStart * PIXELS_PER_TICK}px`,
+                    width: `${(loopEnd - loopStart) * PIXELS_PER_TICK}px`,
+                    height: `${tracks.length * TRACK_HEIGHT}px`,
+                  }}
+                />
+
+                {/* Loop Start Marker */}
+                <div
+                  className="loop-marker loop-marker--start"
+                  style={{
+                    left: `${loopStart * PIXELS_PER_TICK}px`,
+                    height: `${tracks.length * TRACK_HEIGHT}px`,
+                  }}
+                  onMouseDown={(e) => handleLoopMarkerMouseDown(e, 'start')}
+                >
+                  <div className="loop-marker-handle" />
+                </div>
+
+                {/* Loop End Marker */}
+                <div
+                  className="loop-marker loop-marker--end"
+                  style={{
+                    left: `${loopEnd * PIXELS_PER_TICK}px`,
+                    height: `${tracks.length * TRACK_HEIGHT}px`,
+                  }}
+                  onMouseDown={(e) => handleLoopMarkerMouseDown(e, 'end')}
+                >
+                  <div className="loop-marker-handle" />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
