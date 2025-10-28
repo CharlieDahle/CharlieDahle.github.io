@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, FileText } from "lucide-react";
+import { User, LogOut, FileText, Home } from "lucide-react";
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground";
 import QuickRejoin from "../QuickRejoin/QuickRejoin";
 import { useAppStore } from "../../stores";
@@ -90,6 +90,16 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
     <div className="room-interface">
       {/* Animated Background Blobs - Now using the reusable component */}
       <AnimatedBackground blobCount={ROOM_BLOB_COUNT} placement="room" />
+
+      {/* Home Button - Top Left */}
+      <a
+        href="/"
+        className="room-home-btn"
+        aria-label="Go to homepage"
+      >
+        <Home size={20} />
+        <span>charliedahle.me</span>
+      </a>
 
       {/* Quick Rejoin Tab - Bottom Left */}
       <QuickRejoin onJoinRoom={onJoinRoom} />
