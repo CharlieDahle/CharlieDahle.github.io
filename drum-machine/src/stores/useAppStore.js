@@ -1937,221 +1937,6 @@ export const useAppStore = create((set, get) => ({
       }
     },
 
-    // Save current beat (either new or update existing)
-    saveBeat: async (beatName) => {
-      const { isAuthenticated } = get().auth;
-      if (!isAuthenticated) throw new Error("Must be logged in to save beats");
-
-      const { currentlyLoadedBeat } = get().beats;
-      const isUpdate = currentlyLoadedBeat && currentlyLoadedBeat.id;
-
-      console.log("💾 Save Beat Debug:", {
-        beatName,
-        isUpdate,
-        currentlyLoadedBeat,
-        endpoint: isUpdate ? `beats/${currentlyLoadedBeat.id}` : "beats",
-        method: isUpdate ? "PUT" : "POST",
-      });
-
-      // Get current pattern, tracks, bpm, and measures
-      const { pattern, tracks, transport } = get();
-
-      const beatData = {
-        name: beatName,
-        patternData: pattern.data,
-        tracksConfig: tracks.list,
-        bpm: transport.bpm,
-        measureCount: transport.measureCount,
-      };
-
-      console.log("💾 Beat data to save:", beatData);
-
-      set((state) => ({
-        beats: { ...state.beats, isLoading: true, error: null },
-      }));
-
-      try {
-        const headers = get().auth.getAuthHeaders();
-        console.log("💾 Request headers:", headers);
-
-        // Decide endpoint and method based on whether we're updating
-        const url = isUpdate
-          ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}`
-          : "https://api.charliedahle.me/api/beats";
-
-        const method = isUpdate ? "PUT" : "POST";
-
-        console.log("💾 Making request:", { url, method });
-
-        const response = await fetch(url, {
-          method,
-          headers,
-          body: JSON.stringify(beatData),
-        });
-
-        console.log("💾 Response status:", response.status);
-        console.log(
-          "💾 Response headers:",
-          Object.fromEntries(response.headers.entries())
-        );
-
-        // Check content type before parsing
-        const contentType = response.headers.get("content-type");
-        console.log("💾 Response content-type:", contentType);
-
-        if (!contentType || !contentType.includes("application/json")) {
-          // Server returned HTML or plain text instead of JSON
-          const textResponse = await response.text();
-          console.error("💾 Server returned non-JSON response:", textResponse);
-
-          if (!response.ok) {
-            throw new Error(
-              `Server error (${response.status}): ${textResponse.slice(
-                0,
-                200
-              )}...`
-            );
-          } else {
-            throw new Error("Server returned unexpected response format");
-          }
-        }
-
-        const data = await response.json();
-        console.log("💾 Parsed response data:", data);
-
-        if (!response.ok) {
-          throw new Error(
-            data.error || `Failed to ${isUpdate ? "update" : "save"} beat`
-          );
-        }
-
-        // Update tracking
-        set((state) => ({
-          beats: {
-            ...state.beats,
-            isLoading: false,
-            error: null,
-            currentlyLoadedBeat: {
-              id: data.beat.id,
-              name: data.beat.name,
-              lastModified: data.beat.updated_at || data.beat.created_at,
-            },
-            hasUnsavedChanges: false,
-          },
-        }));
-
-        console.log("💾 Save successful, updated tracking:", {
-          id: data.beat.id,
-          name: data.beat.name,
-          isUpdate,
-        });
-
-        // Refresh the beats list
-        await get().beats.fetchUserBeats();
-
-        return { beat: data.beat, isUpdate };
-      } catch (error) {
-        console.error("💾 Save failed:", error);
-
-        set((state) => ({
-          beats: {
-            ...state.beats,
-            isLoading: false,
-            error: error.message,
-          },
-        }));
-        throw error;
-      }
-    },
-
-    // Load a specific beat
-    loadBeat: async (beatId) => {
-      const { isAuthenticated } = get().auth;
-      if (!isAuthenticated) throw new Error("Must be logged in to load beats");
-
-      set((state) => ({
-        beats: { ...state.beats, isLoading: true, error: null },
-      }));
-
-      try {
-        const headers = get().auth.getAuthHeaders();
-        const response = await fetch(
-          `https://api.charliedahle.me/api/beats/${beatId}`,
-          {
-            headers,
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to load beat");
-        }
-
-        console.log("Beat data loaded from server:", {
-          name: data.name,
-          bpm: data.bpm,
-          measureCount: data.measureCount,
-          tracksCount: data.tracksConfig?.length || 0,
-          patternKeys: Object.keys(data.patternData || {}).length,
-        });
-
-        // Apply the loaded beat to current state IMMEDIATELY
-        const { pattern, tracks, transport } = get();
-
-        // Set pattern data
-        if (data.patternData) {
-          pattern.setPattern(data.patternData);
-          console.log("Pattern data applied to store");
-        }
-
-        // Set tracks configuration
-        if (data.tracksConfig) {
-          tracks.setTracks(data.tracksConfig);
-          console.log("Tracks configuration applied to store");
-        }
-
-        // Set transport settings
-        if (data.bpm) {
-          transport.syncBpm(data.bpm);
-          console.log("BPM applied to store:", data.bpm);
-        }
-
-        if (data.measureCount) {
-          transport.syncMeasureCount(data.measureCount);
-          console.log("Measure count applied to store:", data.measureCount);
-        }
-
-        // NEW: Track this as the currently loaded beat
-        set((state) => ({
-          beats: {
-            ...state.beats,
-            isLoading: false,
-            error: null,
-            currentlyLoadedBeat: {
-              id: data.id,
-              name: data.name,
-              lastModified: data.updated_at || data.created_at,
-            },
-            hasUnsavedChanges: false, // Just loaded, so no unsaved changes
-          },
-        }));
-
-        console.log("Beat loaded successfully and applied to store");
-        return data;
-      } catch (error) {
-        console.error("Failed to load beat:", error);
-        set((state) => ({
-          beats: {
-            ...state.beats,
-            isLoading: false,
-            error: error.message,
-          },
-        }));
-        throw error;
-      }
-    },
-
     // NEW: Create a new beat (clears tracking)
     createNewBeat: () => {
       // Clear all patterns and reset to defaults
@@ -2421,7 +2206,7 @@ export const useAppStore = create((set, get) => ({
         });
 
         // Apply the loaded beat to current state IMMEDIATELY
-        const { pattern, tracks, transport } = get();
+        const { pattern, tracks, transport, effects } = get();
 
         // Set pattern data
         if (data.patternData) {
@@ -2444,6 +2229,15 @@ export const useAppStore = create((set, get) => ({
         if (data.measureCount) {
           transport.syncMeasureCount(data.measureCount);
           console.log("Measure count applied to store:", data.measureCount);
+        }
+
+        // Set effects state
+        if (data.effectsState) {
+          // Apply effects for each track
+          Object.keys(data.effectsState).forEach((trackId) => {
+            effects.syncTrackEffectState(trackId, data.effectsState[trackId]);
+          });
+          console.log("Effects state applied to store:", Object.keys(data.effectsState));
         }
 
         // Track this as the currently loaded beat with NO unsaved changes
@@ -2492,8 +2286,8 @@ export const useAppStore = create((set, get) => ({
         method: isUpdate ? "PUT" : "POST",
       });
 
-      // Get current pattern, tracks, bpm, and measures
-      const { pattern, tracks, transport } = get();
+      // Get current pattern, tracks, bpm, measures, and effects
+      const { pattern, tracks, transport, effects } = get();
 
       const beatData = {
         name: beatName,
@@ -2501,6 +2295,7 @@ export const useAppStore = create((set, get) => ({
         tracksConfig: tracks.list,
         bpm: transport.bpm,
         measureCount: transport.measureCount,
+        effectsState: effects.trackEffects,
       };
 
       console.log("💾 Beat data to save:", beatData);
@@ -3137,7 +2932,12 @@ export const useAppStore = create((set, get) => ({
       // Send the complete effect state to other clients (using new apply method)
       const completeEffectsState = get().effects.getTrackEffects(trackId);
       get().websocket.sendEffectStateApply(trackId, completeEffectsState);
-      
+
+      // Mark as modified for beat tracking
+      if (get().auth.isAuthenticated) {
+        get().beats.markAsModified();
+      }
+
       console.log(`✅ Applied and broadcast effect changes for track ${trackId}`);
     },
     
