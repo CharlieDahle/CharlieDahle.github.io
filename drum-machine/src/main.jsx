@@ -11,12 +11,10 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import App from "./App.jsx";
 import DrumMachineApp from "./components/DrumMachineApp/DrumMachineApp.jsx";
 import Home from "./pages/Home/Home.jsx";
 import AnimatedPage from "./AnimatedPage.jsx";
 import { useAppStore } from "./stores";
-import "./styles/index.css";
 
 // Import the auth pages
 import Login from "./pages/Login/Login.jsx";
@@ -110,15 +108,6 @@ function AppRouter() {
                   <Beats />
                 </AnimatedPage>
               </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/terminal"
-            element={
-              <AnimatedPage>
-                <App />
-              </AnimatedPage>
             }
           />
 
