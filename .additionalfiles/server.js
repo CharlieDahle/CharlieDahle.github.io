@@ -541,7 +541,10 @@ class DrumRoom {
     };
 
     for (const [trackId, track] of this.tracks.entries()) {
-      if (defaultSounds[trackId] && track.soundFile !== defaultSounds[trackId]) {
+      if (
+        defaultSounds[trackId] &&
+        track.soundFile !== defaultSounds[trackId]
+      ) {
         return false;
       }
     }
@@ -1218,7 +1221,9 @@ setInterval(() => {
       } else if (now - room.lastActivity > MODIFIED_ROOM_TIMEOUT) {
         // Modified room that's been empty for 2+ minutes - delete
         rooms.delete(roomId);
-        console.log(`Cleaned up modified room: ${roomId} (empty for 2+ minutes)`);
+        console.log(
+          `Cleaned up modified room: ${roomId} (empty for 2+ minutes)`
+        );
       }
     }
     // Active rooms with users are NEVER auto-deleted
