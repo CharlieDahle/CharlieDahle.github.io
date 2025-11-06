@@ -5,6 +5,7 @@ import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import UnsavedWorkModal from "../UnsavedWorkModal/UnsavedWorkModal";
+import VisibilityToggle from "../VisibilityToggle/VisibilityToggle.jsx";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
@@ -196,6 +197,9 @@ function RoomHeader({ debugMode, setDebugMode }) {
           </div>
 
           <div className="header-actions">
+            {/* Visibility Toggle - only show for authenticated users */}
+            <VisibilityToggle />
+
             {/* Save/Update Button - only show when needed */}
             {shouldShowSaveButton() && saveButtonConfig && (
               <button

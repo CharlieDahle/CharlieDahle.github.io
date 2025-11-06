@@ -1,10 +1,11 @@
 // src/components/DrumMachineApp/DrumMachineApp.jsx - Updated without duplicate WebSocket init
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "../../stores/useAppStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
+import ListeningMode from "../ListeningMode/ListeningMode.jsx";
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import EffectsModal from "../EffectsModal/EffectsModal.jsx";
 import RoomNotFoundModal from "../RoomNotFoundModal/RoomNotFoundModal.jsx";
@@ -18,6 +19,11 @@ function DrumMachineApp() {
   // URL parameters and navigation
   const { beatId: urlBeatId } = useParams(); // PHASE 2: renamed from roomId
   const navigate = useNavigate();
+
+  // PHASE 3: Access mode state
+  const [mode, setMode] = useState(null); // 'edit' | 'listening' | 'spectating' | null
+  const [accessLevel, setAccessLevel] = useState(null); // 'owner' | 'collaborator' | 'spectator' | 'none'
+  const [checkingAccess, setCheckingAccess] = useState(false);
 
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
@@ -72,8 +78,61 @@ function DrumMachineApp() {
   // NOTE: WebSocket initialization is now handled in main.jsx AppInitializer
   // So we don't need to call initializeConnection() here anymore
 
+  // PHASE 3: Check access level when beat ID changes
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!urlBeatId) {
+        setMode(null);
+        setAccessLevel(null);
+        return;
+      }
+
+      try {
+        setCheckingAccess(true);
+        const response = await fetch(`/api/beats/${urlBeatId}/access`);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            setMode('error');
+            setAccessLevel('none');
+            return;
+          }
+          throw new Error('Failed to check access');
+        }
+
+        const data = await response.json();
+        setAccessLevel(data.access);
+
+        // Determine mode based on access level
+        if (data.access === 'owner' || data.access === 'collaborator') {
+          setMode('edit'); // Has edit permissions, will join session
+        } else if (data.access === 'spectator') {
+          // TODO Phase 4: Check if active session exists
+          // For now, always show listening mode for spectators
+          setMode('listening');
+        } else {
+          // Private beat, no access
+          setMode('error');
+        }
+      } catch (err) {
+        console.error('Error checking access:', err);
+        setMode('error');
+        setAccessLevel('none');
+      } finally {
+        setCheckingAccess(false);
+      }
+    };
+
+    checkAccess();
+  }, [urlBeatId]);
+
   // Sync beat session state with URL
   useEffect(() => {
+    // Only auto-join if we're in edit mode
+    if (mode !== 'edit') {
+      return;
+    }
+
     // If URL has a beat ID but we're not in that session, auto-join
     if (urlBeatId && beatId !== urlBeatId && isConnected && connectionState !== "connecting") {
       console.log(`Auto-joining beat from URL: ${urlBeatId}`);
@@ -103,7 +162,7 @@ function DrumMachineApp() {
         },
       }));
     }
-  }, [urlBeatId, beatId, isInSession, isConnected, connectionState]);
+  }, [urlBeatId, beatId, isInSession, isConnected, connectionState, mode]);
 
   // PHASE 2: Beat session management handlers
   // NOTE: Beat creation now happens via API in Beats.jsx or RoomInterface.jsx
@@ -190,7 +249,52 @@ function DrumMachineApp() {
     );
   }
 
-  // Render the drum machine with animated background
+  // PHASE 3: Show loading while checking access
+  if (checkingAccess || mode === null) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '18px',
+        color: '#718096'
+      }}>
+        Checking access...
+      </div>
+    );
+  }
+
+  // PHASE 3: Show listening mode for spectators
+  if (mode === 'listening') {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="listening-mode"
+          initial="initial"
+          animate="in"
+          exit="out"
+          variants={pageVariants}
+          transition={pageTransition}
+          style={{
+            width: "100%",
+            minHeight: "100vh",
+            position: "relative",
+          }}
+        >
+          <AnimatedBackground
+            blobCount={DRUM_MACHINE_BLOB_COUNT}
+            placement="edge"
+          />
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <ListeningMode beatId={urlBeatId} />
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // Render the drum machine with animated background (edit mode)
   return (
     <AnimatePresence mode="wait">
       <motion.div

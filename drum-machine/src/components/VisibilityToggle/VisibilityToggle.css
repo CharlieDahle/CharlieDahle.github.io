@@ -1,0 +1,137 @@
+/* src/components/VisibilityToggle/VisibilityToggle.css */
+
+.visibility-toggle {
+  position: relative;
+}
+
+.visibility-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 2px solid;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.visibility-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.visibility-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.visibility-button--public {
+  border-color: #48bb78;
+  color: #48bb78;
+}
+
+.visibility-button--unlisted {
+  border-color: #ed8936;
+  color: #ed8936;
+}
+
+.visibility-button--private {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* Backdrop */
+.visibility-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* Dropdown */
+.visibility-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 280px;
+  z-index: 1000;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.visibility-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.visibility-option:hover {
+  background: #f7fafc;
+}
+
+.visibility-option--active {
+  background: #edf2f7;
+}
+
+.visibility-option svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #4a5568;
+}
+
+.visibility-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.visibility-option-content strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.visibility-option-content span {
+  font-size: 12px;
+  color: #718096;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .visibility-dropdown {
+    min-width: 240px;
+    right: -8px;
+  }
+}
