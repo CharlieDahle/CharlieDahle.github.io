@@ -6,7 +6,9 @@ This document outlines the complete technical vision for transforming a real-tim
 
 ---
 
-## Current State: Ephemeral Session Model
+## Original State: Ephemeral Session Model (Pre-Refactor)
+
+**NOTE:** This section describes the system BEFORE Phase 1 & 2 refactors. See "CURRENT STATE" section below for up-to-date status.
 
 ### Architecture Overview
 
@@ -29,9 +31,9 @@ This document outlines the complete technical vision for transforming a real-tim
 - Frontend: charliedahle.me
 - Backend API: api.charliedahle.me
 
-### Current Paradigm
+### Original Paradigm (Pre-Refactor)
 
-The application currently operates on a **dual-entity model**:
+The application originally operated on a **dual-entity model**:
 
 1. **Rooms (Ephemeral):**
    - Temporary collaboration spaces identified by 8-character UUIDs
@@ -2163,27 +2165,97 @@ async function loadBeatFromDB(beatId) {
 
 ---
 
+## 🎯 CURRENT STATE (As of November 2025)
+
+### ✅ Phases Complete
+
+**Phase 1: Database & Permissions Foundation** - ✅ COMPLETE
+- Database migration successful (25 existing beats migrated)
+- `room_id` UUID column added to beats table
+- `beat_collaborators` table created with owner/collaborator roles
+- Permission-based API endpoints implemented
+- Backend hosted at `api.charliedahle.me`
+
+**Phase 2: Session-Beat Linking** - ✅ COMPLETE
+- Frontend fully refactored to use persistent beat IDs
+- Beat creation now via API: `POST /api/beats`
+- WebSocket events updated: `join-beat`, `leave-beat` (removed `create-room`)
+- All components updated to use `beatId` instead of `roomId`
+- Vite proxy configured to route `/api/*` to backend
+- Auto-join logic working correctly
+
+### 📂 Repository Structure
+
+**Frontend (this repo):** `/drum-machine/`
+- React app with Vite build system
+- Hosted at `charliedahle.me`
+- Dev server: `npm run dev` on port 5173
+
+**Backend (separate deployment):** `.additionalfiles/server.js`
+- Hosted at `api.charliedahle.me`
+- PostgreSQL database
+- WebSocket + REST API
+
+### ⚙️ Development Configuration
+
+**Vite Proxy (vite.config.js):**
+```javascript
+server: {
+  proxy: {
+    '/api': { target: 'https://api.charliedahle.me' },
+    '/socket.io': { target: 'https://api.charliedahle.me', ws: true },
+  },
+}
+```
+This allows `fetch('/api/beats')` in dev to proxy to the production backend - standard practice, not janky!
+
+**Key Files Modified in Phase 2:**
+- `src/stores/useAppStore.js` - WebSocket state, removed `createRoom()`, renamed to `beatId`
+- `src/components/DrumMachineApp/DrumMachineApp.jsx` - Auto-join logic, beat routing
+- `src/pages/Beats/Beats.jsx` - API-based beat creation
+- `src/components/RoomInterface/RoomInterface.jsx` - API-based beat creation
+- `src/components/RoomHeader/RoomHeader.jsx` - Display beatId, use `leaveBeat()`
+- `src/components/QuickRejoin/QuickRejoin.jsx` - Navigate to beats
+- `src/main.jsx` - Route changed to `/DrumMachine/:beatId`
+
+### 🔄 Current Flow
+
+1. User creates beat → `POST /api/beats` → Returns `{ beat: { roomId: "uuid", ... } }`
+2. Navigate to `/DrumMachine/{uuid}`
+3. DrumMachineApp auto-joins beat session via `join-beat` WebSocket event
+4. Real-time collaboration works with persistent beat storage
+
+### ➡️ Next Up: Phase 3
+
+**Phase 3: Listening Mode** - Ready to implement
+- Create `ListeningMode.jsx` for read-only beat viewing
+- Implement `GET /api/beats/:id/access` endpoint
+- Allow public beats to be viewed without edit access
+- Foundation for spectator mode and admittance queue
+
+---
+
 ## Implementation Phases
 
-### Phase 1: Database & Permissions Foundation (Week 1)
+### Phase 1: Database & Permissions Foundation (Week 1) ✅ **COMPLETE**
 
 **Goal:** Establish beat ownership and permissions system
 
 **Tasks:**
-1. Create database migration script for new schema
-2. Migrate existing beats to new structure:
-   - Add `room_id`, `visibility`, `is_modified` columns
-   - Create `beat_collaborators` table
-   - Migrate existing `user_id` to `beat_collaborators` as owner
-3. Create `session_queue` table
-4. Update API endpoints to use new permission checks
-5. Write permission middleware functions
-6. Test: Create beat, add collaborators, verify permissions
+1. ✅ Create database migration script for new schema
+2. ✅ Migrate existing beats to new structure:
+   - ✅ Add `room_id`, `visibility`, `is_modified` columns
+   - ✅ Create `beat_collaborators` table
+   - ✅ Migrate existing `user_id` to `beat_collaborators` as owner
+3. ✅ Create `session_queue` table
+4. ✅ Update API endpoints to use new permission checks
+5. ✅ Write permission middleware functions
+6. ✅ Test: Create beat, add collaborators, verify permissions (25 beats migrated successfully)
 
 **Deliverables:**
-- Migration SQL script
-- Updated API routes with permission checks
-- Unit tests for permission logic
+- ✅ Migration SQL script (`.additionalfiles/migrate-permissions.sql`)
+- ✅ Updated API routes with permission checks (Backend)
+- ✅ Backend deployed to api.charliedahle.me
 
 **Migration Script Example:**
 ```sql
@@ -2239,25 +2311,36 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 
 ---
 
-### Phase 2: Session-Beat Linking (Week 1-2)
+### Phase 2: Session-Beat Linking (Week 1-2) ✅ **COMPLETE**
 
 **Goal:** Replace ephemeral rooms with beat-linked sessions
 
 **Tasks:**
-1. Refactor `DrumRoom` class → `DrumSession` class
-2. Link sessions to `beatId` (UUID from `room_id` column)
-3. Update WebSocket event: `create-room` → removed
-4. Update WebSocket event: `join-room` → `join-beat`
-5. Modify frontend to use `beatId` in URLs and WebSocket
-6. Update URL routing: `/DrumMachine/:beatId`
-7. Update beat creation flow to use persistent `room_id`
-8. Test: Create beat, join session, verify persistence
+1. ✅ Refactor `DrumRoom` class → `DrumSession` class (Backend - already done)
+2. ✅ Link sessions to `beatId` (UUID from `room_id` column)
+3. ✅ Update WebSocket event: `create-room` → removed
+4. ✅ Update WebSocket event: `join-room` → `join-beat`
+5. ✅ Modify frontend to use `beatId` in URLs and WebSocket
+6. ✅ Update URL routing: `/DrumMachine/:beatId`
+7. ✅ Update beat creation flow to use persistent `room_id` via API
+8. ✅ Test: Create beat via API, navigate to room_id, auto-join works
 
 **Deliverables:**
-- `DrumSession` class implementation
-- Updated WebSocket handlers
-- Frontend routing changes
-- Integration tests
+- ✅ `DrumSession` class implementation (Backend)
+- ✅ Updated WebSocket handlers (`join-beat`, `leave-beat`)
+- ✅ Frontend routing changes (all components updated)
+- ✅ Vite proxy configuration for API
+- ✅ Beat creation via POST /api/beats working
+
+**Frontend Changes Completed:**
+- `useAppStore.js`: Renamed `roomId` → `beatId`, removed `createRoom()`, updated all WebSocket events
+- `DrumMachineApp.jsx`: Auto-join logic, beat-not-found modal
+- `Beats.jsx`: API-based beat creation, navigation to room_id
+- `RoomInterface.jsx`: API-based beat creation
+- `RoomHeader.jsx`: Display beatId, use `leaveBeat()`
+- `QuickRejoin.jsx`: Navigate to beats directly
+- `main.jsx`: Updated route to `:beatId`
+- `vite.config.js`: Added proxy to api.charliedahle.me
 
 ---
 

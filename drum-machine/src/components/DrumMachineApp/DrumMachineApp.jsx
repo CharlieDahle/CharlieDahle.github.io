@@ -16,24 +16,24 @@ const DRUM_MACHINE_BLOB_COUNT = [4, 6];
 
 function DrumMachineApp() {
   // URL parameters and navigation
-  const { roomId: urlRoomId } = useParams();
+  const { beatId: urlBeatId } = useParams(); // PHASE 2: renamed from roomId
   const navigate = useNavigate();
 
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
-  const isInRoom = useAppStore((state) => state.websocket.isInRoom);
+  const isInSession = useAppStore((state) => state.websocket.isInSession); // PHASE 2: renamed from isInRoom
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
   const error = useAppStore((state) => state.websocket.error);
-  const roomId = useAppStore((state) => state.websocket.roomId);
+  const beatId = useAppStore((state) => state.websocket.beatId); // PHASE 2: renamed from roomId
   const users = useAppStore((state) => state.websocket.users);
   const lastRemoteTransportCommand = useAppStore(
     (state) => state.websocket.lastRemoteTransportCommand
   );
 
-  const createRoom = useAppStore((state) => state.websocket.createRoom);
-  const joinRoom = useAppStore((state) => state.websocket.joinRoom);
+  // PHASE 2 CHANGE: createRoom removed, beats created via API now
+  const joinBeat = useAppStore((state) => state.websocket.joinBeat); // PHASE 2: renamed from joinRoom
 
   // Get store setters for room sync
   const setTracks = useAppStore((state) => state.tracks?.setTracks);
@@ -72,28 +72,28 @@ function DrumMachineApp() {
   // NOTE: WebSocket initialization is now handled in main.jsx AppInitializer
   // So we don't need to call initializeConnection() here anymore
 
-  // Sync room state with URL
+  // Sync beat session state with URL
   useEffect(() => {
-    // If URL has a room ID but we're not in that room, auto-join
-    if (urlRoomId && roomId !== urlRoomId && isConnected && connectionState !== "connecting") {
-      console.log(`Auto-joining room from URL: ${urlRoomId}`);
-      handleJoinRoom(urlRoomId).catch((err) => {
-        console.error("Failed to auto-join room from URL:", err);
-        // Error will be handled by room-not-found modal
+    // If URL has a beat ID but we're not in that session, auto-join
+    if (urlBeatId && beatId !== urlBeatId && isConnected && connectionState !== "connecting") {
+      console.log(`Auto-joining beat from URL: ${urlBeatId}`);
+      handleJoinBeat(urlBeatId).catch((err) => {
+        console.error("Failed to auto-join beat from URL:", err);
+        // Error will be handled by beat-not-found modal
       });
     }
 
-    // If URL has no room ID but we're in a room, leave it
-    if (!urlRoomId && isInRoom) {
-      console.log("URL room ID removed - leaving room");
-      // Note: We don't need to call leaveRoom() on the WebSocket here
-      // because the user already clicked "Leave Room" which did that.
+    // If URL has no beat ID but we're in a session, leave it
+    if (!urlBeatId && isInSession) {
+      console.log("URL beat ID removed - leaving session");
+      // Note: We don't need to call leaveBeat() on the WebSocket here
+      // because the user already clicked "Leave" which did that.
       // We just need to clean up local state.
       useAppStore.setState((state) => ({
         websocket: {
           ...state.websocket,
-          isInRoom: false,
-          roomId: null,
+          isInSession: false,
+          beatId: null,
           users: [],
           connectionState: state.websocket.isConnected
             ? "connected"
@@ -103,101 +103,50 @@ function DrumMachineApp() {
         },
       }));
     }
-  }, [urlRoomId, roomId, isInRoom, isConnected, connectionState]);
+  }, [urlBeatId, beatId, isInSession, isConnected, connectionState]);
 
-  // Room management handlers
-  const handleCreateRoom = async () => {
+  // PHASE 2: Beat session management handlers
+  // NOTE: Beat creation now happens via API in Beats.jsx or RoomInterface.jsx
+  // This component only joins existing beat sessions
+
+  const handleJoinBeat = async (targetBeatId) => {
     try {
-      const roomState = await createRoom();
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
+      const beatData = await joinBeat(targetBeatId);
+      // Sync all stores with beat data
+      setPattern(beatData.pattern || beatData.pattern_data || {});
+      syncBpm(beatData.bpm || 120);
+      if (beatData.measureCount || beatData.measure_count) {
+        syncMeasureCount(beatData.measureCount || beatData.measure_count);
       }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
+      if (beatData.tracks || beatData.tracks_config) {
+        setTracks(beatData.tracks || beatData.tracks_config);
       }
-      // Update URL to include room ID
-      navigate(`/DrumMachine/${roomState.id}`);
-      return roomState;
+      // Update URL to include beat ID (if not already there)
+      if (urlBeatId !== targetBeatId) {
+        navigate(`/DrumMachine/${targetBeatId}`);
+      }
+      return beatData;
     } catch (err) {
       // Let errors bubble up to RoomInterface
       throw err;
     }
   };
 
-  const handleJoinRoom = async (targetRoomId) => {
-    try {
-      const roomState = await joinRoom(targetRoomId);
-      // Sync all stores with room state
-      setPattern(roomState.pattern);
-      syncBpm(roomState.bpm);
-      if (roomState.measureCount) {
-        syncMeasureCount(roomState.measureCount);
-      }
-      if (roomState.tracks) {
-        setTracks(roomState.tracks);
-      }
-      // Update URL to include room ID (if not already there)
-      if (urlRoomId !== targetRoomId) {
-        navigate(`/DrumMachine/${targetRoomId}`);
-      }
-      return roomState;
-    } catch (err) {
-      // Let errors bubble up to RoomInterface
-      throw err;
-    }
-  };
-
-  // Handle room not found modal actions
-  const handleCreateNewRoomFromCurrent = async () => {
-    try {
-      // Capture current local state before creating room
-      const currentPattern = useAppStore.getState().pattern.data;
-      const currentBpm = useAppStore.getState().transport.bpm;
-      const currentMeasureCount = useAppStore.getState().transport.measureCount;
-      const currentTracks = useAppStore.getState().tracks.list;
-
-      console.log("Preserving offline changes:", {
-        pattern: currentPattern,
-        bpm: currentBpm,
-        measureCount: currentMeasureCount,
-        tracks: currentTracks,
-      });
-
-      // Create new room (this will also update the URL)
-      await handleCreateRoom();
-
-      // Restore the local state AFTER room creation
-      setPattern(currentPattern);
-      syncBpm(currentBpm);
-      syncMeasureCount(currentMeasureCount);
-      setTracks(currentTracks);
-
-      // Force connection state to connected since we just created a room
-      useAppStore.setState((state) => ({
-        websocket: {
-          ...state.websocket,
-          connectionState: "connected",
-          error: null,
-        },
-      }));
-
-      console.log("Restored offline changes to new room");
-    } catch (err) {
-      console.error("Failed to create new room:", err);
-    }
+  // Handle beat not found modal actions
+  const handleCreateNewBeatFromCurrent = async () => {
+    // PHASE 2: This will be implemented in RoomInterface.jsx
+    // For now, just navigate back to selection
+    handleBackToSelection();
   };
 
   const handleBackToSelection = () => {
-    // Don't cleanup the entire connection, just reset room state
-    // This preserves the WebSocket connection for room selection
+    // Don't cleanup the entire connection, just reset session state
+    // This preserves the WebSocket connection for beat selection
     useAppStore.setState((state) => ({
       websocket: {
         ...state.websocket,
-        isInRoom: false,
-        roomId: null,
+        isInSession: false,
+        beatId: null,
         users: [],
         connectionState: state.websocket.isConnected
           ? "connected"
@@ -206,17 +155,17 @@ function DrumMachineApp() {
         lastRemoteTransportCommand: null,
       },
     }));
-    // Navigate back to room selection (removes room ID from URL)
+    // Navigate back to beat selection (removes beat ID from URL)
     navigate('/DrumMachine');
   };
 
-  // Check if we should show the room not found modal
-  const showRoomNotFoundModal =
-    connectionState === "failed" && error === "room-not-found";
+  // Check if we should show the beat not found modal
+  const showBeatNotFoundModal =
+    connectionState === "failed" && error === "beat-not-found";
 
-  // Use URL as source of truth: if no room ID in URL, show room selection
+  // Use URL as source of truth: if no beat ID in URL, show beat selection
   // This makes navigation instant and avoids the "double render" issue
-  if (!urlRoomId) {
+  if (!urlBeatId) {
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -232,8 +181,7 @@ function DrumMachineApp() {
           }}
         >
           <RoomInterface
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
+            onJoinBeat={handleJoinBeat}
             isConnected={isConnected}
             error={error}
           />
@@ -271,10 +219,10 @@ function DrumMachineApp() {
           <SoundSelectorModal drumSounds={drumSounds} />
           <EffectsModal />
 
-          {/* Room Not Found Modal */}
+          {/* Beat Not Found Modal */}
           <RoomNotFoundModal
-            isOpen={showRoomNotFoundModal}
-            onCreateNewRoom={handleCreateNewRoomFromCurrent}
+            isOpen={showBeatNotFoundModal}
+            onCreateNewRoom={handleCreateNewBeatFromCurrent}
             onBackToSelection={handleBackToSelection}
           />
         </div>

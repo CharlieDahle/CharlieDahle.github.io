@@ -10,13 +10,13 @@ import "./RoomHeader.css";
 function RoomHeader({ debugMode, setDebugMode }) {
   const navigate = useNavigate();
 
-  // Get room info from WebSocket slice
-  const roomId = useAppStore((state) => state.websocket.roomId);
+  // PHASE 2: Get beat session info from WebSocket slice
+  const beatId = useAppStore((state) => state.websocket.beatId); // PHASE 2: renamed from roomId
   const users = useAppStore((state) => state.websocket.users);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
-  const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
+  const leaveBeat = useAppStore((state) => state.websocket.leaveBeat); // PHASE 2: renamed from leaveRoom
 
   // Get auth state
   const { isAuthenticated, saveStateBeforeLogin } = useAppStore((state) => state.auth);
@@ -34,10 +34,11 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const [clickCount, setClickCount] = useState(0);
   const [clickTimer, setClickTimer] = useState(null);
 
-  const handleLeaveRoom = () => {
-    // Call the leaveRoom function from the store
-    leaveRoom();
-    // Navigate back to room selection (removes room ID from URL)
+  const handleLeaveBeat = () => {
+    // PHASE 2: Leave beat session and navigate back to beat selection
+    // Call the leaveBeat function from the store
+    leaveBeat();
+    // Navigate back to beat selection (removes beat ID from URL)
     // Use replace: true to avoid adding to history stack
     navigate('/DrumMachine', { replace: true });
   };
@@ -183,7 +184,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
             </div>
             <div className="room-info">
               <div className="room-code-line">
-                Room: {roomId}
+                Beat ID: {beatId}
                 <div className="user-count-badge">
                   <Users size={16} />
                   <span>
@@ -234,14 +235,14 @@ function RoomHeader({ debugMode, setDebugMode }) {
               </button>
             )}
 
-            {/* Leave Room Button */}
+            {/* Leave Beat Button */}
             <button
               className="header-action-btn header-action-btn--leave"
-              onClick={handleLeaveRoom}
+              onClick={handleLeaveBeat}
               disabled={!isConnected}
             >
               <ChevronLeft size={16} />
-              <span>Leave Room</span>
+              <span>Leave Beat</span>
             </button>
           </div>
         </div>

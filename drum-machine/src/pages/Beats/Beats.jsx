@@ -44,15 +44,15 @@ function Beats() {
     createNewBeat,
   } = useAppStore((state) => state.beats);
 
-  // WebSocket functions for creating/joining room
-  const createRoom = useAppStore((state) => state.websocket.createRoom);
-  const joinRoom = useAppStore((state) => state.websocket.joinRoom);
+  // PHASE 2: WebSocket functions for joining beat sessions
+  // Note: createRoom removed - beats are now created via API
+  const joinBeat = useAppStore((state) => state.websocket.joinBeat); // PHASE 2: renamed from joinRoom
   const checkRooms = useAppStore((state) => state.websocket.checkRooms);
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
-  const roomId = useAppStore((state) => state.websocket.roomId);
+  const beatId = useAppStore((state) => state.websocket.beatId); // PHASE 2: renamed from roomId
 
   // Get current beat info
   const saveButtonInfo = getSaveButtonInfo();
@@ -89,47 +89,68 @@ function Beats() {
   }, [showProfileDropdown, showCreateDropdown]);
 
   const handleLoadBeat = async (beat) => {
-    if (!isConnected) {
-      console.error("Not connected to server");
+    // PHASE 2: Simply navigate to beat's persistent room_id
+    // The beat session will be auto-joined in DrumMachineApp
+    // Handle both camelCase and snake_case from backend
+    const roomId = beat.roomId || beat.room_id;
+    if (!roomId) {
+      console.error("Beat missing room_id:", beat);
       return;
     }
 
     setLoadingBeatId(beat.id);
 
     try {
-      // First, load the beat data into the local state
-      console.log("Loading beat data:", beat.name);
-      await loadBeat(beat.id);
+      console.log("Navigating to beat session:", beat.name, roomId);
 
-      // Then create a new room with this beat data
-      console.log("Creating room with loaded beat...");
-      const roomState = await createRoom();
-
-      // Navigate to drum machine with room ID in URL
-      navigate(`/DrumMachine/${roomState.id}`);
+      // Navigate to drum machine with beat's room_id
+      // DrumMachineApp will auto-join and sync the beat data
+      navigate(`/DrumMachine/${roomId}`);
     } catch (error) {
-      console.error("Failed to load beat and create room:", error);
+      console.error("Failed to load beat:", error);
       setLoadingBeatId(null);
     }
   };
 
   const handleCreateNew = async () => {
-    if (!isConnected) {
-      console.error("Not connected to server");
-      return;
-    }
-
+    // PHASE 2: Create beat via API, then navigate to its room_id
     try {
-      // Clear current beat tracking
-      createNewBeat();
+      const getAuthHeaders = useAppStore.getState().auth.getAuthHeaders;
 
-      // Create a new room
-      const roomState = await createRoom();
+      // Create beat in database via API
+      const response = await fetch('/api/beats', {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: 'Untitled Beat',
+          patternData: {}, // Backend expects camelCase
+          tracksConfig: [], // Will be initialized with defaults on backend
+          bpm: 120,
+          measureCount: 4
+        })
+      });
 
-      // Navigate to drum machine with room ID in URL
-      navigate(`/DrumMachine/${roomState.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to create beat');
+      }
+
+      const data = await response.json();
+      console.log("Created new beat:", data);
+
+      // Navigate to beat's persistent room_id
+      // DrumMachineApp will auto-join the beat session
+      // Response format: { message: "...", beat: { roomId: "...", ... } }
+      const beat = data.beat;
+      const roomId = beat.roomId || beat.room_id;
+      if (!roomId) {
+        throw new Error('Beat created but missing room_id');
+      }
+      navigate(`/DrumMachine/${roomId}`);
     } catch (error) {
-      console.error("Failed to create room:", error);
+      console.error("Failed to create beat:", error);
     }
   };
 
@@ -147,8 +168,9 @@ function Beats() {
     handleLogout();
   };
 
-  const handleJoinRoom = async () => {
-    if (!isConnected || !joinRoomId.trim()) {
+  const handleJoinBeat = async () => {
+    // PHASE 2: Navigate to beat ID, auto-join will happen in DrumMachineApp
+    if (!joinRoomId.trim()) {
       return;
     }
 
@@ -156,16 +178,14 @@ function Beats() {
     setIsJoiningRoom(true);
 
     try {
-      // Try to join the room - this will fail if room doesn't exist
-      await joinRoom(joinRoomId.trim());
-
-      // Only navigate if join was successful
+      // Simply navigate - DrumMachineApp will handle auto-join
+      // If beat doesn't exist, the beat-not-found modal will show
       navigate(`/DrumMachine/${joinRoomId.trim()}`);
       setShowJoinModal(false);
       setJoinRoomId("");
     } catch (error) {
-      console.error("Failed to join room:", error);
-      setJoinRoomError(error.message || "Room not found. Please check the code and try again.");
+      console.error("Failed to navigate to beat:", error);
+      setJoinRoomError(error.message || "Failed to join beat. Please try again.");
     } finally {
       setIsJoiningRoom(false);
     }
@@ -209,20 +229,14 @@ function Beats() {
     }
   };
 
-  const handleJoinRecentRoom = async (roomId) => {
+  const handleJoinRecentBeat = async (beatId) => {
+    // PHASE 2: Simply navigate to beat, auto-join will happen in DrumMachineApp
     setShowCreateDropdown(false);
 
-    if (!isConnected) {
-      console.error("Not connected to server");
-      return;
-    }
-
     try {
-      await joinRoom(roomId);
-      navigate(`/DrumMachine/${roomId}`);
+      navigate(`/DrumMachine/${beatId}`);
     } catch (error) {
-      console.error("Failed to join recent room:", error);
-      // If room doesn't exist anymore, could show an error or remove from recents
+      console.error("Failed to navigate to beat:", error);
     }
   };
 
@@ -272,7 +286,7 @@ function Beats() {
                 {saveButtonInfo.isUpdate && (
                   <button
                     className="continue-editing-btn"
-                    onClick={() => navigate(roomId ? `/DrumMachine/${roomId}` : "/DrumMachine")}
+                    onClick={() => navigate(beatId ? `/DrumMachine/${beatId}` : "/DrumMachine")}
                   >
                     <Edit size={18} />
                     Continue Editing
@@ -314,7 +328,7 @@ function Beats() {
                             <button
                               key={room.roomId}
                               className="create-dropdown-item recent-room-item"
-                              onClick={() => handleJoinRecentRoom(room.roomId)}
+                              onClick={() => handleJoinRecentBeat(room.roomId)}
                             >
                               {room.roomId}
                             </button>
@@ -546,7 +560,7 @@ function Beats() {
                   setJoinRoomId(e.target.value.replace(/[^A-Za-z0-9]/g, ""));
                   setJoinRoomError("");
                 }}
-                onKeyDown={(e) => e.key === "Enter" && !isJoiningRoom && handleJoinRoom()}
+                onKeyDown={(e) => e.key === "Enter" && !isJoiningRoom && handleJoinBeat()}
                 maxLength={8}
                 autoFocus
                 disabled={isJoiningRoom}
@@ -569,8 +583,8 @@ function Beats() {
               </button>
               <button
                 className="join-submit-btn"
-                onClick={handleJoinRoom}
-                disabled={!isConnected || !joinRoomId.trim() || isJoiningRoom}
+                onClick={handleJoinBeat}
+                disabled={!joinRoomId.trim() || isJoiningRoom}
               >
                 {isJoiningRoom ? "Joining..." : "Join Room"}
               </button>

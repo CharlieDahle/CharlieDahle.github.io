@@ -81,7 +81,7 @@ function AppRouter() {
           />
 
           <Route
-            path="/DrumMachine/:roomId?"
+            path="/DrumMachine/:beatId?"
             element={
               <AnimatedPage>
                 <DrumMachineApp />

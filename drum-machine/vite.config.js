@@ -8,4 +8,20 @@ export default defineConfig({
   build: {
     outDir: "dist",
   },
+  server: {
+    proxy: {
+      // Proxy API requests to backend server
+      '/api': {
+        target: 'https://api.charliedahle.me',
+        changeOrigin: true,
+        secure: true,
+      },
+      // Proxy WebSocket connections
+      '/socket.io': {
+        target: 'https://api.charliedahle.me',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
+  },
 });

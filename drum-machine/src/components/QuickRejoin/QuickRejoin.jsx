@@ -1,11 +1,13 @@
 // src/components/QuickRejoin/QuickRejoin.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Users, Clock, History } from "lucide-react";
 import { useAppStore } from "../../stores";
 import { getRecentRooms, removeRecentRoom } from "../../utils/recentRooms";
 import "./QuickRejoin.css";
 
-function QuickRejoin({ onJoinRoom }) {
+function QuickRejoin({ onJoinBeat }) { // PHASE 2: renamed from onJoinRoom
+  const navigate = useNavigate();
   const [activeRooms, setActiveRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [joiningRoomId, setJoiningRoomId] = useState(null);
@@ -50,16 +52,17 @@ function QuickRejoin({ onJoinRoom }) {
     loadActiveRooms();
   }, [isConnected, checkRooms]);
 
-  const handleRejoin = async (roomId) => {
-    setJoiningRoomId(roomId);
+  const handleRejoin = async (beatId) => {
+    // PHASE 2: Simply navigate to beat, auto-join will happen in DrumMachineApp
+    setJoiningRoomId(beatId);
     try {
-      await onJoinRoom(roomId);
+      navigate(`/DrumMachine/${beatId}`);
     } catch (err) {
-      console.error("Failed to rejoin room:", err);
-      // Remove from recent rooms if it failed
-      removeRecentRoom(roomId);
-      // Update active rooms list
-      setActiveRooms((prev) => prev.filter((r) => r.roomId !== roomId));
+      console.error("Failed to rejoin beat:", err);
+      // Remove from recent beats if navigation failed
+      removeRecentRoom(beatId);
+      // Update active beats list
+      setActiveRooms((prev) => prev.filter((r) => r.roomId !== beatId));
     } finally {
       setJoiningRoomId(null);
     }
@@ -150,7 +153,7 @@ function QuickRejoin({ onJoinRoom }) {
                   onClick={() => handleRejoin(room.roomId)}
                   disabled={joiningRoomId !== null}
                 >
-                  {joiningRoomId === room.roomId ? "Joining..." : "Rejoin Room"}
+                  {joiningRoomId === room.roomId ? "Joining..." : "Rejoin Beat"}
                 </button>
               </div>
             ))}
