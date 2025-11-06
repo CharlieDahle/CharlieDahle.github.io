@@ -1,0 +1,191 @@
+.websocket-debug {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 500px;
+  max-height: 600px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.websocket-debug-header {
+  background: #007bff;
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.websocket-debug-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.websocket-debug-header button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.websocket-debug-header button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.websocket-debug-state,
+.websocket-debug-actions,
+.websocket-debug-logs {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+
+.websocket-debug-state h4,
+.websocket-debug-actions h4,
+.websocket-debug-logs h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #61afef;
+}
+
+.websocket-debug-state table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.websocket-debug-state table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.websocket-debug-state table td:first-child {
+  font-weight: bold;
+  width: 150px;
+  color: #abb2bf;
+}
+
+.websocket-debug-state table td.success {
+  color: #98c379;
+}
+
+.websocket-debug-state table td.error {
+  color: #e06c75;
+}
+
+.websocket-debug-state table td.warning {
+  color: #e5c07b;
+}
+
+.websocket-debug-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.websocket-debug-actions button {
+  background: #2a2a2a;
+  color: #d4d4d4;
+  border: 1px solid #444;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.2s;
+}
+
+.websocket-debug-actions button:hover {
+  background: #3a3a3a;
+  border-color: #007bff;
+}
+
+.websocket-debug-logs {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-bottom: none;
+}
+
+.log-container {
+  flex: 1;
+  overflow-y: auto;
+  background: #252525;
+  padding: 8px;
+  border-radius: 4px;
+  max-height: 200px;
+}
+
+.log-entry {
+  margin-bottom: 4px;
+  padding: 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.log-time {
+  color: #5c6370;
+  margin-right: 8px;
+}
+
+.log-message {
+  color: #abb2bf;
+}
+
+.log-info {
+  border-left: 3px solid #61afef;
+}
+
+.log-success {
+  border-left: 3px solid #98c379;
+}
+
+.log-success .log-message {
+  color: #98c379;
+}
+
+.log-warning {
+  border-left: 3px solid #e5c07b;
+}
+
+.log-warning .log-message {
+  color: #e5c07b;
+}
+
+.log-error {
+  border-left: 3px solid #e06c75;
+}
+
+.log-error .log-message {
+  color: #e06c75;
+}
+
+/* Scrollbar styling */
+.log-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

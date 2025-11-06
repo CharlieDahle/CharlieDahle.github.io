@@ -28,7 +28,7 @@ const throttle = (func, limit) => {
     } else {
       clearTimeout(lastFunc);
       lastFunc = setTimeout(() => {
-        if ((Date.now() - lastRan) >= limit) {
+        if (Date.now() - lastRan >= limit) {
           func.apply(this, args);
           lastRan = Date.now();
         }
@@ -36,7 +36,6 @@ const throttle = (func, limit) => {
     }
   };
 };
-
 
 export const useAppStore = create((set, get) => ({
   // ============================================================================
@@ -280,7 +279,10 @@ export const useAppStore = create((set, get) => ({
       set((state) => {
         const { loopEnabled, loopStart, currentTick } = state.transport;
         // If loop is enabled and we're not already inside the loop, start at loop start
-        const shouldResetToLoopStart = loopEnabled && (currentTick < loopStart || currentTick >= get().transport.getLoopEnd());
+        const shouldResetToLoopStart =
+          loopEnabled &&
+          (currentTick < loopStart ||
+            currentTick >= get().transport.getLoopEnd());
 
         return {
           transport: {
@@ -384,16 +386,23 @@ export const useAppStore = create((set, get) => ({
     // Loop control actions
     toggleLoop: () => {
       set((state) => ({
-        transport: { ...state.transport, loopEnabled: !state.transport.loopEnabled },
+        transport: {
+          ...state.transport,
+          loopEnabled: !state.transport.loopEnabled,
+        },
       }));
     },
 
     setLoopStart: (tick) => {
       set((state) => {
-        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        const totalTicks =
+          state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
         const loopEnd = state.transport.loopEnd ?? totalTicks;
         // Ensure loopStart is before loopEnd
-        const clampedTick = Math.max(0, Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT));
+        const clampedTick = Math.max(
+          0,
+          Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT)
+        );
         return {
           transport: { ...state.transport, loopStart: clampedTick },
         };
@@ -402,9 +411,13 @@ export const useAppStore = create((set, get) => ({
 
     setLoopEnd: (tick) => {
       set((state) => {
-        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        const totalTicks =
+          state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
         // Ensure loopEnd is after loopStart and within bounds
-        const clampedTick = Math.max(state.transport.loopStart + state.transport.TICKS_PER_BEAT, Math.min(tick, totalTicks));
+        const clampedTick = Math.max(
+          state.transport.loopStart + state.transport.TICKS_PER_BEAT,
+          Math.min(tick, totalTicks)
+        );
         return {
           transport: { ...state.transport, loopEnd: clampedTick },
         };
@@ -797,7 +810,10 @@ export const useAppStore = create((set, get) => ({
     error: null,
     beatId: null, // CHANGED: renamed from roomId (now using beats.room_id UUID)
     isInSession: false, // CHANGED: renamed from isInRoom
+    isSpectator: false, // PHASE 4: Track if user is spectating
     users: [],
+    spectators: [], // PHASE 4: Track spectator socket IDs
+    queueRequests: [], // PHASE 5: Pending edit access requests
     lastRemoteTransportCommand: null,
 
     // Reconnection state
@@ -808,7 +824,8 @@ export const useAppStore = create((set, get) => ({
 
     initializeConnection: () => {
       console.log("Connecting to server...");
-      const newSocket = io("https://api.charliedahle.me");
+      // const newSocket = io("https://api.charliedahle.me"); // Production
+      const newSocket = io("http://localhost:3001"); // Local development
 
       // Connection events
       newSocket.on("connect", () => {
@@ -841,7 +858,9 @@ export const useAppStore = create((set, get) => ({
 
         // If we were reconnecting and still have a beat session, try to rejoin
         if (wasReconnecting && websocket.beatId) {
-          console.log("Attempting to rejoin beat session after reconnection...");
+          console.log(
+            "Attempting to rejoin beat session after reconnection..."
+          );
           get().websocket.attemptRejoinBeat();
         }
       });
@@ -875,16 +894,33 @@ export const useAppStore = create((set, get) => ({
       });
 
       // Room events
-      newSocket.on("user-joined", ({ userId, userCount }) => {
-        console.log("User joined:", userId);
-        debugLog("in", "user-joined", { userId, userCount });
-        set((state) => ({
-          websocket: {
-            ...state.websocket,
-            users: [...new Set([...state.websocket.users, userId])],
-          },
-        }));
-      });
+      newSocket.on(
+        "user-joined",
+        ({ userId, userCount, spectatorCount, isSpectator }) => {
+          console.log(
+            "User joined:",
+            userId,
+            isSpectator ? "(spectator)" : "(editor)"
+          );
+          debugLog("in", "user-joined", {
+            userId,
+            userCount,
+            spectatorCount,
+            isSpectator,
+          });
+          set((state) => ({
+            websocket: {
+              ...state.websocket,
+              users: isSpectator
+                ? state.websocket.users
+                : [...new Set([...state.websocket.users, userId])],
+              spectators: isSpectator
+                ? [...new Set([...state.websocket.spectators, userId])]
+                : state.websocket.spectators,
+            },
+          }));
+        }
+      );
 
       newSocket.on("user-left", ({ userId, userCount }) => {
         console.log("User left:", userId);
@@ -893,6 +929,9 @@ export const useAppStore = create((set, get) => ({
           websocket: {
             ...state.websocket,
             users: state.websocket.users.filter((id) => id !== userId),
+            spectators: state.websocket.spectators.filter(
+              (id) => id !== userId
+            ),
           },
         }));
       });
@@ -913,13 +952,11 @@ export const useAppStore = create((set, get) => ({
         get().effects.syncTrackEffectReset(trackId);
       });
 
-
-      
       // NEW: Complete effect state application
       newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
         console.log("Effect state apply received:", { trackId, effectsState });
         debugLog("in", "effect-state-apply", { trackId, effectsState });
-        
+
         // Sync the entire effect state for this track
         get().effects.syncTrackEffectState(trackId, effectsState);
       });
@@ -1074,6 +1111,111 @@ export const useAppStore = create((set, get) => ({
         get().tracks.syncUpdateTrackVolume(trackId, volume);
       });
 
+      // PHASE 5: Queue events
+      newSocket.on("queue-request-added", (request) => {
+        console.log("Queue request added:", request);
+        debugLog("in", "queue-request-added", request);
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            queueRequests: [...state.websocket.queueRequests, request],
+          },
+        }));
+      });
+
+      newSocket.on("edit-access-granted", ({ beatId, message }) => {
+        console.log("Edit access granted:", message);
+        debugLog("in", "edit-access-granted", { beatId, message });
+
+        // Promote from spectator to editor
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            isSpectator: false,
+          },
+        }));
+
+        // Show success notification
+        get().ui.setError(null);
+        console.log("You now have edit access!");
+      });
+
+      newSocket.on("edit-access-denied", ({ beatId, message }) => {
+        console.log("Edit access denied:", message);
+        debugLog("in", "edit-access-denied", { beatId, message });
+
+        // Show notification
+        get().ui.setError(message || "Your edit request was denied");
+        setTimeout(() => get().ui.clearError(), 5000);
+      });
+
+      newSocket.on("queue-request-removed", ({ requestId }) => {
+        console.log("Queue request removed:", requestId);
+        debugLog("in", "queue-request-removed", { requestId });
+
+        // Remove from queue
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            queueRequests: state.websocket.queueRequests.filter(
+              (req) => req.requestId !== requestId
+            ),
+          },
+        }));
+      });
+
+      newSocket.on("user-role-changed", ({ userId, username, role }) => {
+        console.log("User role changed:", { userId, username, role });
+        debugLog("in", "user-role-changed", { userId, username, role });
+
+        // Move user from spectators to editors or vice versa
+        set((state) => {
+          const newState = { ...state.websocket };
+
+          if (role === "spectator") {
+            // Demoted to spectator
+            newState.users = newState.users.filter((id) => id !== userId);
+            newState.spectators = [...new Set([...newState.spectators, userId])];
+          } else {
+            // Promoted to editor
+            newState.spectators = newState.spectators.filter((id) => id !== userId);
+            newState.users = [...new Set([...newState.users, userId])];
+          }
+
+          return { websocket: newState };
+        });
+      });
+
+      // Handle access revoked (beat became private)
+      newSocket.on("access-revoked", ({ message }) => {
+        console.log("Access revoked:", message);
+        debugLog("in", "access-revoked", { message });
+
+        // Leave the session and disconnect socket
+        const { socket, beatId } = get().websocket;
+        if (socket && beatId) {
+          socket.emit("leave-room", { roomId: beatId });
+        }
+
+        // Clear session state and set error
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            isInSession: false,
+            beatId: null,
+            users: [],
+            spectators: [],
+            error: message || "Access to this beat has been revoked",
+          },
+        }));
+
+        // Navigate back to beats page
+        if (window.location.pathname.includes("/DrumMachine/")) {
+          window.history.pushState({}, '', '/beats');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+      });
+
       set((state) => ({
         websocket: { ...state.websocket, socket: newSocket },
       }));
@@ -1174,7 +1316,9 @@ export const useAppStore = create((set, get) => ({
             debugLog("in", "rejoin-beat-success", response);
 
             // Sync all state from server (server wins)
-            get().websocket.syncFromServer(response.beatData || response.roomState);
+            get().websocket.syncFromServer(
+              response.beatData || response.roomState
+            );
 
             // Show syncing state for 5 seconds, then connected
             setTimeout(() => {
@@ -1232,7 +1376,8 @@ export const useAppStore = create((set, get) => ({
     // Beats are now created via POST /api/beats which returns a persistent room_id
     // Components should create beats via API, then call joinBeat(room_id)
 
-    joinBeat: (targetBeatId) => {
+    // PHASE 4: Updated to support spectator mode
+    joinBeat: (targetBeatId, asSpectator = false) => {
       const { socket, isConnected } = get().websocket;
       if (!socket || !isConnected || !targetBeatId.trim()) {
         debugLog("out", "join-beat-failed", "Invalid connection or beat ID");
@@ -1240,8 +1385,9 @@ export const useAppStore = create((set, get) => ({
       }
 
       return new Promise((resolve, reject) => {
-        console.log("Joining beat:", targetBeatId);
-        debugLog("out", "join-beat", { beatId: targetBeatId });
+        const mode = asSpectator ? "spectator" : "editor";
+        console.log(`Joining beat as ${mode}:`, targetBeatId);
+        debugLog("out", "join-beat", { beatId: targetBeatId, asSpectator });
 
         const timeout = setTimeout(() => {
           debugLog("out", "join-beat-timeout", "Request timed out");
@@ -1249,27 +1395,40 @@ export const useAppStore = create((set, get) => ({
         }, 10000);
 
         socket.emit(
-          "join-beat",
-          { beatId: targetBeatId.trim() },
+          "join-room", // Note: Using join-room for backward compatibility
+          { roomId: targetBeatId.trim(), asSpectator },
           (response) => {
             clearTimeout(timeout);
 
             if (response && response.success) {
-              console.log("Successfully joined beat session:", targetBeatId);
+              console.log(
+                `Successfully joined beat session as ${mode}:`,
+                targetBeatId
+              );
+              console.log("[joinBeat] Setting beatId to:", targetBeatId.trim());
               debugLog("in", "join-beat-success", response);
 
-              // Save to recent beats
-              addRecentRoom(targetBeatId.trim());
+              // Save to recent beats (only if not spectator)
+              if (!asSpectator) {
+                addRecentRoom(targetBeatId.trim());
+              }
 
               set((state) => ({
                 websocket: {
                   ...state.websocket,
                   beatId: targetBeatId.trim(),
                   isInSession: true,
-                  users: response.roomState?.users || response.beatData?.users || [],
+                  isSpectator: response.isSpectator || asSpectator,
+                  users:
+                    response.roomState?.users || response.beatData?.users || [],
+                  spectators:
+                    response.roomState?.spectators ||
+                    response.beatData?.spectators ||
+                    [],
                   error: null,
                 },
               }));
+              console.log("[joinBeat] beatId after set:", get().websocket.beatId);
               resolve(response.beatData || response.roomState);
             } else {
               const errorMsg = response?.error || "Unknown error";
@@ -1294,17 +1453,54 @@ export const useAppStore = create((set, get) => ({
 
       console.log("Leaving beat session:", beatId);
       debugLog("out", "leave-beat", { beatId });
-      socket.emit("leave-beat", { beatId });
+      socket.emit("leave-room", { roomId: beatId }); // Using leave-room for compatibility
 
       set((state) => ({
         websocket: {
           ...state.websocket,
           isInSession: false,
           beatId: null,
+          isSpectator: false, // PHASE 4: Reset spectator state
           users: [],
+          spectators: [], // PHASE 4: Clear spectators
+          queueRequests: [], // PHASE 5: Clear queue requests
           lastRemoteTransportCommand: null,
         },
       }));
+    },
+
+    // PHASE 5: Request temporary edit access to a beat
+    requestEditAccess: (message = null) => {
+      const { socket, beatId } = get().websocket;
+      if (!socket || !beatId) {
+        console.error("Cannot request edit access: not connected or no beat ID");
+        return;
+      }
+
+      const username = get().auth.user?.username || null;
+
+      console.log("Requesting edit access for beat:", beatId);
+      debugLog("out", "request-edit-access", { beatId, username, message });
+
+      socket.emit("request-edit-access", { beatId, username, message });
+    },
+
+    // PHASE 5: Respond to a queue request (approve or deny)
+    respondToQueueRequest: (requestId, approve, role = 'temporary') => {
+      const { socket } = get().websocket;
+      if (!socket) {
+        console.error("Cannot respond to queue request: not connected");
+        return;
+      }
+
+      console.log(
+        `${approve ? "Approving" : "Denying"} queue request:`,
+        requestId,
+        approve ? `with role: ${role}` : ""
+      );
+      debugLog("out", "respond-to-queue-request", { requestId, approve, role });
+
+      socket.emit("respond-to-queue-request", { requestId, approve, role });
     },
 
     // Check if rooms still exist on server (for quick rejoin feature)
@@ -1338,14 +1534,20 @@ export const useAppStore = create((set, get) => ({
 
     // Safe send methods - only send if connected
     sendPatternChange: (change) => {
-      const { socket, connectionState, beatId } = get().websocket;
+      const { socket, connectionState, beatId, isConnected } = get().websocket;
+      console.log("[sendPatternChange] State check:", {
+        hasSocket: !!socket,
+        connectionState,
+        isConnected,
+        beatId,
+      });
       if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "pattern-change-failed", "Not connected");
         console.log("Skipping pattern change - not connected");
         return;
       }
 
-      const payload = { beatId, change };
+      const payload = { roomId: beatId, change }; // FIXED: Use roomId for server compatibility
       console.log("Sending pattern change:", change);
       debugLog("out", "pattern-change", payload);
       socket.emit("pattern-change", payload);
@@ -1360,7 +1562,7 @@ export const useAppStore = create((set, get) => ({
       }
 
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
-      const payload = { beatId, bpm: clampedBpm };
+      const payload = { roomId: beatId, bpm: clampedBpm }; // FIXED: Use roomId
       console.log("Sending BPM change:", clampedBpm);
       debugLog("out", "set-bpm", payload);
       socket.emit("set-bpm", payload);
@@ -1374,7 +1576,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, measureCount };
+      const payload = { roomId: beatId, measureCount }; // FIXED: Use roomId
       console.log("Sending measure count change:", measureCount);
       debugLog("out", "set-measure-count", payload);
       socket.emit("set-measure-count", payload);
@@ -1388,7 +1590,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, command };
+      const payload = { roomId: beatId, command }; // FIXED: Use roomId
       console.log("Sending transport command:", command);
       debugLog("out", "transport-command", payload);
       socket.emit("transport-command", payload);
@@ -1402,7 +1604,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackData };
+      const payload = { roomId: beatId, trackData }; // FIXED: Use roomId
       console.log("Sending add track:", trackData);
       debugLog("out", "add-track", payload);
       socket.emit("add-track", payload);
@@ -1416,7 +1618,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId };
+      const payload = { roomId: beatId, trackId }; // FIXED: Use roomId
       console.log("Sending remove track:", trackId);
       debugLog("out", "remove-track", payload);
       socket.emit("remove-track", payload);
@@ -1430,7 +1632,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId, soundFile };
+      const payload = { roomId: beatId, trackId, soundFile }; // FIXED: Use roomId
       console.log("Sending track sound update:", trackId, soundFile);
       debugLog("out", "update-track-sound", payload);
       socket.emit("update-track-sound", payload);
@@ -1444,7 +1646,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId, volume };
+      const payload = { roomId: beatId, trackId, volume }; // FIXED: Use roomId
       console.log("Sending track volume update:", trackId, volume);
       debugLog("out", "update-track-volume", payload);
       socket.emit("update-track-volume", payload);
@@ -1458,12 +1660,11 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId, enabledEffects };
+      const payload = { roomId: beatId, trackId, enabledEffects }; // FIXED: Use roomId
       console.log("Sending effect chain update:", { trackId, enabledEffects });
       debugLog("out", "effect-chain-update", payload);
       socket.emit("effect-chain-update", payload);
     },
-
 
     sendEffectReset: (trackId) => {
       const { socket, connectionState, beatId } = get().websocket;
@@ -1473,12 +1674,11 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId };
+      const payload = { roomId: beatId, trackId }; // FIXED: Use roomId
       console.log("Sending effect reset:", trackId);
       debugLog("out", "effect-reset", payload);
       socket.emit("effect-reset", payload);
     },
-
 
     // NEW: Send complete effect state (for apply button)
     sendEffectStateApply: (trackId, effectsState) => {
@@ -1489,7 +1689,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { beatId, trackId, effectsState };
+      const payload = { roomId: beatId, trackId, effectsState }; // FIXED: Use roomId
       console.log("Sending effect state apply:", payload);
       debugLog("out", "effect-state-apply", payload);
       socket.emit("effect-state-apply", payload);
@@ -1578,7 +1778,8 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          "https://api.charliedahle.me/api/auth/register",
+          // "https://api.charliedahle.me/api/auth/register", // Production
+          "/api/auth/register", // Local development - uses Vite proxy
           {
             method: "POST",
             headers: {
@@ -1630,7 +1831,8 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          "https://api.charliedahle.me/api/auth/login",
+          // "https://api.charliedahle.me/api/auth/login", // Production
+          "/api/auth/login", // Local development - uses Vite proxy
           {
             method: "POST",
             headers: {
@@ -1717,25 +1919,31 @@ export const useAppStore = create((set, get) => ({
 
         // Warn if state is getting large (> 500KB)
         if (sizeInKB > 500) {
-          console.warn(`⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`);
+          console.warn(
+            `⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`
+          );
         }
 
-        localStorage.setItem('drum_machine_pending_state', stateString);
+        localStorage.setItem("drum_machine_pending_state", stateString);
         console.log(`💾 Saved drum machine state before login (${sizeInKB}KB)`);
       } catch (error) {
         // Handle QuotaExceededError
-        if (error.name === 'QuotaExceededError') {
-          console.error('❌ localStorage quota exceeded! Cannot save state.');
-          alert('Unable to save your beat - storage is full. Please clear browser data or simplify your beat.');
+        if (error.name === "QuotaExceededError") {
+          console.error("❌ localStorage quota exceeded! Cannot save state.");
+          alert(
+            "Unable to save your beat - storage is full. Please clear browser data or simplify your beat."
+          );
         } else {
-          console.error('Failed to save drum machine state:', error);
+          console.error("Failed to save drum machine state:", error);
         }
       }
     },
 
     // Restore drum machine state after login
     restoreStateAfterLogin: () => {
-      const savedStateString = localStorage.getItem('drum_machine_pending_state');
+      const savedStateString = localStorage.getItem(
+        "drum_machine_pending_state"
+      );
 
       if (!savedStateString) {
         return null;
@@ -1746,15 +1954,16 @@ export const useAppStore = create((set, get) => ({
 
         // Check if state is expired (older than 1 hour)
         const ONE_HOUR = 60 * 60 * 1000;
-        const isExpired = savedState.timestamp && (Date.now() - savedState.timestamp > ONE_HOUR);
+        const isExpired =
+          savedState.timestamp && Date.now() - savedState.timestamp > ONE_HOUR;
 
         if (isExpired) {
-          console.log('⏰ Saved state expired (>1 hour old), discarding');
-          localStorage.removeItem('drum_machine_pending_state');
+          console.log("⏰ Saved state expired (>1 hour old), discarding");
+          localStorage.removeItem("drum_machine_pending_state");
           return null;
         }
 
-        console.log('🔄 Restoring drum machine state after login:', savedState);
+        console.log("🔄 Restoring drum machine state after login:", savedState);
 
         // Restore the state
         const state = get();
@@ -1779,12 +1988,12 @@ export const useAppStore = create((set, get) => ({
         }
 
         // Clear the saved state
-        localStorage.removeItem('drum_machine_pending_state');
+        localStorage.removeItem("drum_machine_pending_state");
 
         return savedState;
       } catch (error) {
-        console.error('Failed to restore drum machine state:', error);
-        localStorage.removeItem('drum_machine_pending_state');
+        console.error("Failed to restore drum machine state:", error);
+        localStorage.removeItem("drum_machine_pending_state");
         return null;
       }
     },
@@ -1792,13 +2001,13 @@ export const useAppStore = create((set, get) => ({
     // Helper to clear all app-related localStorage
     clearAllLocalStorage: () => {
       const keysToRemove = [
-        'drum_machine_token',
-        'drum_machine_user',
-        'drum_machine_pending_state',
+        "drum_machine_token",
+        "drum_machine_user",
+        "drum_machine_pending_state",
       ];
 
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log('🗑️ Cleared all drum machine localStorage');
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      console.log("🗑️ Cleared all drum machine localStorage");
     },
 
     // Helper to check localStorage usage
@@ -1806,14 +2015,18 @@ export const useAppStore = create((set, get) => ({
       const stats = {};
       let totalSize = 0;
 
-      ['drum_machine_token', 'drum_machine_user', 'drum_machine_pending_state'].forEach(key => {
+      [
+        "drum_machine_token",
+        "drum_machine_user",
+        "drum_machine_pending_state",
+      ].forEach((key) => {
         const item = localStorage.getItem(key);
         if (item) {
           const sizeInKB = (new Blob([item]).size / 1024).toFixed(2);
           stats[key] = `${sizeInKB}KB`;
           totalSize += parseFloat(sizeInKB);
         } else {
-          stats[key] = 'not set';
+          stats[key] = "not set";
         }
       });
 
@@ -1868,9 +2081,11 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const headers = get().auth.getAuthHeaders();
-        const response = await fetch("https://api.charliedahle.me/api/beats", {
-          headers,
-        });
+        const response = await fetch(
+          // "https://api.charliedahle.me/api/beats", // Production
+          "/api/beats", // Local development - uses Vite proxy
+          { headers }
+        );
 
         const data = await response.json();
 
@@ -1989,7 +2204,8 @@ export const useAppStore = create((set, get) => ({
         const headers = get().auth.getAuthHeaders();
         console.log("💾 Request headers:", headers);
 
-        const url = "https://api.charliedahle.me/api/beats";
+        // const url = "https://api.charliedahle.me/api/beats"; // Production
+        const url = "/api/beats"; // Local development - uses Vite proxy
         console.log("💾 Making POST request to:", url);
 
         const response = await fetch(url, {
@@ -2124,7 +2340,8 @@ export const useAppStore = create((set, get) => ({
         );
 
         // Check if tracks have been modified from defaults
-        const hasCustomTracks = tracks.list.length > 4 ||
+        const hasCustomTracks =
+          tracks.list.length > 4 ||
           tracks.list.some((track) => {
             // Check if track has non-default properties
             return track.volume !== undefined && track.volume !== 1.0;
@@ -2148,7 +2365,8 @@ export const useAppStore = create((set, get) => ({
       try {
         const headers = get().auth.getAuthHeaders();
         const response = await fetch(
-          `https://api.charliedahle.me/api/beats/${beatId}`,
+          // `https://api.charliedahle.me/api/beats/${beatId}`, // Production
+          `/api/beats/${beatId}`, // Local development - uses Vite proxy
           {
             headers,
           }
@@ -2200,7 +2418,10 @@ export const useAppStore = create((set, get) => ({
           Object.keys(data.effectsState).forEach((trackId) => {
             effects.syncTrackEffectState(trackId, data.effectsState[trackId]);
           });
-          console.log("Effects state applied to store:", Object.keys(data.effectsState));
+          console.log(
+            "Effects state applied to store:",
+            Object.keys(data.effectsState)
+          );
         }
 
         // Track this as the currently loaded beat with NO unsaved changes
@@ -2273,8 +2494,10 @@ export const useAppStore = create((set, get) => ({
 
         // Decide endpoint and method based on whether we're updating
         const url = isUpdate
-          ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}`
-          : "https://api.charliedahle.me/api/beats";
+          // ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}` // Production
+          ? `/api/beats/${currentlyLoadedBeat.id}` // Local development - uses Vite proxy
+          // : "https://api.charliedahle.me/api/beats"; // Production
+          : "/api/beats"; // Local development - uses Vite proxy
 
         const method = isUpdate ? "PUT" : "POST";
 
@@ -2376,7 +2599,7 @@ export const useAppStore = create((set, get) => ({
     enabledEffects: {}, // { trackId: { effectType: boolean } }
     // Local pending changes before apply (NEW)
     pendingChanges: {}, // { trackId: { effectType: { param: value } } }
-    
+
     // Effect presets organized by drum type
     presets: {
       kick: {
@@ -2385,18 +2608,28 @@ export const useAppStore = create((set, get) => ({
           description: "Punchy and controlled",
           effects: {
             eq: { high: -3, mid: 2, low: 4 },
-            compressor: { threshold: -20, ratio: 6, attack: 0.001, release: 0.05 },
-            filter: { frequency: 15000, Q: 1 }
-          }
+            compressor: {
+              threshold: -20,
+              ratio: 6,
+              attack: 0.001,
+              release: 0.05,
+            },
+            filter: { frequency: 15000, Q: 1 },
+          },
         },
         punchy: {
           name: "Punchy",
           description: "Heavy and impactful",
           effects: {
             eq: { high: 0, mid: 4, low: 6 },
-            compressor: { threshold: -18, ratio: 8, attack: 0.005, release: 0.08 },
-            distortion: { amount: 0.1, oversample: "2x" }
-          }
+            compressor: {
+              threshold: -18,
+              ratio: 8,
+              attack: 0.005,
+              release: 0.08,
+            },
+            distortion: { amount: 0.1, oversample: "2x" },
+          },
         },
         vintage: {
           name: "Vintage",
@@ -2405,18 +2638,23 @@ export const useAppStore = create((set, get) => ({
             eq: { high: -4, mid: 1, low: 3 },
             filter: { frequency: 8000, Q: 0.7 },
             distortion: { amount: 0.15, oversample: "2x" },
-            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 }
-          }
+            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 },
+          },
         },
         sub: {
           name: "808",
           description: "Deep sub-bass",
           effects: {
             eq: { high: -6, mid: -2, low: 8 },
-            compressor: { threshold: -16, ratio: 4, attack: 0.01, release: 0.15 },
-            chorus: { rate: 1, depth: 0.2, wet: 0.3 }
-          }
-        }
+            compressor: {
+              threshold: -16,
+              ratio: 4,
+              attack: 0.01,
+              release: 0.15,
+            },
+            chorus: { rate: 1, depth: 0.2, wet: 0.3 },
+          },
+        },
       },
       snare: {
         crispy: {
@@ -2424,38 +2662,58 @@ export const useAppStore = create((set, get) => ({
           description: "Bright and cutting",
           effects: {
             eq: { high: 6, mid: 2, low: -2 },
-            compressor: { threshold: -22, ratio: 5, attack: 0.002, release: 0.06 },
-            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 }
-          }
+            compressor: {
+              threshold: -22,
+              ratio: 5,
+              attack: 0.002,
+              release: 0.06,
+            },
+            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 },
+          },
         },
         fat: {
           name: "Fat",
           description: "Full and powerful",
           effects: {
             eq: { high: 1, mid: 4, low: 1 },
-            compressor: { threshold: -18, ratio: 6, attack: 0.005, release: 0.1 },
-            distortion: { amount: 0.08, oversample: "2x" }
-          }
+            compressor: {
+              threshold: -18,
+              ratio: 6,
+              attack: 0.005,
+              release: 0.1,
+            },
+            distortion: { amount: 0.08, oversample: "2x" },
+          },
         },
         gated: {
           name: "Gated",
           description: "Tight and controlled",
           effects: {
-            compressor: { threshold: -16, ratio: 10, attack: 0.001, release: 0.03 },
+            compressor: {
+              threshold: -16,
+              ratio: 10,
+              attack: 0.001,
+              release: 0.03,
+            },
             filter: { frequency: 200, Q: 1.2 },
-            eq: { high: 2, mid: 0, low: -4 }
-          }
+            eq: { high: 2, mid: 0, low: -4 },
+          },
         },
         vintage: {
           name: "Vintage",
           description: "Classic analog warmth",
           effects: {
             eq: { high: -2, mid: -1, low: 0 },
-            compressor: { threshold: -20, ratio: 4, attack: 0.01, release: 0.1 },
+            compressor: {
+              threshold: -20,
+              ratio: 4,
+              attack: 0.01,
+              release: 0.1,
+            },
             distortion: { amount: 0.12, oversample: "2x" },
-            filter: { frequency: 12000, Q: 0.8 }
-          }
-        }
+            filter: { frequency: 12000, Q: 0.8 },
+          },
+        },
       },
       hihat: {
         bright: {
@@ -2463,9 +2721,14 @@ export const useAppStore = create((set, get) => ({
           description: "Sparkly and present",
           effects: {
             eq: { high: 4, mid: 1, low: -3 },
-            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
-            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
-          }
+            compressor: {
+              threshold: -25,
+              ratio: 3,
+              attack: 0.001,
+              release: 0.04,
+            },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 },
+          },
         },
         sizzle: {
           name: "Sizzle",
@@ -2473,17 +2736,22 @@ export const useAppStore = create((set, get) => ({
           effects: {
             eq: { high: 8, mid: 3, low: -4 },
             distortion: { amount: 0.06, oversample: "4x" },
-            filter: { frequency: 18000, Q: 1.5 }
-          }
+            filter: { frequency: 18000, Q: 1.5 },
+          },
         },
         tight: {
           name: "Tight",
           description: "Controlled and precise",
           effects: {
-            compressor: { threshold: -20, ratio: 8, attack: 0.001, release: 0.02 },
+            compressor: {
+              threshold: -20,
+              ratio: 8,
+              attack: 0.001,
+              release: 0.02,
+            },
             filter: { frequency: 400, Q: 1.0 },
-            eq: { high: 0, mid: -2, low: -6 }
-          }
+            eq: { high: 0, mid: -2, low: -6 },
+          },
         },
         spacey: {
           name: "Spacey",
@@ -2491,9 +2759,9 @@ export const useAppStore = create((set, get) => ({
           effects: {
             chorus: { rate: 3, depth: 0.4, wet: 0.4 },
             reverb: { roomSize: 0.6, decay: 1.2, wet: 0.3 },
-            eq: { high: 2, mid: 0, low: -2 }
-          }
-        }
+            eq: { high: 2, mid: 0, low: -2 },
+          },
+        },
       },
       openhat: {
         bright: {
@@ -2501,9 +2769,14 @@ export const useAppStore = create((set, get) => ({
           description: "Sparkly and present",
           effects: {
             eq: { high: 4, mid: 1, low: -3 },
-            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
-            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
-          }
+            compressor: {
+              threshold: -25,
+              ratio: 3,
+              attack: 0.001,
+              release: 0.04,
+            },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 },
+          },
         },
         sizzle: {
           name: "Sizzle",
@@ -2511,8 +2784,8 @@ export const useAppStore = create((set, get) => ({
           effects: {
             eq: { high: 8, mid: 3, low: -4 },
             distortion: { amount: 0.06, oversample: "4x" },
-            filter: { frequency: 18000, Q: 1.5 }
-          }
+            filter: { frequency: 18000, Q: 1.5 },
+          },
         },
         washy: {
           name: "Washy",
@@ -2520,8 +2793,8 @@ export const useAppStore = create((set, get) => ({
           effects: {
             reverb: { roomSize: 0.7, decay: 2.5, wet: 0.4 },
             chorus: { rate: 1.5, depth: 0.3, wet: 0.25 },
-            eq: { high: 1, mid: -1, low: -4 }
-          }
+            eq: { high: 1, mid: -1, low: -4 },
+          },
         },
         vintage: {
           name: "Vintage",
@@ -2530,10 +2803,10 @@ export const useAppStore = create((set, get) => ({
             eq: { high: -1, mid: 1, low: -2 },
             filter: { frequency: 14000, Q: 0.9 },
             distortion: { amount: 0.05, oversample: "2x" },
-            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 }
-          }
-        }
-      }
+            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 },
+          },
+        },
+      },
     },
 
     // Default effect settings
@@ -2680,7 +2953,6 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
-
     },
 
     // Enable an effect with specific settings
@@ -2804,11 +3076,11 @@ export const useAppStore = create((set, get) => ({
         const newTrackEffects = { ...state.effects.trackEffects };
         const newEnabledEffects = { ...state.effects.enabledEffects };
         const newPendingChanges = { ...state.effects.pendingChanges };
-        
+
         delete newTrackEffects[trackId];
         delete newEnabledEffects[trackId];
         delete newPendingChanges[trackId];
-        
+
         return {
           effects: {
             ...state.effects,
@@ -2873,14 +3145,20 @@ export const useAppStore = create((set, get) => ({
     applyEffectChanges: (trackId) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId];
-      
-      if (!trackPendingChanges || Object.keys(trackPendingChanges).length === 0) {
+
+      if (
+        !trackPendingChanges ||
+        Object.keys(trackPendingChanges).length === 0
+      ) {
         console.log(`No pending changes to apply for track ${trackId}`);
         return;
       }
-      
-      console.log(`Applying effect changes for track ${trackId}:`, trackPendingChanges);
-      
+
+      console.log(
+        `Applying effect changes for track ${trackId}:`,
+        trackPendingChanges
+      );
+
       // Clear pending changes since we're applying them
       set((state) => ({
         effects: {
@@ -2891,7 +3169,7 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
-      
+
       // Send the complete effect state to other clients (using new apply method)
       const completeEffectsState = get().effects.getTrackEffects(trackId);
       get().websocket.sendEffectStateApply(trackId, completeEffectsState);
@@ -2901,50 +3179,52 @@ export const useAppStore = create((set, get) => ({
         get().beats.markAsModified();
       }
 
-      console.log(`✅ Applied and broadcast effect changes for track ${trackId}`);
+      console.log(
+        `✅ Applied and broadcast effect changes for track ${trackId}`
+      );
     },
-    
+
     // NEW: Reset a single effect to default values
     resetEffect: (trackId, effectType) => {
       console.log(`Resetting ${effectType} effect for track ${trackId}`);
-      
+
       get().effects.disableEffect(trackId, effectType);
     },
-    
+
     // NEW: Reset all effects for a track
     resetAllEffects: (trackId) => {
       console.log(`Resetting all effects for track ${trackId}`);
-      
+
       get().effects.resetTrackEffects(trackId);
     },
-    
+
     // NEW: Check if there are pending changes for a track
     hasPendingChanges: (trackId) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId];
-      
+
       if (!trackPendingChanges) return false;
-      
+
       // Check if any effect has pending changes
       return Object.keys(trackPendingChanges).some(
-        (effectType) => 
-          trackPendingChanges[effectType] && 
+        (effectType) =>
+          trackPendingChanges[effectType] &&
           Object.keys(trackPendingChanges[effectType]).length > 0
       );
     },
-    
+
     // NEW: Get pending changes for a specific effect
     getPendingChanges: (trackId, effectType = null) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId] || {};
-      
+
       if (effectType) {
         return trackPendingChanges[effectType] || {};
       }
-      
+
       return trackPendingChanges;
     },
-    
+
     // NEW: Clear pending changes without applying
     clearPendingChanges: (trackId, effectType = null) => {
       if (effectType) {
@@ -2974,23 +3254,26 @@ export const useAppStore = create((set, get) => ({
         }));
       }
     },
-    
+
     // NEW: Sync complete effect state from remote (for apply button)
     syncTrackEffectState: (trackId, effectsState) => {
-      console.log(`Syncing complete effect state for ${trackId}:`, effectsState);
-      
+      console.log(
+        `Syncing complete effect state for ${trackId}:`,
+        effectsState
+      );
+
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
-      
+
       // Update enabled effects tracking
       const newEnabledEffects = {};
       Object.keys(effectsState).forEach((effectType) => {
         newEnabledEffects[effectType] = get().effects.isEffectEnabled(
-          effectType, 
+          effectType,
           effectsState[effectType]
         );
       });
-      
+
       set((state) => ({
         effects: {
           ...state.effects,
@@ -3012,13 +3295,13 @@ export const useAppStore = create((set, get) => ({
     },
 
     // PRESET METHODS
-    
+
     // Get available presets for a track type (kick, snare, hihat, openhat)
     getPresetsForTrackType: (trackType) => {
       const presets = get().effects.presets[trackType] || {};
       return Object.entries(presets).map(([key, preset]) => ({
         id: key,
-        ...preset
+        ...preset,
       }));
     },
 
@@ -3026,27 +3309,32 @@ export const useAppStore = create((set, get) => ({
     applyPreset: (trackId, trackType, presetId) => {
       const presets = get().effects.presets[trackType];
       if (!presets || !presets[presetId]) {
-        console.warn(`Preset ${presetId} not found for track type ${trackType}`);
+        console.warn(
+          `Preset ${presetId} not found for track type ${trackType}`
+        );
         return;
       }
 
       const preset = presets[presetId];
-      console.log(`Applying preset "${preset.name}" to track ${trackId}:`, preset.effects);
+      console.log(
+        `Applying preset "${preset.name}" to track ${trackId}:`,
+        preset.effects
+      );
 
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
 
       // Get current effects state
       const currentEffects = get().effects.getTrackEffects(trackId);
-      
+
       // Merge preset effects with current effects (preset wins for specified parameters)
       const newEffects = { ...currentEffects };
-      
+
       Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
         if (newEffects[effectType]) {
           newEffects[effectType] = {
             ...newEffects[effectType],
-            ...effectParams
+            ...effectParams,
           };
         }
       });
@@ -3069,38 +3357,50 @@ export const useAppStore = create((set, get) => ({
 
       // Send the complete effect state to other clients
       get().websocket.sendEffectStateApply(trackId, newEffects);
-      
+
       console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
     },
 
     // Get sound category from sound file path
     getSoundCategoryFromPath: (soundFile) => {
       if (!soundFile) return null;
-      
+
       // Extract category from file path (e.g., "kicks/kick01.wav" -> "kicks")
-      const pathParts = soundFile.split('/');
+      const pathParts = soundFile.split("/");
       return pathParts.length > 1 ? pathParts[0] : null;
     },
 
     // Get display-friendly category name for UI
     getCategoryDisplayName: (trackId) => {
       const track = get().tracks.getTrackById(trackId);
-      if (!track || !track.soundFile) return 'Track';
-      
-      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
-      
+      if (!track || !track.soundFile) return "Track";
+
+      const soundCategory = get().effects.getSoundCategoryFromPath(
+        track.soundFile
+      );
+
       // Map categories to display names
       switch (soundCategory) {
-        case 'kicks': return 'Kick';
-        case 'snares': return 'Snare';
-        case 'hihats': return 'Hi-Hat';
-        case 'openhats': return 'Open Hat';
-        case 'cymbals': return 'Cymbal';
-        case '808s': return '808';
-        case 'claps': return 'Clap';
-        case 'percs': return 'Percussion';
-        case 'vox': return 'Vocal';
-        default: return 'Track';
+        case "kicks":
+          return "Kick";
+        case "snares":
+          return "Snare";
+        case "hihats":
+          return "Hi-Hat";
+        case "openhats":
+          return "Open Hat";
+        case "cymbals":
+          return "Cymbal";
+        case "808s":
+          return "808";
+        case "claps":
+          return "Clap";
+        case "percs":
+          return "Percussion";
+        case "vox":
+          return "Vocal";
+        default:
+          return "Track";
       }
     },
 
@@ -3108,24 +3408,31 @@ export const useAppStore = create((set, get) => ({
     getTrackTypeFromId: (trackId) => {
       const track = get().tracks.getTrackById(trackId);
       if (!track || !track.soundFile) return null;
-      
-      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
-      
+
+      const soundCategory = get().effects.getSoundCategoryFromPath(
+        track.soundFile
+      );
+
       // Map sound categories to preset categories
       switch (soundCategory) {
-        case 'kicks': return 'kick';
-        case 'snares': return 'snare';
-        case 'hihats': return 'hihat';
-        case 'openhats':
-        case 'cymbals': return 'openhat';
-        default: return null; // No presets for this category
+        case "kicks":
+          return "kick";
+        case "snares":
+          return "snare";
+        case "hihats":
+          return "hihat";
+        case "openhats":
+        case "cymbals":
+          return "openhat";
+        default:
+          return null; // No presets for this category
       }
     },
 
     // Get track number (1-based) from track ID
     getTrackNumber: (trackId) => {
       const tracks = get().tracks.list;
-      const trackIndex = tracks.findIndex(track => track.id === trackId);
+      const trackIndex = tracks.findIndex((track) => track.id === trackId);
       return trackIndex + 1; // Convert to 1-based numbering
     },
 
@@ -3134,33 +3441,35 @@ export const useAppStore = create((set, get) => ({
       const trackType = get().effects.getTrackTypeFromId(trackId);
       const currentEffects = get().effects.getTrackEffects(trackId);
       const presets = get().effects.presets[trackType] || {};
-      
+
       // Check each preset to see if it matches current settings
       for (const [presetId, preset] of Object.entries(presets)) {
         let isMatch = true;
-        
+
         // Check if all preset parameters match current effects
-        for (const [effectType, effectParams] of Object.entries(preset.effects)) {
+        for (const [effectType, effectParams] of Object.entries(
+          preset.effects
+        )) {
           if (!currentEffects[effectType]) {
             isMatch = false;
             break;
           }
-          
+
           for (const [param, value] of Object.entries(effectParams)) {
             if (Math.abs(currentEffects[effectType][param] - value) > 0.01) {
               isMatch = false;
               break;
             }
           }
-          
+
           if (!isMatch) break;
         }
-        
+
         if (isMatch) {
           return { id: presetId, ...preset };
         }
       }
-      
+
       return null; // No matching preset
     },
   },

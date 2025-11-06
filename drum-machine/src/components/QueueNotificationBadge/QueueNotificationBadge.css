@@ -1,0 +1,71 @@
+.queue-notification-badge {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: #4a90e2;
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+  transition: all 0.2s ease;
+  z-index: 999;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.queue-notification-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.5);
+  animation: none;
+}
+
+.queue-notification-badge:active {
+  transform: scale(1.05);
+}
+
+.queue-badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid white;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.6);
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .queue-notification-badge {
+    width: 48px;
+    height: 48px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .queue-badge-count {
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+}

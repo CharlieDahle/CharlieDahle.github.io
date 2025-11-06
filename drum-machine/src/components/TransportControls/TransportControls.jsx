@@ -3,7 +3,7 @@ import { Repeat2 } from "lucide-react";
 import { useAppStore } from "../../stores/useAppStore";
 import "./TransportControls.css";
 
-function TransportControls() {
+function TransportControls({ isSpectator = false }) {
   // Get transport state and actions
   const isPlaying = useAppStore((state) => state.transport.isPlaying);
   const bpm = useAppStore((state) => state.transport.bpm);
@@ -25,26 +25,32 @@ function TransportControls() {
   const setSnapToGrid = useAppStore((state) => state.ui.setSnapToGrid);
 
   const handlePlay = () => {
+    if (isSpectator) return;
     play(); // This now handles both local state and WebSocket automatically
   };
 
   const handlePause = () => {
+    if (isSpectator) return;
     pause(); // This now handles both local state and WebSocket automatically
   };
 
   const handleStop = () => {
+    if (isSpectator) return;
     stop(); // This now handles both local state and WebSocket automatically
   };
 
   const handleBpmChange = (newBpm) => {
+    if (isSpectator) return;
     setBpm(newBpm); // This now handles both local state and WebSocket automatically
   };
 
   const handleAddMeasure = () => {
+    if (isSpectator) return;
     addMeasure(); // This now handles both local state and WebSocket automatically
   };
 
   const handleRemoveMeasure = () => {
+    if (isSpectator) return;
     removeMeasure(); // This now handles both local state and WebSocket automatically
   };
 

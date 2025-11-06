@@ -12,13 +12,15 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to backend server
       '/api': {
-        target: 'https://api.charliedahle.me',
+        // target: 'https://api.charliedahle.me', // Production
+        target: 'http://localhost:3001', // Local development
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       // Proxy WebSocket connections
       '/socket.io': {
-        target: 'https://api.charliedahle.me',
+        // target: 'https://api.charliedahle.me', // Production
+        target: 'http://localhost:3001', // Local development
         changeOrigin: true,
         ws: true,
       },

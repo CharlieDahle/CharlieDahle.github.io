@@ -13,6 +13,7 @@ This document outlines the complete technical vision for transforming a real-tim
 ### Architecture Overview
 
 **Frontend:**
+
 - React 19.1.0 + Vite
 - React Router DOM 6.30.0
 - Zustand 5.0.5 (state management)
@@ -21,6 +22,7 @@ This document outlines the complete technical vision for transforming a real-tim
 - Framer Motion 12.12.1 (animations)
 
 **Backend:**
+
 - Node.js + Express.js
 - Socket.io (WebSocket server)
 - PostgreSQL (persistence)
@@ -28,14 +30,16 @@ This document outlines the complete technical vision for transforming a real-tim
 - bcrypt (password hashing)
 
 **Deployment:**
+
 - Frontend: charliedahle.me
 - Backend API: api.charliedahle.me
 
-### Original Paradigm (Pre-Refactor)
+### Current Paradigm
 
-The application originally operated on a **dual-entity model**:
+The application currently operates on a **dual-entity model**:
 
 1. **Rooms (Ephemeral):**
+
    - Temporary collaboration spaces identified by 8-character UUIDs
    - Stored in-memory on server (Map structure)
    - Contain real-time state (pattern, tracks, BPM, effects, users)
@@ -50,6 +54,7 @@ The application originally operated on a **dual-entity model**:
    - Can be loaded into rooms, but no link between beat and room after load
 
 **Key Limitations:**
+
 - No beat ownership or permission system
 - No collaborative beat editing (only session collaboration)
 - No connection between rooms and saved beats
@@ -73,6 +78,7 @@ NEW: Beat (document) ↔ Session (collaborative editing instance)
 ### Key Concepts
 
 #### 1. Beat Documents
+
 - Persistent musical compositions stored in PostgreSQL
 - Each beat has a unique, immutable `beatId` (UUID)
 - Beats have owners, collaborators, and visibility settings
@@ -80,6 +86,7 @@ NEW: Beat (document) ↔ Session (collaborative editing instance)
 - URL structure: `charliedahle.me/DrumMachine/{beatId}`
 
 #### 2. Sessions
+
 - Temporary collaborative editing instances tied to specific beats
 - Sessions open when users access a beat
 - Sessions maintain real-time WebSocket connections
@@ -87,16 +94,19 @@ NEW: Beat (document) ↔ Session (collaborative editing instance)
 - Session state auto-saves back to beat document
 
 #### 3. User Roles
+
 - **Owner:** Full permissions (edit, delete, manage collaborators, change visibility)
 - **Collaborator:** Edit permissions (can modify beat, cannot delete or manage settings)
 - **Spectator:** View-only (can see/hear session, cannot interact)
 
 #### 4. User Modes
+
 - **Edit Mode:** Owner/collaborator actively editing beat in session
 - **Listening Mode:** Playing back saved beat locally (no session, static playback)
 - **Spectating Mode:** Watching live session in real-time (read-only, synced playback)
 
 #### 5. Visibility Settings
+
 - **Public:** Anyone can view/spectate, shows in public gallery
 - **Unlisted:** Anyone with link can view/spectate, hidden from gallery
 - **Private:** Only collaborators can access, 404 for others
@@ -109,21 +119,22 @@ NEW: Beat (document) ↔ Session (collaborative editing instance)
 
 #### Access Matrix
 
-| Beat Visibility | User Type | Access Level | Behavior |
-|-----------------|-----------|--------------|----------|
-| **Public** | Owner/Collaborator | Edit | Join session, full editing permissions |
-| **Public** | Non-collaborator (signed in) | Spectator | View in listening mode OR spectate active session |
-| **Public** | Guest (not signed in) | Spectator | View in listening mode OR spectate active session |
-| **Unlisted** | Owner/Collaborator | Edit | Join session, full editing permissions |
-| **Unlisted** | Non-collaborator (signed in) | Spectator | View in listening mode OR spectate active session |
-| **Unlisted** | Guest (not signed in) | Spectator | View in listening mode OR spectate active session |
-| **Private** | Owner/Collaborator | Edit | Join session, full editing permissions |
-| **Private** | Non-collaborator | None | 404 - Beat not found |
-| **Private** | Guest | None | 404 - Beat not found |
+| Beat Visibility | User Type                    | Access Level | Behavior                                          |
+| --------------- | ---------------------------- | ------------ | ------------------------------------------------- |
+| **Public**      | Owner/Collaborator           | Edit         | Join session, full editing permissions            |
+| **Public**      | Non-collaborator (signed in) | Spectator    | View in listening mode OR spectate active session |
+| **Public**      | Guest (not signed in)        | Spectator    | View in listening mode OR spectate active session |
+| **Unlisted**    | Owner/Collaborator           | Edit         | Join session, full editing permissions            |
+| **Unlisted**    | Non-collaborator (signed in) | Spectator    | View in listening mode OR spectate active session |
+| **Unlisted**    | Guest (not signed in)        | Spectator    | View in listening mode OR spectate active session |
+| **Private**     | Owner/Collaborator           | Edit         | Join session, full editing permissions            |
+| **Private**     | Non-collaborator             | None         | 404 - Beat not found                              |
+| **Private**     | Guest                        | None         | 404 - Beat not found                              |
 
 #### Listening Mode vs Spectating Mode
 
 **Listening Mode:**
+
 - Triggered when user visits beat URL and NO active session exists
 - Loads beat data from database
 - User can play beat back locally (not synced with anyone)
@@ -133,6 +144,7 @@ NEW: Beat (document) ↔ Session (collaborative editing instance)
 - Shows "Request to Edit" button (for public/unlisted beats)
 
 **Spectating Mode:**
+
 - Triggered when user visits beat URL and active session exists
 - User joins session as spectator via WebSocket
 - Sees/hears real-time changes as collaborators edit
@@ -149,6 +161,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 #### Queue Workflow
 
 **For Public/Unlisted Beats:**
+
 1. User lands on beat URL (as spectator in listening/spectating mode)
 2. User sees "Request to Edit" button
 3. User clicks → Request sent to all owners/collaborators in session
@@ -159,6 +172,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 8. If user returns later → Must request access again
 
 **For Private Beats:**
+
 1. Non-collaborator visits beat URL
 2. Sees overlay: "This is a private beat. Request access?"
 3. If user requests → Enters queue (cannot see/hear beat until admitted)
@@ -167,6 +181,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 6. If denied → User sees "Access denied" message
 
 #### Queue Properties
+
 - **Expiration:** Requests expire after 10 minutes OR when session ends
 - **Scope:** Queue access is session-only (not permanent collaboration)
 - **Notifications:** Only owners/collaborators see queue (spectators do not)
@@ -175,6 +190,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 #### Queue vs Collaboration
 
 **Queue (Temporary):**
+
 - Granted for single session
 - User becomes spectator when session ends
 - No permanent relationship to beat
@@ -182,6 +198,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 - Used for one-time collaboration or guest participation
 
 **Collaboration (Permanent):**
+
 - Granted via "Share" or "Add Collaborator" feature
 - User has persistent edit access across all future sessions
 - Appears in user's "Shared With Me" beat list
@@ -193,6 +210,7 @@ The admittance queue allows users to request temporary edit access to a beat ses
 Multiple users can be owners of a single beat, with **equal permissions**.
 
 **Owner Permissions:**
+
 - ✅ Edit beat
 - ✅ Save changes (auto-save)
 - ✅ Delete beat
@@ -203,6 +221,7 @@ Multiple users can be owners of a single beat, with **equal permissions**.
 - ✅ Rename beat
 
 **Collaborator Permissions:**
+
 - ✅ Edit beat
 - ✅ Save changes (auto-save)
 - ✅ Approve/deny queue requests
@@ -213,6 +232,7 @@ Multiple users can be owners of a single beat, with **equal permissions**.
 - ❌ Rename beat
 
 **Spectator Permissions:**
+
 - ✅ View/hear session in real-time
 - ✅ Request to edit (join queue)
 - ❌ Edit anything
@@ -221,6 +241,7 @@ Multiple users can be owners of a single beat, with **equal permissions**.
 - ❌ See queue or approve requests
 
 **Business Rules:**
+
 - A beat can have multiple owners (co-ownership)
 - All owners have identical permissions
 - Cannot remove the last owner (would orphan beat)
@@ -234,6 +255,7 @@ Guests (unauthenticated users) can create and edit beats temporarily, but must s
 #### Guest Beat Creation Flow
 
 1. **Guest creates new beat:**
+
    - System generates unique `beatId`
    - Beat created in database with NO entries in `beat_collaborators` (orphan beat)
    - `is_modified = false`
@@ -241,16 +263,19 @@ Guests (unauthenticated users) can create and edit beats temporarily, but must s
    - URL: `/DrumMachine/{beatId}`
 
 2. **Guest makes first edit:**
+
    - `is_modified = true`
    - Tasteful warning banner appears: "Sign in to save your work or it will be lost"
    - Auto-save begins tracking changes (but beat has no owner)
 
 3. **Guest tries to leave page:**
+
    - Browser shows prompt: "Sign in to save your work?"
    - If "Yes": Auth modal appears (sign in or sign up)
    - If "No": User leaves, beat will be deleted on session termination
 
 4. **Guest signs in:**
+
    - User authenticated, receives JWT token
    - User automatically added to `beat_collaborators` as owner
    - Beat now persists permanently
@@ -290,6 +315,7 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 **Trigger:** User navigates to `/DrumMachine/{beatId}` with edit permissions
 
 **Flow:**
+
 1. Check if session already exists for this beatId
    - **Exists:** User joins existing session
    - **Does not exist:** Server creates new session from beat data
@@ -299,6 +325,7 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 5. Auto-save interval starts (every 2 minutes)
 
 **Session State:**
+
 ```javascript
 {
   beatId: 'uuid',
@@ -321,10 +348,12 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 #### Session Termination
 
 **Termination Triggers:**
+
 1. **No users connected** for 2 minutes
 2. **All users inactive** (no edits/playback changes) for 10 minutes
 
 **Termination Flow:**
+
 1. Server detects termination condition
 2. Server broadcasts `session-terminating` event (30 second countdown)
 3. Check if beat has owner:
@@ -336,6 +365,7 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 7. Remove session from `activeSessions` map
 
 **Auto-Save on Termination:**
+
 - Always saves before termination if beat has owner
 - Updates `beats` table with final session state
 - Updates `last_saved_at` and `last_edited_by`
@@ -343,6 +373,7 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 #### Activity Tracking
 
 **Activity Events (reset inactivity timer):**
+
 - Pattern changes (add/remove/move notes)
 - Track changes (add/remove/update)
 - BPM or measure count changes
@@ -351,6 +382,7 @@ Sessions are the ephemeral collaborative editing instances tied to persistent be
 - User joins or leaves
 
 **Non-Activity Events (do not reset timer):**
+
 - Spectators joining/leaving
 - Queue requests
 - Auto-save triggers
@@ -398,6 +430,7 @@ if (session.isModified && session.hasOwner()) {
 #### Client-Side Auto-Save Indicator
 
 **UI Display:**
+
 ```
 "Last saved 2 minutes ago by @username"
 "Saving..." (during save)
@@ -405,6 +438,7 @@ if (session.isModified && session.hasOwner()) {
 ```
 
 **Behavior:**
+
 - Owners/collaborators see save status
 - Spectators do not see save status
 - Auto-save does not interrupt user workflow
@@ -459,6 +493,7 @@ CREATE INDEX idx_beat_collaborators_role ON beat_collaborators(role);
 ```
 
 **Business Rules:**
+
 - A beat MUST have at least one owner (enforced at application level)
 - User cannot be both owner and collaborator on same beat (UNIQUE constraint)
 - Deleting a beat cascades to delete all collaborator relationships
@@ -491,6 +526,7 @@ CREATE INDEX idx_session_queue_expires ON session_queue(expires_at);
 ```
 
 **Cleanup Strategy:**
+
 - Cron job runs every 5 minutes to delete expired requests: `DELETE FROM session_queue WHERE expires_at < NOW()`
 - When session terminates, delete all queue requests for that beat
 - When beat is deleted, cascade deletes all queue requests
@@ -517,16 +553,20 @@ CREATE INDEX idx_users_username ON users(username);
 ### Authentication
 
 #### `POST /api/auth/register`
+
 **Purpose:** Create new user account
 **Auth:** None
 **Body:**
+
 ```json
 {
   "username": "string",
   "password": "string"
 }
 ```
+
 **Response:**
+
 ```json
 {
   "token": "jwt-token",
@@ -535,16 +575,20 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 #### `POST /api/auth/login`
+
 **Purpose:** Authenticate existing user
 **Auth:** None
 **Body:**
+
 ```json
 {
   "username": "string",
   "password": "string"
 }
 ```
+
 **Response:**
+
 ```json
 {
   "token": "jwt-token",
@@ -555,9 +599,11 @@ CREATE INDEX idx_users_username ON users(username);
 ### Beat Management
 
 #### `GET /api/beats/:id/access`
+
 **Purpose:** Check user's access level to a beat
 **Auth:** Optional (JWT if signed in)
 **Response:**
+
 ```json
 {
   "access": "owner" | "collaborator" | "spectator" | "none",
@@ -581,6 +627,7 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Logic:**
+
 ```javascript
 // Determine access level:
 - User is in beat_collaborators with role='owner' → access: 'owner'
@@ -590,9 +637,11 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 #### `GET /api/beats/:id`
+
 **Purpose:** Load complete beat data
 **Auth:** Optional (JWT if signed in)
 **Response:**
+
 ```json
 {
   "id": 123,
@@ -603,7 +652,13 @@ CREATE INDEX idx_users_username ON users(username);
   "measure_count": 4,
   "pattern_data": { "track-1": [{ "tick": 0, "velocity": 3 }] },
   "tracks_config": [
-    { "id": "track-1", "name": "Kick", "color": "#FF0000", "soundFile": "kick.wav", "volume": 0.8 }
+    {
+      "id": "track-1",
+      "name": "Kick",
+      "color": "#FF0000",
+      "soundFile": "kick.wav",
+      "volume": 0.8
+    }
   ],
   "effects_state": {
     "track-1": {
@@ -617,14 +672,17 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Access Control:**
+
 - Private beat + no permission → 404
 - Public/unlisted beat → Return data (guest can view)
 - Owner/collaborator → Return data
 
 #### `POST /api/beats`
+
 **Purpose:** Create new beat
 **Auth:** Optional (JWT if signed in)
 **Body:**
+
 ```json
 {
   "name": "Untitled Beat",
@@ -635,7 +693,9 @@ CREATE INDEX idx_users_username ON users(username);
   "effects_state": {}
 }
 ```
+
 **Response:**
+
 ```json
 {
   "id": 123,
@@ -647,6 +707,7 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Logic:**
+
 ```javascript
 // If user is authenticated:
 - Create beat in beats table
@@ -659,9 +720,11 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 #### `PUT /api/beats/:id`
+
 **Purpose:** Update beat (typically via auto-save)
 **Auth:** Required (JWT)
 **Body:**
+
 ```json
 {
   "name": "Updated Name",
@@ -671,7 +734,9 @@ CREATE INDEX idx_users_username ON users(username);
   "effects_state": {...}
 }
 ```
+
 **Response:**
+
 ```json
 {
   "success": true,
@@ -680,47 +745,58 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Access Control:**
+
 - User must be owner or collaborator
 - Updates `last_edited_by` to current user
 - Sets `is_modified = true`
 - Updates `last_saved_at` timestamp
 
 #### `DELETE /api/beats/:id`
+
 **Purpose:** Delete beat permanently
 **Auth:** Required (JWT)
 **Response:**
+
 ```json
 { "success": true }
 ```
 
 **Access Control:**
+
 - User must have role='owner' in beat_collaborators
 - Cascades to delete collaborators and queue entries
 - If session active, terminates session and disconnects users
 
 #### `PUT /api/beats/:id/visibility`
+
 **Purpose:** Change beat visibility setting
 **Auth:** Required (JWT)
 **Body:**
+
 ```json
 {
   "visibility": "public" | "unlisted" | "private"
 }
 ```
+
 **Response:**
+
 ```json
 { "success": true }
 ```
 
 **Access Control:**
+
 - User must be owner
 
 ### Collaborator Management
 
 #### `GET /api/beats/:id/collaborators`
+
 **Purpose:** Get list of beat collaborators
 **Auth:** Required (JWT)
 **Response:**
+
 ```json
 {
   "collaborators": [
@@ -745,63 +821,79 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Access Control:**
+
 - User must be owner or collaborator
 
 #### `POST /api/beats/:id/collaborators`
+
 **Purpose:** Add collaborator to beat
 **Auth:** Required (JWT)
 **Body:**
+
 ```json
 {
   "userId": 2,
   "role": "owner" | "collaborator"
 }
 ```
+
 **Response:**
+
 ```json
 { "success": true }
 ```
 
 **Access Control:**
+
 - User must be owner
 - Cannot add duplicate collaborator (UNIQUE constraint)
 
 #### `PUT /api/beats/:id/collaborators/:userId`
+
 **Purpose:** Change collaborator role
 **Auth:** Required (JWT)
 **Body:**
+
 ```json
 {
   "role": "owner" | "collaborator"
 }
 ```
+
 **Response:**
+
 ```json
 { "success": true }
 ```
 
 **Access Control:**
+
 - User must be owner
 - Cannot demote last owner (would orphan beat)
 
 #### `DELETE /api/beats/:id/collaborators/:userId`
+
 **Purpose:** Remove collaborator from beat
 **Auth:** Required (JWT)
 **Response:**
+
 ```json
 { "success": true }
 ```
 
 **Access Control:**
+
 - User must be owner
 - Cannot remove last owner (would orphan beat)
 
 ### Beat Discovery
 
 #### `GET /api/beats/my-beats`
+
 **Purpose:** Get beats owned by current user
 **Auth:** Required (JWT)
 **Response:**
+
 ```json
 {
   "beats": [
@@ -819,6 +911,7 @@ CREATE INDEX idx_users_username ON users(username);
 ```
 
 **Query:**
+
 ```sql
 SELECT b.*, COUNT(bc2.id) as collaborator_count
 FROM beats b
@@ -830,9 +923,11 @@ ORDER BY b.last_saved_at DESC;
 ```
 
 #### `GET /api/beats/shared-with-me`
+
 **Purpose:** Get beats where user is collaborator (not owner)
 **Auth:** Required (JWT)
 **Response:**
+
 ```json
 {
   "beats": [
@@ -849,6 +944,7 @@ ORDER BY b.last_saved_at DESC;
 ```
 
 **Query:**
+
 ```sql
 SELECT b.*, bc.added_at, u.id as owner_id, u.username as owner_username
 FROM beats b
@@ -860,14 +956,17 @@ ORDER BY bc.added_at DESC;
 ```
 
 #### `GET /api/beats/public`
+
 **Purpose:** Get all public beats (gallery)
 **Auth:** None
 **Query Params:**
+
 - `limit` (default: 50)
 - `offset` (default: 0)
 - `sort` (default: 'recent', options: 'recent', 'popular')
 
 **Response:**
+
 ```json
 {
   "beats": [
@@ -892,8 +991,10 @@ ORDER BY bc.added_at DESC;
 ### Connection & Authentication
 
 #### Client → Server: `authenticate`
+
 **Purpose:** Authenticate WebSocket connection with JWT
 **Payload:**
+
 ```json
 {
   "token": "jwt-token" | null
@@ -901,8 +1002,10 @@ ORDER BY bc.added_at DESC;
 ```
 
 #### Server → Client: `authenticated`
+
 **Purpose:** Confirm authentication status
 **Payload:**
+
 ```json
 {
   "userId": 1,
@@ -911,6 +1014,7 @@ ORDER BY bc.added_at DESC;
 ```
 
 Or for guests:
+
 ```json
 {
   "userId": null,
@@ -922,8 +1026,10 @@ Or for guests:
 ### Session Management
 
 #### Client → Server: `join-beat`
+
 **Purpose:** Join beat session (as editor or spectator)
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -932,8 +1038,10 @@ Or for guests:
 ```
 
 #### Server → Client: `session-joined`
+
 **Purpose:** Confirm successful session join
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -958,8 +1066,10 @@ Or for guests:
 **Note:** `queueRequests` only included if user is owner/collaborator
 
 #### Server → Client: `session-join-failed`
+
 **Purpose:** Notify failed join attempt
 **Payload:**
+
 ```json
 {
   "reason": "not-found" | "private" | "no-permission",
@@ -968,8 +1078,10 @@ Or for guests:
 ```
 
 #### Client → Server: `leave-beat`
+
 **Purpose:** Leave current session
 **Payload:**
+
 ```json
 {
   "beatId": "uuid"
@@ -977,8 +1089,10 @@ Or for guests:
 ```
 
 #### Server → All in Session: `user-joined-session`
+
 **Purpose:** Notify all users when someone joins
 **Payload:**
+
 ```json
 {
   "userId": 1,
@@ -988,8 +1102,10 @@ Or for guests:
 ```
 
 #### Server → All in Session: `user-left-session`
+
 **Purpose:** Notify all users when someone leaves
 **Payload:**
+
 ```json
 {
   "userId": 1,
@@ -1000,8 +1116,10 @@ Or for guests:
 ### Admittance Queue
 
 #### Client → Server: `request-edit-access`
+
 **Purpose:** Request temporary edit access to session
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -1011,8 +1129,10 @@ Or for guests:
 ```
 
 #### Server → Owners/Collaborators: `queue-request-added`
+
 **Purpose:** Notify owners/collaborators of new queue request
 **Payload:**
+
 ```json
 {
   "requestId": 123,
@@ -1024,8 +1144,10 @@ Or for guests:
 ```
 
 #### Client → Server: `respond-to-queue-request`
+
 **Purpose:** Approve or deny queue request
 **Payload:**
+
 ```json
 {
   "requestId": 123,
@@ -1034,12 +1156,15 @@ Or for guests:
 ```
 
 **Access Control:**
+
 - User must be owner or collaborator
 - Request must be in 'pending' status
 
 #### Server → Requester: `edit-access-granted`
+
 **Purpose:** Notify requester they were approved
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -1048,13 +1173,16 @@ Or for guests:
 ```
 
 **Side Effect:**
+
 - User's role promoted from 'spectator' to temporary editor
 - User receives all subsequent session updates as editor
 - User can now emit pattern/transport changes
 
 #### Server → Requester: `edit-access-denied`
+
 **Purpose:** Notify requester they were denied
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -1063,8 +1191,10 @@ Or for guests:
 ```
 
 #### Server → Requester: `queue-request-expired`
+
 **Purpose:** Notify requester their request expired
 **Payload:**
+
 ```json
 {
   "requestId": 123,
@@ -1077,8 +1207,10 @@ Or for guests:
 ### Pattern & Transport Events (Existing, Unchanged)
 
 #### Client → Server: `pattern-change`
+
 **Purpose:** Modify beat pattern
 **Payload:**
+
 ```json
 {
   "action": "add" | "remove" | "move" | "velocity",
@@ -1090,16 +1222,20 @@ Or for guests:
 ```
 
 **Access Control:**
+
 - User must be owner, collaborator, or approved queue user
 - Spectators cannot emit this event
 
 #### Server → All in Session: `pattern-update`
+
 **Purpose:** Broadcast pattern change to all users
 **Payload:** Same as `pattern-change`
 
 #### Client → Server: `transport-command`
+
 **Purpose:** Control playback
 **Payload:**
+
 ```json
 {
   "command": "play" | "pause" | "stop"
@@ -1107,11 +1243,14 @@ Or for guests:
 ```
 
 **Access Control:**
+
 - User must be owner, collaborator, or approved queue user
 
 #### Server → All in Session: `transport-sync`
+
 **Purpose:** Sync playback state to all users
 **Payload:**
+
 ```json
 {
   "command": "play" | "pause" | "stop",
@@ -1120,8 +1259,10 @@ Or for guests:
 ```
 
 #### Client → Server: `set-bpm`
+
 **Purpose:** Change tempo
 **Payload:**
+
 ```json
 {
   "bpm": 140
@@ -1129,8 +1270,10 @@ Or for guests:
 ```
 
 #### Server → All in Session: `bpm-change`
+
 **Purpose:** Broadcast BPM change
 **Payload:**
+
 ```json
 {
   "bpm": 140
@@ -1138,8 +1281,10 @@ Or for guests:
 ```
 
 #### Client → Server: `set-measure-count`
+
 **Purpose:** Change beat length
 **Payload:**
+
 ```json
 {
   "measureCount": 8
@@ -1147,8 +1292,10 @@ Or for guests:
 ```
 
 #### Server → All in Session: `measure-count-change`
+
 **Purpose:** Broadcast measure count change
 **Payload:**
+
 ```json
 {
   "measureCount": 8
@@ -1158,7 +1305,9 @@ Or for guests:
 ### Track Management Events (Existing, Unchanged)
 
 #### Client → Server: `add-track`
+
 **Payload:**
+
 ```json
 {
   "track": {
@@ -1172,10 +1321,13 @@ Or for guests:
 ```
 
 #### Server → All in Session: `track-added`
+
 **Payload:** Same as `add-track`
 
 #### Client → Server: `remove-track`
+
 **Payload:**
+
 ```json
 {
   "trackId": "track-2"
@@ -1183,10 +1335,13 @@ Or for guests:
 ```
 
 #### Server → All in Session: `track-removed`
+
 **Payload:** Same as `remove-track`
 
 #### Client → Server: `update-track-sound`
+
 **Payload:**
+
 ```json
 {
   "trackId": "track-1",
@@ -1195,12 +1350,15 @@ Or for guests:
 ```
 
 #### Server → All in Session: `track-sound-updated`
+
 **Payload:** Same as `update-track-sound`
 
 ### Effects Events (Existing, Unchanged)
 
 #### Client → Server: `effect-chain-update`
+
 **Payload:**
+
 ```json
 {
   "trackId": "track-1",
@@ -1210,10 +1368,13 @@ Or for guests:
 ```
 
 #### Server → All in Session: `effect-chain-update`
+
 **Payload:** Same as client event
 
 #### Client → Server: `effect-state-apply`
+
 **Payload:**
+
 ```json
 {
   "trackId": "track-1",
@@ -1225,13 +1386,16 @@ Or for guests:
 ```
 
 #### Server → All in Session: `effect-state-apply`
+
 **Payload:** Same as client event
 
 ### Auto-Save Events
 
 #### Server → All in Session: `beat-auto-saved`
+
 **Purpose:** Notify users that beat was auto-saved
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -1242,6 +1406,7 @@ Or for guests:
 ```
 
 **Trigger:**
+
 - Every 2 minutes (if `is_modified = true`)
 - Before session termination
 - Manual save (if implemented)
@@ -1249,8 +1414,10 @@ Or for guests:
 ### Session Termination Events
 
 #### Server → All in Session: `session-terminating`
+
 **Purpose:** Warn users session is about to end
 **Payload:**
+
 ```json
 {
   "reason": "inactivity" | "no-users",
@@ -1259,12 +1426,15 @@ Or for guests:
 ```
 
 **Trigger:**
+
 - 30 seconds before termination
 - Gives users time to finish edits
 
 #### Server → All in Session: `session-terminated`
+
 **Purpose:** Notify users session has ended
 **Payload:**
+
 ```json
 {
   "beatId": "uuid",
@@ -1273,6 +1443,7 @@ Or for guests:
 ```
 
 **Side Effect:**
+
 - All users disconnected from session
 - Session removed from server memory
 - Beat saved to database (if has owner)
@@ -1286,6 +1457,7 @@ Or for guests:
 #### New Components
 
 **`ListeningMode.jsx`**
+
 - **Purpose:** Static playback of saved beat (no session)
 - **Renders when:** User visits public/unlisted beat with no active session
 - **Features:**
@@ -1297,6 +1469,7 @@ Or for guests:
   - Visual indicator: "Listening Mode"
 
 **`SpectatorMode.jsx`**
+
 - **Purpose:** Real-time viewing of active session
 - **Renders when:** User visits beat as spectator (public/unlisted + session active)
 - **Features:**
@@ -1310,6 +1483,7 @@ Or for guests:
   - Visual indicator: "Spectating - View Only"
 
 **`SessionQueue.jsx`**
+
 - **Purpose:** Display and manage queue requests
 - **Renders when:** User is owner/collaborator
 - **Features:**
@@ -1321,6 +1495,7 @@ Or for guests:
   - Auto-remove expired requests
 
 **`GuestAuthPrompt.jsx`**
+
 - **Purpose:** Prompt guests to sign in to save work
 - **Renders when:** Guest user edits beat
 - **Features:**
@@ -1331,6 +1506,7 @@ Or for guests:
   - Shows when `is_modified = true` and user is guest
 
 **`AuthModal.jsx`**
+
 - **Purpose:** In-place authentication without page reload
 - **Features:**
   - Sign In tab
@@ -1342,6 +1518,7 @@ Or for guests:
   - Closes and refreshes permissions after auth
 
 **`BeatVisibilityToggle.jsx`**
+
 - **Purpose:** Change beat visibility setting
 - **Renders when:** User is owner
 - **Features:**
@@ -1351,6 +1528,7 @@ Or for guests:
   - Confirmation modal for public → private (warns about removing access)
 
 **`CollaboratorManager.jsx`**
+
 - **Purpose:** Manage beat collaborators
 - **Renders when:** User is owner
 - **Features:**
@@ -1363,6 +1541,7 @@ Or for guests:
 #### Modified Components
 
 **`DrumMachine.jsx`** - Major Refactor
+
 ```javascript
 // New flow:
 function DrumMachine() {
@@ -1420,27 +1599,29 @@ function DrumMachine() {
 ```
 
 **`BeatsPage.jsx`** - Enhanced
+
 ```javascript
 function BeatsPage() {
-  const [activeTab, setActiveTab] = useState('my-beats');
+  const [activeTab, setActiveTab] = useState("my-beats");
 
   return (
     <div>
       <Tabs>
-        <Tab label="My Beats" active={activeTab === 'my-beats'} />
-        <Tab label="Shared With Me" active={activeTab === 'shared'} />
-        <Tab label="Public Gallery" active={activeTab === 'public'} />
+        <Tab label="My Beats" active={activeTab === "my-beats"} />
+        <Tab label="Shared With Me" active={activeTab === "shared"} />
+        <Tab label="Public Gallery" active={activeTab === "public"} />
       </Tabs>
 
-      {activeTab === 'my-beats' && <MyBeatsGrid />}
-      {activeTab === 'shared' && <SharedBeatsGrid />}
-      {activeTab === 'public' && <PublicGalleryGrid />}
+      {activeTab === "my-beats" && <MyBeatsGrid />}
+      {activeTab === "shared" && <SharedBeatsGrid />}
+      {activeTab === "public" && <PublicGalleryGrid />}
     </div>
   );
 }
 ```
 
 **`BeatCard.jsx`** - New Actions
+
 ```javascript
 function BeatCard({ beat, userRole }) {
   return (
@@ -1454,11 +1635,11 @@ function BeatCard({ beat, userRole }) {
           Open
         </Button>
 
-        {userRole === 'owner' && (
+        {userRole === "owner" && (
           <>
             <Button onClick={() => openRenameModal(beat.id)}>Rename</Button>
             <Button onClick={() => openVisibilityModal(beat.id)}>
-              {beat.visibility === 'public' ? 'Public' : 'Private'}
+              {beat.visibility === "public" ? "Public" : "Private"}
             </Button>
             <Button onClick={() => openCollaboratorsModal(beat.id)}>
               Collaborators ({beat.collaborator_count})
@@ -1469,9 +1650,7 @@ function BeatCard({ beat, userRole }) {
           </>
         )}
 
-        <Button onClick={() => copyShareLink(beat.room_id)}>
-          Share Link
-        </Button>
+        <Button onClick={() => copyShareLink(beat.room_id)}>Share Link</Button>
       </Actions>
     </Card>
   );
@@ -1481,6 +1660,7 @@ function BeatCard({ beat, userRole }) {
 ### State Management (Zustand)
 
 **New Session Slice:**
+
 ```javascript
 sessionSlice: {
   // State
@@ -1547,6 +1727,7 @@ sessionSlice: {
 ```
 
 **Modified Beats Slice:**
+
 ```javascript
 beatsSlice: {
   // ... existing properties
@@ -1594,6 +1775,7 @@ beatsSlice: {
 ### Routing Updates
 
 **`main.jsx`:**
+
 ```javascript
 <Routes>
   <Route path="/" element={<Home />} />
@@ -1642,12 +1824,15 @@ class DrumSession {
     this.autoSaveInterval = setInterval(() => this.autoSave(), 120000);
 
     // Inactivity check interval (every 30 seconds)
-    this.inactivityCheckInterval = setInterval(() => this.checkInactivity(), 30000);
+    this.inactivityCheckInterval = setInterval(
+      () => this.checkInactivity(),
+      30000
+    );
   }
 
   // User management
   addUser(socketId, userId, username, role) {
-    if (role === 'spectator') {
+    if (role === "spectator") {
       this.spectators.add(socketId);
     } else {
       this.users.set(socketId, { userId, username, role });
@@ -1657,7 +1842,7 @@ class DrumSession {
     return {
       beatData: this.getBeatData(),
       connectedUsers: this.getConnectedUsers(),
-      queueRequests: role !== 'spectator' ? this.getQueueRequests() : undefined
+      queueRequests: role !== "spectator" ? this.getQueueRequests() : undefined,
     };
   }
 
@@ -1673,7 +1858,7 @@ class DrumSession {
 
   promoteSpectator(socketId, userId, username) {
     this.spectators.delete(socketId);
-    this.users.set(socketId, { userId, username, role: 'approved-editor' });
+    this.users.set(socketId, { userId, username, role: "approved-editor" });
     this.lastActivityAt = Date.now();
   }
 
@@ -1692,10 +1877,10 @@ class DrumSession {
 
     // Apply change to session state
     switch (changeData.action) {
-      case 'add':
+      case "add":
         this.addNote(changeData.trackId, changeData.tick, changeData.velocity);
         break;
-      case 'remove':
+      case "remove":
         this.removeNote(changeData.trackId, changeData.tick);
         break;
       // ... other actions
@@ -1710,7 +1895,7 @@ class DrumSession {
       userId,
       username,
       socketId,
-      expiresAt: Date.now() + 600000 // 10 minutes
+      expiresAt: Date.now() + 600000, // 10 minutes
     });
   }
 
@@ -1723,7 +1908,7 @@ class DrumSession {
       requestId: id,
       userId: data.userId,
       username: data.username,
-      requestedAt: data.expiresAt - 600000
+      requestedAt: data.expiresAt - 600000,
     }));
   }
 
@@ -1741,15 +1926,16 @@ class DrumSession {
     this.lastSaveAt = Date.now();
 
     // Notify users
-    io.to(this.beatId).emit('beat-auto-saved', {
+    io.to(this.beatId).emit("beat-auto-saved", {
       beatId: this.beatId,
       savedAt: new Date().toISOString(),
-      savedBy: this.lastEditedBy
+      savedBy: this.lastEditedBy,
     });
   }
 
   async saveToDB() {
-    await db.query(`
+    await db.query(
+      `
       UPDATE beats
       SET
         pattern_data = $1,
@@ -1761,26 +1947,31 @@ class DrumSession {
         last_saved_at = NOW(),
         last_edited_by = $7
       WHERE room_id = $8
-    `, [
-      JSON.stringify(this.pattern),
-      JSON.stringify(this.tracks),
-      this.bpm,
-      this.measureCount,
-      JSON.stringify(this.effects),
-      this.isModified,
-      this.lastEditedBy,
-      this.beatId
-    ]);
+    `,
+      [
+        JSON.stringify(this.pattern),
+        JSON.stringify(this.tracks),
+        this.bpm,
+        this.measureCount,
+        JSON.stringify(this.effects),
+        this.isModified,
+        this.lastEditedBy,
+        this.beatId,
+      ]
+    );
   }
 
   async checkHasOwner() {
-    const result = await db.query(`
+    const result = await db.query(
+      `
       SELECT b.id
       FROM beats b
       JOIN beat_collaborators bc ON b.id = bc.beat_id
       WHERE b.room_id = $1
       LIMIT 1
-    `, [this.beatId]);
+    `,
+      [this.beatId]
+    );
 
     return result.rows.length > 0;
   }
@@ -1793,12 +1984,12 @@ class DrumSession {
 
     // No users for 2 minutes
     if (userCount === 0 && timeSinceActivity > 120000) {
-      this.terminate('no-users');
+      this.terminate("no-users");
     }
 
     // All users inactive for 10 minutes
     if (userCount > 0 && timeSinceActivity > 600000) {
-      this.terminate('inactivity');
+      this.terminate("inactivity");
     }
   }
 
@@ -1806,7 +1997,7 @@ class DrumSession {
     if (this.shutdownTimer) return;
 
     this.shutdownTimer = setTimeout(() => {
-      this.terminate('no-users');
+      this.terminate("no-users");
     }, 120000); // 2 minutes
   }
 
@@ -1832,12 +2023,15 @@ class DrumSession {
     }
 
     // Clean up queue requests
-    await db.query('DELETE FROM session_queue WHERE beat_id = (SELECT id FROM beats WHERE room_id = $1)', [this.beatId]);
+    await db.query(
+      "DELETE FROM session_queue WHERE beat_id = (SELECT id FROM beats WHERE room_id = $1)",
+      [this.beatId]
+    );
 
     // Notify all users
-    io.to(this.beatId).emit('session-terminated', {
+    io.to(this.beatId).emit("session-terminated", {
       beatId: this.beatId,
-      reason
+      reason,
     });
 
     // Remove from active sessions
@@ -1845,7 +2039,7 @@ class DrumSession {
   }
 
   async deleteBeat() {
-    await db.query('DELETE FROM beats WHERE room_id = $1', [this.beatId]);
+    await db.query("DELETE FROM beats WHERE room_id = $1", [this.beatId]);
   }
 
   // Utility methods
@@ -1856,15 +2050,15 @@ class DrumSession {
       measureCount: this.measureCount,
       pattern: this.pattern,
       tracks: this.tracks,
-      effects: this.effects
+      effects: this.effects,
     };
   }
 
   getConnectedUsers() {
-    return Array.from(this.users.values()).map(u => ({
+    return Array.from(this.users.values()).map((u) => ({
       userId: u.userId,
       username: u.username,
-      role: u.role
+      role: u.role,
     }));
   }
 }
@@ -1873,49 +2067,60 @@ class DrumSession {
 ### WebSocket Event Handlers
 
 ```javascript
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   let currentBeatId = null;
   let currentUserId = null;
   let currentUsername = null;
 
   // Authentication
-  socket.on('authenticate', async ({ token }) => {
+  socket.on("authenticate", async ({ token }) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         currentUserId = decoded.userId;
 
-        const userResult = await db.query('SELECT username FROM users WHERE id = $1', [currentUserId]);
+        const userResult = await db.query(
+          "SELECT username FROM users WHERE id = $1",
+          [currentUserId]
+        );
         currentUsername = userResult.rows[0].username;
 
-        socket.emit('authenticated', {
+        socket.emit("authenticated", {
           userId: currentUserId,
-          username: currentUsername
+          username: currentUsername,
         });
       } catch (err) {
-        socket.emit('authenticated', { userId: null, username: null, socketId: socket.id });
+        socket.emit("authenticated", {
+          userId: null,
+          username: null,
+          socketId: socket.id,
+        });
       }
     } else {
       // Guest user
-      socket.emit('authenticated', { userId: null, username: null, socketId: socket.id });
+      socket.emit("authenticated", {
+        userId: null,
+        username: null,
+        socketId: socket.id,
+      });
     }
   });
 
   // Join beat session
-  socket.on('join-beat', async ({ beatId, asSpectator }) => {
+  socket.on("join-beat", async ({ beatId, asSpectator }) => {
     try {
       // Check permissions
       const access = await checkBeatAccess(beatId, currentUserId);
 
-      if (access.level === 'none') {
-        socket.emit('session-join-failed', { reason: 'no-permission' });
+      if (access.level === "none") {
+        socket.emit("session-join-failed", { reason: "no-permission" });
         return;
       }
 
       // Determine role
       let role;
-      if (asSpectator || access.level === 'spectator') {
-        role = 'spectator';
+      if (asSpectator || access.level === "spectator") {
+        role = "spectator";
       } else {
         role = access.level; // 'owner' or 'collaborator'
       }
@@ -1929,45 +2134,52 @@ io.on('connection', (socket) => {
       }
 
       // Add user to session
-      const sessionData = session.addUser(socket.id, currentUserId, currentUsername, role);
+      const sessionData = session.addUser(
+        socket.id,
+        currentUserId,
+        currentUsername,
+        role
+      );
 
       // Join Socket.io room
       socket.join(beatId);
       currentBeatId = beatId;
 
       // Send session data to user
-      socket.emit('session-joined', {
+      socket.emit("session-joined", {
         beatId,
         role,
         beatData: sessionData.beatData,
         connectedUsers: sessionData.connectedUsers,
-        queueRequests: sessionData.queueRequests
+        queueRequests: sessionData.queueRequests,
       });
 
       // Notify others
-      socket.to(beatId).emit('user-joined-session', {
+      socket.to(beatId).emit("user-joined-session", {
         userId: currentUserId,
         username: currentUsername,
-        role
+        role,
       });
-
     } catch (err) {
-      console.error('Error joining beat:', err);
-      socket.emit('session-join-failed', { reason: 'error', message: err.message });
+      console.error("Error joining beat:", err);
+      socket.emit("session-join-failed", {
+        reason: "error",
+        message: err.message,
+      });
     }
   });
 
   // Leave beat session
-  socket.on('leave-beat', () => {
+  socket.on("leave-beat", () => {
     if (!currentBeatId) return;
 
     const session = activeSessions.get(currentBeatId);
     if (session) {
       session.removeUser(socket.id);
 
-      socket.to(currentBeatId).emit('user-left-session', {
+      socket.to(currentBeatId).emit("user-left-session", {
         userId: currentUserId,
-        username: currentUsername
+        username: currentUsername,
       });
     }
 
@@ -1976,11 +2188,12 @@ io.on('connection', (socket) => {
   });
 
   // Request edit access (join queue)
-  socket.on('request-edit-access', async ({ beatId, username, message }) => {
-    const displayName = currentUsername || username || 'Guest';
+  socket.on("request-edit-access", async ({ beatId, username, message }) => {
+    const displayName = currentUsername || username || "Guest";
 
     // Save to database
-    const result = await db.query(`
+    const result = await db.query(
+      `
       INSERT INTO session_queue (beat_id, user_id, guest_identifier, username, request_message)
       VALUES (
         (SELECT id FROM beats WHERE room_id = $1),
@@ -1990,7 +2203,9 @@ io.on('connection', (socket) => {
         $5
       )
       RETURNING id
-    `, [beatId, currentUserId, socket.id, displayName, message]);
+    `,
+      [beatId, currentUserId, socket.id, displayName, message]
+    );
 
     const requestId = result.rows[0].id;
 
@@ -2001,32 +2216,35 @@ io.on('connection', (socket) => {
     }
 
     // Notify owners/collaborators
-    socket.to(beatId).emit('queue-request-added', {
+    socket.to(beatId).emit("queue-request-added", {
       requestId,
       userId: currentUserId,
       username: displayName,
       requestedAt: new Date().toISOString(),
-      message
+      message,
     });
   });
 
   // Respond to queue request
-  socket.on('respond-to-queue-request', async ({ requestId, approve }) => {
+  socket.on("respond-to-queue-request", async ({ requestId, approve }) => {
     // Verify user is owner/collaborator
     const session = activeSessions.get(currentBeatId);
     if (!session) return;
 
     const user = session.users.get(socket.id);
-    if (!user || (user.role !== 'owner' && user.role !== 'collaborator')) {
+    if (!user || (user.role !== "owner" && user.role !== "collaborator")) {
       return; // Not authorized
     }
 
     // Update database
-    await db.query(`
+    await db.query(
+      `
       UPDATE session_queue
       SET status = $1, responded_by = $2, responded_at = NOW()
       WHERE id = $3
-    `, [approve ? 'approved' : 'denied', currentUserId, requestId]);
+    `,
+      [approve ? "approved" : "denied", currentUserId, requestId]
+    );
 
     // Get requester info
     const queueEntry = session.queueRequests.get(requestId);
@@ -2034,25 +2252,29 @@ io.on('connection', (socket) => {
 
     if (approve) {
       // Promote spectator to editor
-      session.promoteSpectator(queueEntry.socketId, queueEntry.userId, queueEntry.username);
+      session.promoteSpectator(
+        queueEntry.socketId,
+        queueEntry.userId,
+        queueEntry.username
+      );
 
       // Notify requester
-      io.to(queueEntry.socketId).emit('edit-access-granted', {
+      io.to(queueEntry.socketId).emit("edit-access-granted", {
         beatId: currentBeatId,
-        message: 'You can now edit this beat'
+        message: "You can now edit this beat",
       });
 
       // Notify all users of role change
-      io.to(currentBeatId).emit('user-role-changed', {
+      io.to(currentBeatId).emit("user-role-changed", {
         userId: queueEntry.userId,
         username: queueEntry.username,
-        role: 'approved-editor'
+        role: "approved-editor",
       });
     } else {
       // Notify requester of denial
-      io.to(queueEntry.socketId).emit('edit-access-denied', {
+      io.to(queueEntry.socketId).emit("edit-access-denied", {
         beatId: currentBeatId,
-        message: 'Your request was denied'
+        message: "Your request was denied",
       });
     }
 
@@ -2061,7 +2283,7 @@ io.on('connection', (socket) => {
   });
 
   // Pattern changes
-  socket.on('pattern-change', (data) => {
+  socket.on("pattern-change", (data) => {
     const session = activeSessions.get(currentBeatId);
     if (!session) return;
 
@@ -2069,11 +2291,11 @@ io.on('connection', (socket) => {
     if (!allowed) return; // Spectator tried to edit
 
     // Broadcast to others
-    socket.to(currentBeatId).emit('pattern-update', data);
+    socket.to(currentBeatId).emit("pattern-update", data);
   });
 
   // Transport commands
-  socket.on('transport-command', (data) => {
+  socket.on("transport-command", (data) => {
     const session = activeSessions.get(currentBeatId);
     if (!session) return;
 
@@ -2083,11 +2305,11 @@ io.on('connection', (socket) => {
     session.lastActivityAt = Date.now();
 
     // Broadcast to all (including sender for sync)
-    io.to(currentBeatId).emit('transport-sync', data);
+    io.to(currentBeatId).emit("transport-sync", data);
   });
 
   // BPM changes
-  socket.on('set-bpm', (data) => {
+  socket.on("set-bpm", (data) => {
     const session = activeSessions.get(currentBeatId);
     if (!session) return;
 
@@ -2099,21 +2321,21 @@ io.on('connection', (socket) => {
     session.lastActivityAt = Date.now();
     session.lastEditedBy = currentUserId;
 
-    socket.to(currentBeatId).emit('bpm-change', data);
+    socket.to(currentBeatId).emit("bpm-change", data);
   });
 
   // ... other event handlers (tracks, effects, etc.)
 
   // Disconnect
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     if (currentBeatId) {
       const session = activeSessions.get(currentBeatId);
       if (session) {
         session.removeUser(socket.id);
 
-        socket.to(currentBeatId).emit('user-left-session', {
+        socket.to(currentBeatId).emit("user-left-session", {
           userId: currentUserId,
-          username: currentUsername
+          username: currentUsername,
         });
       }
     }
@@ -2123,40 +2345,49 @@ io.on('connection', (socket) => {
 // Helper functions
 async function checkBeatAccess(beatId, userId) {
   // Check if user is owner/collaborator
-  const collabResult = await db.query(`
+  const collabResult = await db.query(
+    `
     SELECT bc.role
     FROM beats b
     JOIN beat_collaborators bc ON b.id = bc.beat_id
     WHERE b.room_id = $1 AND bc.user_id = $2
-  `, [beatId, userId]);
+  `,
+    [beatId, userId]
+  );
 
   if (collabResult.rows.length > 0) {
     return { level: collabResult.rows[0].role }; // 'owner' or 'collaborator'
   }
 
   // Check beat visibility
-  const beatResult = await db.query('SELECT visibility FROM beats WHERE room_id = $1', [beatId]);
+  const beatResult = await db.query(
+    "SELECT visibility FROM beats WHERE room_id = $1",
+    [beatId]
+  );
 
   if (beatResult.rows.length === 0) {
-    return { level: 'none' }; // Beat doesn't exist
+    return { level: "none" }; // Beat doesn't exist
   }
 
   const visibility = beatResult.rows[0].visibility;
 
-  if (visibility === 'public' || visibility === 'unlisted') {
-    return { level: 'spectator' };
+  if (visibility === "public" || visibility === "unlisted") {
+    return { level: "spectator" };
   }
 
-  return { level: 'none' }; // Private beat, no permission
+  return { level: "none" }; // Private beat, no permission
 }
 
 async function loadBeatFromDB(beatId) {
-  const result = await db.query(`
+  const result = await db.query(
+    `
     SELECT * FROM beats WHERE room_id = $1
-  `, [beatId]);
+  `,
+    [beatId]
+  );
 
   if (result.rows.length === 0) {
-    throw new Error('Beat not found');
+    throw new Error("Beat not found");
   }
 
   return result.rows[0];
@@ -2170,6 +2401,7 @@ async function loadBeatFromDB(beatId) {
 ### ✅ Phases Complete
 
 **Phase 1: Database & Permissions Foundation** - ✅ COMPLETE
+
 - Database migration successful (25 existing beats migrated)
 - `room_id` UUID column added to beats table
 - `beat_collaborators` table created with owner/collaborator roles
@@ -2177,6 +2409,7 @@ async function loadBeatFromDB(beatId) {
 - Backend hosted at `api.charliedahle.me`
 
 **Phase 2: Session-Beat Linking** - ✅ COMPLETE
+
 - Frontend fully refactored to use persistent beat IDs
 - Beat creation now via API: `POST /api/beats`
 - WebSocket events updated: `join-beat`, `leave-beat` (removed `create-room`)
@@ -2184,22 +2417,16 @@ async function loadBeatFromDB(beatId) {
 - Vite proxy configured to route `/api/*` to backend
 - Auto-join logic working correctly
 
-**Phase 3: Listening Mode** - ✅ COMPLETE
-- Access control system implemented (owner/collaborator/spectator/none)
-- `GET /api/beats/:id/access` endpoint (supports UUID and numeric ID)
-- ListeningMode component for read-only beat viewing
-- Visibility toggle UI (Public/Unlisted/Private)
-- Access-based routing in DrumMachineApp
-- Local playback without WebSocket session
-
 ### 📂 Repository Structure
 
 **Frontend (this repo):** `/drum-machine/`
+
 - React app with Vite build system
 - Hosted at `charliedahle.me`
 - Dev server: `npm run dev` on port 5173
 
 **Backend (separate deployment):** `.additionalfiles/server.js`
+
 - Hosted at `api.charliedahle.me`
 - PostgreSQL database
 - WebSocket + REST API
@@ -2207,6 +2434,7 @@ async function loadBeatFromDB(beatId) {
 ### ⚙️ Development Configuration
 
 **Vite Proxy (vite.config.js):**
+
 ```javascript
 server: {
   proxy: {
@@ -2215,9 +2443,11 @@ server: {
   },
 }
 ```
+
 This allows `fetch('/api/beats')` in dev to proxy to the production backend - standard practice, not janky!
 
 **Key Files Modified in Phase 2:**
+
 - `src/stores/useAppStore.js` - WebSocket state, removed `createRoom()`, renamed to `beatId`
 - `src/components/DrumMachineApp/DrumMachineApp.jsx` - Auto-join logic, beat routing
 - `src/pages/Beats/Beats.jsx` - API-based beat creation
@@ -2233,13 +2463,14 @@ This allows `fetch('/api/beats')` in dev to proxy to the production backend - st
 3. DrumMachineApp auto-joins beat session via `join-beat` WebSocket event
 4. Real-time collaboration works with persistent beat storage
 
-### ➡️ Next Up: Phase 4
+### ➡️ Next Up: Phase 3
 
-**Phase 4: Spectator Mode** - Ready to implement
-- Implement spectator role in WebSocket sessions
-- Real-time viewing of active collaborative sessions
-- Disabled UI with live updates
-- Foundation for admittance queue system
+**Phase 3: Listening Mode** - Ready to implement
+
+- Create `ListeningMode.jsx` for read-only beat viewing
+- Implement `GET /api/beats/:id/access` endpoint
+- Allow public beats to be viewed without edit access
+- Foundation for spectator mode and admittance queue
 
 ---
 
@@ -2250,6 +2481,7 @@ This allows `fetch('/api/beats')` in dev to proxy to the production backend - st
 **Goal:** Establish beat ownership and permissions system
 
 **Tasks:**
+
 1. ✅ Create database migration script for new schema
 2. ✅ Migrate existing beats to new structure:
    - ✅ Add `room_id`, `visibility`, `is_modified` columns
@@ -2261,11 +2493,13 @@ This allows `fetch('/api/beats')` in dev to proxy to the production backend - st
 6. ✅ Test: Create beat, add collaborators, verify permissions (25 beats migrated successfully)
 
 **Deliverables:**
+
 - ✅ Migration SQL script (`.additionalfiles/migrate-permissions.sql`)
 - ✅ Updated API routes with permission checks (Backend)
 - ✅ Backend deployed to api.charliedahle.me
 
 **Migration Script Example:**
+
 ```sql
 -- Add new columns to beats
 ALTER TABLE beats
@@ -2324,6 +2558,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Replace ephemeral rooms with beat-linked sessions
 
 **Tasks:**
+
 1. ✅ Refactor `DrumRoom` class → `DrumSession` class (Backend - already done)
 2. ✅ Link sessions to `beatId` (UUID from `room_id` column)
 3. ✅ Update WebSocket event: `create-room` → removed
@@ -2334,6 +2569,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 8. ✅ Test: Create beat via API, navigate to room_id, auto-join works
 
 **Deliverables:**
+
 - ✅ `DrumSession` class implementation (Backend)
 - ✅ Updated WebSocket handlers (`join-beat`, `leave-beat`)
 - ✅ Frontend routing changes (all components updated)
@@ -2341,6 +2577,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 - ✅ Beat creation via POST /api/beats working
 
 **Frontend Changes Completed:**
+
 - `useAppStore.js`: Renamed `roomId` → `beatId`, removed `createRoom()`, updated all WebSocket events
 - `DrumMachineApp.jsx`: Auto-join logic, beat-not-found modal
 - `Beats.jsx`: API-based beat creation, navigation to room_id
@@ -2352,45 +2589,28 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 
 ---
 
-### Phase 3: Listening Mode (Week 2) ✅ **COMPLETE**
+### Phase 3: Listening Mode (Week 2)
 
 **Goal:** Non-owners can view public beats without starting sessions
 
 **Tasks:**
-1. ✅ Create `GET /api/beats/:id/access` endpoint
-2. ✅ Implement access check logic (owner/collaborator/spectator/none)
-3. ✅ Create `ListeningMode.jsx` component:
-   - ✅ Load beat data from API
-   - ✅ Local Tone.js playback (not synced)
-   - ✅ Disabled UI (pattern visible but not editable)
-   - ✅ "Request to Edit" button (placeholder for Phase 5)
-4. ✅ Update `DrumMachineApp.jsx` to route to ListeningMode when appropriate
-5. ✅ Implement 404 for private beats with no permission
-6. ⚠️ Test: Visit public beat as guest, verify local playback (blocked by ownership assignment - see notes)
+
+1. Create `GET /api/beats/:id/access` endpoint
+2. Implement access check logic (owner/collaborator/spectator/none)
+3. Create `ListeningMode.jsx` component:
+   - Load beat data from API
+   - Local Tone.js playback (not synced)
+   - Disabled UI (pattern visible but not editable)
+   - "Request to Edit" button
+4. Update `DrumMachine.jsx` to route to ListeningMode when appropriate
+5. Implement 404 for private beats with no permission
+6. Test: Visit public beat as guest, verify local playback
 
 **Deliverables:**
-- ✅ `ListeningMode` component (`src/components/ListeningMode/`)
-- ✅ Access check API endpoint (accepts both numeric ID and UUID room_id)
-- ✅ Updated routing logic in `DrumMachineApp.jsx`
-- ✅ **Bonus:** `VisibilityToggle` component for changing beat visibility
 
-**Implementation Notes:**
-- Added `optionalAuthenticateToken` middleware to support guest access checking
-- Updated `/api/beats/:id/access` and `/api/beats/:id/visibility` to accept UUID `room_id` in addition to numeric `id`
-- Beat ownership assignment logic already exists in POST `/api/beats` (lines 399-405)
-- Existing beats created before Phase 1/2 have no owners in `beat_collaborators` table
-- New beats created while authenticated automatically assign user as owner
-- Frontend checks access level and routes to ListeningMode vs Edit Mode accordingly
-
-**Files Modified:**
-- Backend: `.additionalfiles/server.js` (middleware + endpoint updates)
-- Frontend:
-  - `src/components/ListeningMode/ListeningMode.jsx` (new)
-  - `src/components/ListeningMode/ListeningMode.module.css` (new)
-  - `src/components/VisibilityToggle/VisibilityToggle.jsx` (new)
-  - `src/components/VisibilityToggle/VisibilityToggle.css` (new)
-  - `src/components/DrumMachineApp/DrumMachineApp.jsx` (access checking + routing)
-  - `src/components/RoomHeader/RoomHeader.jsx` (added visibility toggle)
+- `ListeningMode` component
+- Access check API endpoint
+- Updated routing logic
 
 ---
 
@@ -2399,6 +2619,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Users can watch active sessions in real-time
 
 **Tasks:**
+
 1. Implement spectator role in `DrumSession` class
 2. Update `join-beat` WebSocket event to accept `asSpectator` parameter
 3. Server: Send session events to spectators (read-only)
@@ -2411,6 +2632,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 7. Test: Join active session as spectator, watch changes
 
 **Deliverables:**
+
 - Spectator role in session
 - Spectator UI components
 - Integration tests for spectator mode
@@ -2422,6 +2644,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Request temporary edit access to sessions
 
 **Tasks:**
+
 1. Implement queue WebSocket events:
    - `request-edit-access`
    - `respond-to-queue-request`
@@ -2438,6 +2661,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 6. Test: Request access, approve, edit, leave, verify back to spectator
 
 **Deliverables:**
+
 - Queue WebSocket handlers
 - `SessionQueue` UI component
 - Queue expiration logic
@@ -2450,6 +2674,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Guests can create beats, prompted to sign in to save
 
 **Tasks:**
+
 1. Allow guest beat creation (no entry in `beat_collaborators`)
 2. Track `is_modified` flag on first edit
 3. Create `GuestAuthPrompt.jsx`:
@@ -2465,6 +2690,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 9. Test: Guest creates beat, signs in → Beat persists
 
 **Deliverables:**
+
 - Guest authentication flow
 - `GuestAuthPrompt` and `AuthModal` components
 - Orphan beat cleanup logic
@@ -2477,6 +2703,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Beats auto-save during sessions
 
 **Tasks:**
+
 1. Implement 2-minute auto-save interval in `DrumSession`
 2. Implement save-before-termination logic
 3. Track `last_edited_by` and `last_saved_at` in database
@@ -2487,6 +2714,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 8. Test: Session terminates, verify final save
 
 **Deliverables:**
+
 - Auto-save implementation
 - Save status UI
 - Database updates for save tracking
@@ -2499,6 +2727,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Manage beats, collaborators, visibility
 
 **Tasks:**
+
 1. Update `/beats` page layout:
    - Three tabs: My Beats, Shared With Me, Public Gallery
 2. Implement API endpoints:
@@ -2521,6 +2750,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 5. Test: Change visibility, add collaborator, verify access
 
 **Deliverables:**
+
 - Enhanced `/beats` page
 - Beat management UI components
 - Collaborator/visibility API endpoints
@@ -2533,6 +2763,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Sessions end gracefully with proper cleanup
 
 **Tasks:**
+
 1. Implement inactivity tracking in `DrumSession`:
    - No users for 2 minutes → Terminate
    - All users inactive for 10 minutes → Terminate
@@ -2551,6 +2782,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 6. Test: Inactive session, wait 10 minutes, verify termination
 
 **Deliverables:**
+
 - Session termination logic
 - Frontend termination handling
 - Queue cleanup cron job
@@ -2563,6 +2795,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 **Goal:** Handle edge cases and improve UX
 
 **Tasks:**
+
 1. Co-owner management:
    - Allow promoting collaborators to co-owner
    - Prevent removing last owner
@@ -2589,165 +2822,11 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
    - User guide
 
 **Deliverables:**
+
 - Polished UI/UX
 - Comprehensive test suite
 - Documentation
 - Production deployment
-
----
-
-## Technical Considerations
-
-### Concurrency & Conflict Resolution
-
-**Current Approach:** Last Write Wins (LWW)
-- Simple to implement
-- Works well for small teams (2-5 collaborators)
-- Potential for lost edits in high-concurrency scenarios
-
-**Future Enhancement:** Operational Transforms (OT) or CRDTs
-- More complex but prevents conflicts
-- Required for larger teams or public collaboration
-- Libraries: ShareDB, Yjs, Automerge
-
-### Scalability
-
-**Current Architecture:** Single server, in-memory sessions
-- Works for MVP and small-scale deployments
-- Sessions lost on server restart
-- Limited by single server memory/CPU
-
-**Scaling Strategy:**
-1. **Horizontal scaling:** Use Redis for session state (shared across servers)
-2. **WebSocket scaling:** Use Socket.io Redis adapter for multi-server WebSocket
-3. **Database optimization:** Connection pooling, read replicas
-4. **CDN:** Serve static assets (sound files) from CDN
-
-### Security Considerations
-
-**Current Security Measures:**
-- JWT authentication
-- Password hashing (bcrypt)
-- SQL parameterized queries (prevent injection)
-- CORS restrictions
-
-**Additional Security (Phase 10+):**
-- Rate limiting on API endpoints
-- WebSocket rate limiting (prevent DoS)
-- Content Security Policy (CSP) headers
-- Audit logging for owner actions (delete, permission changes)
-- Email verification for accounts
-- Two-factor authentication (2FA)
-
-### Performance Optimization
-
-**Frontend:**
-- Lazy load components (React.lazy)
-- Virtualize beat list (react-window) for large libraries
-- Memoize expensive computations (useMemo, React.memo)
-- Debounce auto-save and WebSocket emissions
-
-**Backend:**
-- Database indexing (already planned in schema)
-- Connection pooling (pg-pool)
-- Compress WebSocket messages (Socket.io compression)
-- Cache public gallery results (Redis)
-
-**Audio:**
-- Preload sound files
-- Use Web Workers for audio processing
-- Optimize Tone.js transport scheduling
-
----
-
-## Success Metrics
-
-### Technical Metrics
-- **Session uptime:** >99% availability
-- **Auto-save success rate:** >99.9%
-- **WebSocket latency:** <100ms for real-time updates
-- **Page load time:** <2 seconds for beat loading
-- **API response time:** <200ms for most endpoints
-
-### User Experience Metrics
-- **Collaboration success rate:** % of queue requests approved
-- **Guest conversion rate:** % of guests who sign up after creating beat
-- **Beat persistence rate:** % of beats saved vs abandoned
-- **Active sessions:** Concurrent sessions at peak times
-- **User retention:** Weekly/monthly active users
-
----
-
-## Future Enhancements (Post-MVP)
-
-### Phase 11+: Advanced Features
-
-**Beat Forking & Remixing:**
-- Fork public beats to create variations
-- Attribution system (show original beat creator)
-- "Remixes" section showing forks of a beat
-
-**Version History:**
-- Save snapshots on each auto-save
-- Rollback to previous versions
-- Diff view showing changes between versions
-
-**Comments & Annotations:**
-- Add comments to specific measures/tracks
-- Reply threads for collaboration discussion
-- @mention collaborators
-
-**Export & Integration:**
-- Export beats as MIDI files
-- Export as audio (WAV, MP3)
-- Integration with DAWs (Ableton Live Link, etc.)
-
-**Advanced Permissions:**
-- Custom roles (e.g., "Viewer+Comment", "Editor-Delete")
-- Per-track permissions (user can only edit certain tracks)
-- Time-limited access (collaborator expires after X days)
-
-**Public Discovery:**
-- Beat tags and categories
-- Search and filtering
-- "Trending" and "Featured" sections
-- User profiles and follower system
-
-**Real-Time Presence:**
-- Show user cursors on pattern grid
-- Highlight which track user is editing
-- Show who is listening (spectator list)
-- Typing indicators for comments
-
-**Notifications:**
-- Email notifications for collaboration invites
-- Push notifications for queue requests
-- Digest emails (weekly summary of collaborations)
-
----
-
-## Conclusion
-
-This vision document outlines the transformation of a real-time collaborative drum machine into a **document-centric beat production platform** modeled after Google Docs. The architecture shifts from ephemeral sessions to persistent beat documents with sophisticated permission controls, real-time collaboration, and a flexible access system.
-
-**Key Innovations:**
-1. **Beat-as-document paradigm** - Beats are first-class persistent entities
-2. **Three-tier access control** - Owner, Collaborator, Spectator
-3. **Dual viewing modes** - Listening (static) vs Spectating (live)
-4. **Admittance queue** - Temporary edit access without permanent collaboration
-5. **Guest-to-user conversion** - Frictionless onboarding with save prompts
-6. **Auto-save & session management** - Automatic persistence with graceful cleanup
-
-**Technical Foundation:**
-- React + Zustand + Socket.io (real-time sync)
-- PostgreSQL (persistence)
-- JWT authentication
-- Tone.js (audio engine)
-- Express + Socket.io (backend)
-
-**Implementation Timeline:** 5-6 weeks across 10 phases
-
-This document serves as the **complete technical specification** for implementing "Google Docs for Beats" and should be used to onboard AI assistants, developers, or collaborators to the project vision.
 
 ---
 

@@ -6,10 +6,15 @@ import { useAppStore } from "../../stores/useAppStore";
 import RoomInterface from "../RoomInterface/RoomInterface.jsx";
 import DrumMachine from "../DrumMachine/DrumMachine.jsx";
 import ListeningMode from "../ListeningMode/ListeningMode.jsx";
+import SpectatorBanner from "../SpectatorBanner/SpectatorBanner.jsx"; // PHASE 4
+import QueueNotificationBadge from "../QueueNotificationBadge/QueueNotificationBadge.jsx"; // PHASE 5
+import SessionQueueModal from "../SessionQueueModal/SessionQueueModal.jsx"; // PHASE 5
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import EffectsModal from "../EffectsModal/EffectsModal.jsx";
 import RoomNotFoundModal from "../RoomNotFoundModal/RoomNotFoundModal.jsx";
+import BeatNotAvailable from "../BeatNotAvailable/BeatNotAvailable.jsx"; // Private beat error
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground.jsx";
+import WebSocketDebug from "../WebSocketDebug/WebSocketDebug.jsx"; // DEBUG: WebSocket diagnostics
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 // Define these outside the component to prevent recreating arrays on every render
@@ -25,9 +30,13 @@ function DrumMachineApp() {
   const [accessLevel, setAccessLevel] = useState(null); // 'owner' | 'collaborator' | 'spectator' | 'none'
   const [checkingAccess, setCheckingAccess] = useState(false);
 
+  // PHASE 5: Queue modal state
+  const [queueModalOpen, setQueueModalOpen] = useState(false);
+
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const isInSession = useAppStore((state) => state.websocket.isInSession); // PHASE 2: renamed from isInRoom
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator); // PHASE 4
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
@@ -40,6 +49,7 @@ function DrumMachineApp() {
 
   // PHASE 2 CHANGE: createRoom removed, beats created via API now
   const joinBeat = useAppStore((state) => state.websocket.joinBeat); // PHASE 2: renamed from joinRoom
+  const getAuthHeaders = useAppStore((state) => state.auth.getAuthHeaders); // For access checks
 
   // Get store setters for room sync
   const setTracks = useAppStore((state) => state.tracks?.setTracks);
@@ -89,35 +99,49 @@ function DrumMachineApp() {
 
       try {
         setCheckingAccess(true);
-        const response = await fetch(`/api/beats/${urlBeatId}/access`);
+        // Add cache-busting to prevent 304 responses
+        // Include auth headers so server knows who is requesting
+        const authHeaders = getAuthHeaders();
+        const response = await fetch(`/api/beats/${urlBeatId}/access?t=${Date.now()}`, {
+          headers: {
+            ...authHeaders,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
 
         if (!response.ok) {
           if (response.status === 404) {
-            setMode('error');
-            setAccessLevel('none');
+            setMode("error");
+            setAccessLevel("none");
             return;
           }
-          throw new Error('Failed to check access');
+          throw new Error("Failed to check access");
         }
 
         const data = await response.json();
         setAccessLevel(data.access);
+        console.log("[DrumMachineApp] Access check result:", data.access);
 
         // Determine mode based on access level
-        if (data.access === 'owner' || data.access === 'collaborator') {
-          setMode('edit'); // Has edit permissions, will join session
-        } else if (data.access === 'spectator') {
-          // TODO Phase 4: Check if active session exists
-          // For now, always show listening mode for spectators
-          setMode('listening');
+        if (data.access === "owner" || data.access === "collaborator") {
+          console.log("[DrumMachineApp] Setting mode to EDIT");
+          setMode("edit"); // Has edit permissions, will join session
+        } else if (data.access === "spectator") {
+          console.log("[DrumMachineApp] Spectator access - defaulting to EDIT mode to join as spectator");
+          // For now, spectators also use "edit" mode but will join as spectator
+          // This allows them to get real-time updates
+          // TODO: Distinguish between listening (static) and spectating (live) modes
+          setMode("edit");
         } else {
+          console.log("[DrumMachineApp] Setting mode to ERROR (no access)");
           // Private beat, no access
-          setMode('error');
+          setMode("error");
         }
       } catch (err) {
-        console.error('Error checking access:', err);
-        setMode('error');
-        setAccessLevel('none');
+        console.error("Error checking access:", err);
+        setMode("error");
+        setAccessLevel("none");
       } finally {
         setCheckingAccess(false);
       }
@@ -128,15 +152,43 @@ function DrumMachineApp() {
 
   // Sync beat session state with URL
   useEffect(() => {
-    // Only auto-join if we're in edit mode
-    if (mode !== 'edit') {
+    console.log("[DrumMachineApp] Sync effect:", {
+      mode,
+      urlBeatId,
+      beatId,
+      isConnected,
+      connectionState,
+    });
+
+    // Auto-join for editors (edit mode) or spectators who want live updates
+    // For now, spectators can manually join by clicking "Join Live Session" button
+    // But editors should auto-join
+    if (mode !== "edit") {
+      console.log(
+        "[DrumMachineApp] Not in edit mode, skipping auto-join. Mode:",
+        mode
+      );
       return;
     }
 
     // If URL has a beat ID but we're not in that session, auto-join
-    if (urlBeatId && beatId !== urlBeatId && isConnected && connectionState !== "connecting") {
-      console.log(`Auto-joining beat from URL: ${urlBeatId}`);
-      handleJoinBeat(urlBeatId).catch((err) => {
+    console.log("[DrumMachineApp] Auto-join check:", {
+      urlBeatId,
+      beatId,
+      isConnected,
+      connectionState,
+      shouldJoin: urlBeatId && beatId !== urlBeatId && isConnected && connectionState !== "connecting"
+    });
+    if (
+      urlBeatId &&
+      beatId !== urlBeatId &&
+      isConnected &&
+      connectionState !== "connecting"
+    ) {
+      // Join as spectator if user is not owner/collaborator
+      const asSpectator = accessLevel === "spectator";
+      console.log(`[DrumMachineApp] Auto-joining beat from URL: ${urlBeatId} (asSpectator: ${asSpectator})`);
+      handleJoinBeat(urlBeatId, asSpectator).catch((err) => {
         console.error("Failed to auto-join beat from URL:", err);
         // Error will be handled by beat-not-found modal
       });
@@ -162,15 +214,16 @@ function DrumMachineApp() {
         },
       }));
     }
-  }, [urlBeatId, beatId, isInSession, isConnected, connectionState, mode]);
+  }, [urlBeatId, beatId, isInSession, isConnected, connectionState, mode, accessLevel]);
 
   // PHASE 2: Beat session management handlers
   // NOTE: Beat creation now happens via API in Beats.jsx or RoomInterface.jsx
   // This component only joins existing beat sessions
 
-  const handleJoinBeat = async (targetBeatId) => {
+  // PHASE 4: Updated to support spectator mode
+  const handleJoinBeat = async (targetBeatId, asSpectator = false) => {
     try {
-      const beatData = await joinBeat(targetBeatId);
+      const beatData = await joinBeat(targetBeatId, asSpectator);
       // Sync all stores with beat data
       setPattern(beatData.pattern || beatData.pattern_data || {});
       syncBpm(beatData.bpm || 120);
@@ -215,7 +268,7 @@ function DrumMachineApp() {
       },
     }));
     // Navigate back to beat selection (removes beat ID from URL)
-    navigate('/DrumMachine');
+    navigate("/DrumMachine");
   };
 
   // Check if we should show the beat not found modal
@@ -252,21 +305,28 @@ function DrumMachineApp() {
   // PHASE 3: Show loading while checking access
   if (checkingAccess || mode === null) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px',
-        color: '#718096'
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontSize: "18px",
+          color: "#718096",
+        }}
+      >
         Checking access...
       </div>
     );
   }
 
+  // Show error screen for private beats or no access
+  if (mode === "error") {
+    return <BeatNotAvailable />;
+  }
+
   // PHASE 3: Show listening mode for spectators
-  if (mode === 'listening') {
+  if (mode === "listening") {
     return (
       <AnimatePresence mode="wait">
         <motion.div
@@ -294,7 +354,7 @@ function DrumMachineApp() {
     );
   }
 
-  // Render the drum machine with animated background (edit mode)
+  // Render the drum machine with animated background (edit mode OR spectator mode)
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -317,7 +377,25 @@ function DrumMachineApp() {
         />
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          <DrumMachine remoteTransportCommand={lastRemoteTransportCommand} />
+          {/* PHASE 4: Show spectator banner if in spectator mode */}
+          {isSpectator && <SpectatorBanner />}
+
+          {/* PHASE 5: Queue notification badge for editors */}
+          {!isSpectator && isInSession && (
+            <QueueNotificationBadge onClick={() => setQueueModalOpen(true)} />
+          )}
+
+          {/* PHASE 5: Queue modal */}
+          <SessionQueueModal
+            isOpen={queueModalOpen}
+            onClose={() => setQueueModalOpen(false)}
+          />
+
+          {/* PHASE 4: Pass isSpectator prop to DrumMachine for UI disabling */}
+          <DrumMachine
+            remoteTransportCommand={lastRemoteTransportCommand}
+            isSpectator={isSpectator}
+          />
 
           {/* Global Sound Selector Modal */}
           <SoundSelectorModal drumSounds={drumSounds} />
@@ -329,6 +407,9 @@ function DrumMachineApp() {
             onCreateNewRoom={handleCreateNewBeatFromCurrent}
             onBackToSelection={handleBackToSelection}
           />
+
+          {/* DEBUG: WebSocket diagnostics panel */}
+          <WebSocketDebug />
         </div>
       </motion.div>
     </AnimatePresence>
