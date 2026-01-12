@@ -204,6 +204,32 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* PHASE 6: Guest warning text */
+.guest-warning-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f59e0b;
+  background: #fff3cd;
+  padding: 6px 14px;
+  border-radius: 8px;
+  margin-right: 12px;
+  white-space: nowrap;
+  animation: fadeInSlide 0.3s ease;
+  letter-spacing: 0.02em;
+  border: 1px solid #fde68a;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Leave Room Button - Red (default styling) */
 .header-action-btn--leave {
   /* Uses default red styling from base .header-action-btn */

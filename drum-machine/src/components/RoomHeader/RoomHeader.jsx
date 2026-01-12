@@ -5,6 +5,7 @@ import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
 import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
 import UnsavedWorkModal from "../UnsavedWorkModal/UnsavedWorkModal";
+import AuthModal from "../AuthModal/AuthModal.jsx"; // PHASE 6
 import VisibilityToggle from "../VisibilityToggle/VisibilityToggle.jsx";
 import "./RoomHeader.css";
 
@@ -26,10 +27,18 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const { getSaveButtonInfo, hasUnsavedWork } = useAppStore((state) => state.beats);
   const saveButtonInfo = getSaveButtonInfo();
 
+  // PHASE 6: Get guest beat state for warning
+  const isGuestBeat = useAppStore((state) => state.beats.isGuestBeat);
+  const guestBeatModified = useAppStore((state) => state.beats.guestBeatModified);
+
   // Save beat modal state
   const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
   const [showUnsavedWorkModal, setShowUnsavedWorkModal] = useState(false);
   const [shouldNavigateAfterSave, setShouldNavigateAfterSave] = useState(false);
+
+  // PHASE 6: Auth modal state
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
 
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
@@ -83,9 +92,14 @@ function RoomHeader({ debugMode, setDebugMode }) {
   };
 
   const handleSignInClick = () => {
-    // Save current drum machine state before redirecting to login
-    saveStateBeforeLogin();
-    navigate("/login");
+    // PHASE 6: Open auth modal instead of navigating to /login
+    setShowAuthModal(true);
+  };
+
+  const handleAuthSuccess = () => {
+    // PHASE 6: Promote guest beat to owned beat after sign-in
+    promoteGuestBeat();
+    setShowAuthModal(false);
   };
 
   // Secret debug mode trigger - click the logo 5 times quickly
@@ -229,14 +243,22 @@ function RoomHeader({ debugMode, setDebugMode }) {
                 <span>My Beats</span>
               </button>
             ) : (
-              <button
-                className="header-action-btn header-action-btn--signin"
-                onClick={handleSignInClick}
-                title="Sign in to save beats"
-              >
-                <User size={16} />
-                <span>Sign In</span>
-              </button>
+              <>
+                {/* PHASE 6: Show warning text for guest users with modified beats */}
+                {isGuestBeat && guestBeatModified && (
+                  <span className="guest-warning-text">
+                    Sign in to save your work
+                  </span>
+                )}
+                <button
+                  className="header-action-btn header-action-btn--signin"
+                  onClick={handleSignInClick}
+                  title="Sign in to save beats"
+                >
+                  <User size={16} />
+                  <span>Sign In</span>
+                </button>
+              </>
             )}
 
             {/* Leave Beat Button */}
@@ -265,6 +287,13 @@ function RoomHeader({ debugMode, setDebugMode }) {
         onSave={handleSaveAndNavigate}
         onDiscard={handleDiscardAndNavigate}
         onCancel={handleCancelNavigation}
+      />
+
+      {/* PHASE 6: Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
       />
     </>
   );

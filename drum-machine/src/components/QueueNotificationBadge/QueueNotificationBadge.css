@@ -4,14 +4,14 @@
   right: 24px;
   width: 56px;
   height: 56px;
-  background: #4a90e2;
+  background: #5bc0eb;
   border: 3px solid white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.4);
   transition: all 0.2s ease;
   z-index: 999;
   color: white;
@@ -20,7 +20,7 @@
 
 .queue-notification-badge:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.5);
+  box-shadow: 0 6px 16px rgba(91, 192, 235, 0.5);
   animation: none;
 }
 
@@ -47,10 +47,10 @@
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+    box-shadow: 0 4px 12px rgba(91, 192, 235, 0.4);
   }
   50% {
-    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.6);
+    box-shadow: 0 4px 20px rgba(91, 192, 235, 0.6);
   }
 }
 

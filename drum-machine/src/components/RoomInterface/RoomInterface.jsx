@@ -49,6 +49,12 @@ function RoomInterface({ onJoinBeat, isConnected, error }) { // PHASE 2: onCreat
       const data = await response.json();
       console.log("Created new beat:", data);
 
+      // PHASE 6: Mark as guest beat if user is not authenticated
+      if (!isAuthenticated) {
+        console.log('[RoomInterface] Marking beat as guest beat');
+        useAppStore.getState().beats.markAsGuestBeat();
+      }
+
       // Navigate to beat's persistent room_id
       // DrumMachineApp will auto-join the beat session
       // Response format: { message: "...", beat: { roomId: "...", ... } }
@@ -218,7 +224,6 @@ function RoomInterface({ onJoinBeat, isConnected, error }) { // PHASE 2: onCreat
                 <button
                   className="room-btn room-btn--primary"
                   onClick={handleCreateBeat}
-                  disabled={!isAuthenticated}
                 >
                   Create Beat
                 </button>

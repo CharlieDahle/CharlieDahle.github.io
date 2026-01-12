@@ -15,7 +15,7 @@ const SessionQueueModal = ({ isOpen, onClose }) => {
     (state) => state.websocket.respondToQueueRequest
   );
 
-  // Track dropdown state for each request
+  // Track which request has dropdown open
   const [expandedRequest, setExpandedRequest] = useState(null);
 
   if (!isOpen) return null;
@@ -30,6 +30,10 @@ const SessionQueueModal = ({ isOpen, onClose }) => {
     setExpandedRequest(null);
   };
 
+  const toggleDropdown = (requestId) => {
+    setExpandedRequest(expandedRequest === requestId ? null : requestId);
+  };
+
   const getTimeAgo = (timestamp) => {
     const now = Date.now();
     const diff = now - new Date(timestamp).getTime();
@@ -41,10 +45,6 @@ const SessionQueueModal = ({ isOpen, onClose }) => {
     const hours = Math.floor(minutes / 60);
     if (hours === 1) return '1 hour ago';
     return `${hours} hours ago`;
-  };
-
-  const toggleDropdown = (requestId) => {
-    setExpandedRequest(expandedRequest === requestId ? null : requestId);
   };
 
   return (
@@ -66,91 +66,99 @@ const SessionQueueModal = ({ isOpen, onClose }) => {
             <div className="queue-modal-list">
               {queueRequests.map((request) => (
                 <div key={request.requestId} className="queue-modal-item">
-                  <div className="queue-modal-item-header">
-                    <div className="queue-modal-item-info">
-                      <span className="queue-modal-username">
-                        {request.username || 'Guest User'}
-                      </span>
+                  {/* Left side - User info */}
+                  <div className="queue-modal-item-left">
+                    <span className="queue-modal-username">
+                      {request.username || 'Guest User'}
+                    </span>
+                    <div className="queue-modal-info-row">
                       <span className="queue-modal-time">
-                        <Clock size={12} />
+                        <Clock size={11} />
                         {getTimeAgo(request.requestedAt)}
                       </span>
+                      {request.message && (
+                        <span className="queue-modal-message">
+                          "{request.message}"
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {request.message && (
-                    <p className="queue-modal-message">{request.message}</p>
-                  )}
-
+                  {/* Right side - Actions */}
                   <div className="queue-modal-actions">
-                    {/* Accept dropdown button */}
-                    <div className="queue-accept-dropdown">
+                    {/* For guests: Simple accept button (temporary only) */}
+                    {!request.userId ? (
                       <button
-                        className="queue-modal-button queue-accept-toggle"
-                        onClick={() => toggleDropdown(request.requestId)}
+                        className="queue-accept-main queue-accept-guest"
+                        onClick={() => handleApprove(request.requestId, 'temporary')}
                       >
-                        <Check size={16} />
+                        <Check size={14} />
                         Accept
-                        <ChevronDown size={14} />
                       </button>
+                    ) : (
+                      /* For authenticated users: Split button with dropdown */
+                      <div className="queue-accept-btn-group">
+                        <button
+                          className="queue-accept-main"
+                          onClick={() => handleApprove(request.requestId, 'temporary')}
+                        >
+                          <Check size={14} />
+                          Accept
+                        </button>
+                        <button
+                          className="queue-accept-dropdown-toggle"
+                          onClick={() => toggleDropdown(request.requestId)}
+                        >
+                          <ChevronDown size={14} />
+                        </button>
 
-                      {expandedRequest === request.requestId && (
-                        <div className="queue-accept-menu">
-                          <button
-                            className="queue-accept-option"
-                            onClick={() =>
-                              handleApprove(request.requestId, 'temporary')
-                            }
-                          >
-                            <div className="queue-accept-option-content">
-                              <span className="queue-accept-option-title">
+                        {/* Dropdown menu */}
+                        {expandedRequest === request.requestId && (
+                          <div className="queue-accept-dropdown">
+                            <button
+                              className="queue-accept-dropdown-item"
+                              onClick={() => handleApprove(request.requestId, 'temporary')}
+                            >
+                              <span className="queue-dropdown-item-title">
                                 Temporary Editor
                               </span>
-                              <span className="queue-accept-option-desc">
+                              <span className="queue-dropdown-item-desc">
                                 Can edit during this session only
                               </span>
-                            </div>
-                          </button>
-                          <button
-                            className="queue-accept-option"
-                            onClick={() =>
-                              handleApprove(request.requestId, 'collaborator')
-                            }
-                          >
-                            <div className="queue-accept-option-content">
-                              <span className="queue-accept-option-title">
+                            </button>
+                            <button
+                              className="queue-accept-dropdown-item"
+                              onClick={() => handleApprove(request.requestId, 'collaborator')}
+                            >
+                              <span className="queue-dropdown-item-title">
                                 Collaborator
                               </span>
-                              <span className="queue-accept-option-desc">
+                              <span className="queue-dropdown-item-desc">
                                 Can edit anytime, no ownership
                               </span>
-                            </div>
-                          </button>
-                          <button
-                            className="queue-accept-option"
-                            onClick={() =>
-                              handleApprove(request.requestId, 'co-owner')
-                            }
-                          >
-                            <div className="queue-accept-option-content">
-                              <span className="queue-accept-option-title">
+                            </button>
+                            <button
+                              className="queue-accept-dropdown-item"
+                              onClick={() => handleApprove(request.requestId, 'co-owner')}
+                            >
+                              <span className="queue-dropdown-item-title">
                                 Co-Owner
                               </span>
-                              <span className="queue-accept-option-desc">
+                              <span className="queue-dropdown-item-desc">
                                 Full permissions including delete
                               </span>
-                            </div>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Deny button */}
                     <button
-                      className="queue-modal-button queue-deny"
+                      className="queue-deny"
                       onClick={() => handleDeny(request.requestId)}
                     >
-                      <XIcon size={16} />
+                      <XIcon size={14} />
                       Deny
                     </button>
                   </div>

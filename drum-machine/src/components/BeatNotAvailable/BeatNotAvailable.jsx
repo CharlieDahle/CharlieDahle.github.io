@@ -1,11 +1,29 @@
 // src/components/BeatNotAvailable/BeatNotAvailable.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, ArrowLeft } from "lucide-react";
+import { Lock, ArrowLeft, UserPlus } from "lucide-react";
+import { useAppStore } from "../../stores/useAppStore";
 import "./BeatNotAvailable.css";
 
-function BeatNotAvailable() {
+function BeatNotAvailable({ beatId }) {
   const navigate = useNavigate();
+  const requestEditAccess = useAppStore((state) => state.websocket.requestEditAccess);
+  const isConnected = useAppStore((state) => state.websocket.isConnected);
+  const [hasRequested, setHasRequested] = useState(false);
+
+  const handleRequestAccess = () => {
+    if (!beatId) {
+      console.error('[BeatNotAvailable] No beatId provided');
+      return;
+    }
+    if (!isConnected) {
+      console.error('[BeatNotAvailable] Not connected to WebSocket');
+      return;
+    }
+    console.log('[BeatNotAvailable] Requesting edit access for beat:', beatId);
+    requestEditAccess(beatId); // Pass beatId as parameter
+    setHasRequested(true);
+  };
 
   return (
     <div className="beat-not-available">
@@ -18,15 +36,25 @@ function BeatNotAvailable() {
           This beat is private and you don't have access to view it.
         </p>
         <p className="hint">
-          If you believe you should have access, ask the beat owner to add you as a collaborator.
+          Request access and the beat owner will be notified.
         </p>
-        <button
-          className="back-button"
-          onClick={() => navigate("/beats")}
-        >
-          <ArrowLeft size={18} />
-          Back to Beats
-        </button>
+        <div className="button-group">
+          <button
+            className="request-access-button"
+            onClick={handleRequestAccess}
+            disabled={hasRequested}
+          >
+            <UserPlus size={18} />
+            {hasRequested ? "Request Sent" : "Request Access"}
+          </button>
+          <button
+            className="back-button"
+            onClick={() => navigate("/beats")}
+          >
+            <ArrowLeft size={18} />
+            Back to Beats
+          </button>
+        </div>
       </div>
     </div>
   );

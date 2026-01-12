@@ -9,12 +9,13 @@ import ListeningMode from "../ListeningMode/ListeningMode.jsx";
 import SpectatorBanner from "../SpectatorBanner/SpectatorBanner.jsx"; // PHASE 4
 import QueueNotificationBadge from "../QueueNotificationBadge/QueueNotificationBadge.jsx"; // PHASE 5
 import SessionQueueModal from "../SessionQueueModal/SessionQueueModal.jsx"; // PHASE 5
+import AuthModal from "../AuthModal/AuthModal.jsx"; // PHASE 6
+import GuestAuthPrompt from "../GuestAuthPrompt/GuestAuthPrompt.jsx"; // PHASE 6
 import SoundSelectorModal from "../SoundSelectorModal/SoundSelectorModal.jsx";
 import EffectsModal from "../EffectsModal/EffectsModal.jsx";
 import RoomNotFoundModal from "../RoomNotFoundModal/RoomNotFoundModal.jsx";
 import BeatNotAvailable from "../BeatNotAvailable/BeatNotAvailable.jsx"; // Private beat error
 import AnimatedBackground from "../AnimatedBackground/AnimatedBackground.jsx";
-import WebSocketDebug from "../WebSocketDebug/WebSocketDebug.jsx"; // DEBUG: WebSocket diagnostics
 import drumSounds from "../../assets/data/drum-sounds.json";
 
 // Define these outside the component to prevent recreating arrays on every render
@@ -32,6 +33,13 @@ function DrumMachineApp() {
 
   // PHASE 5: Queue modal state
   const [queueModalOpen, setQueueModalOpen] = useState(false);
+
+  // PHASE 6: Guest auth state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const isAuthenticated = useAppStore((state) => state.auth.isAuthenticated);
+  const isGuestBeat = useAppStore((state) => state.beats.isGuestBeat);
+  const guestBeatModified = useAppStore((state) => state.beats.guestBeatModified);
+  const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
 
   // Get WebSocket state and actions
   const isConnected = useAppStore((state) => state.websocket.isConnected);
@@ -88,6 +96,28 @@ function DrumMachineApp() {
   // NOTE: WebSocket initialization is now handled in main.jsx AppInitializer
   // So we don't need to call initializeConnection() here anymore
 
+  // PHASE 6: Handle beforeunload for guest beats
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Only prompt if guest has modified work
+      if (!isAuthenticated && isGuestBeat && guestBeatModified) {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome requires returnValue to be set
+        return ''; // For older browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isAuthenticated, isGuestBeat, guestBeatModified]);
+
+  // PHASE 6: Handle successful authentication (promote guest beat)
+  const handleAuthSuccess = () => {
+    console.log('[DrumMachineApp] Auth successful, promoting guest beat');
+    promoteGuestBeat();
+    setAuthModalOpen(false);
+  };
+
   // PHASE 3: Check access level when beat ID changes
   useEffect(() => {
     const checkAccess = async () => {
@@ -101,7 +131,7 @@ function DrumMachineApp() {
         setCheckingAccess(true);
         // Add cache-busting to prevent 304 responses
         // Include auth headers so server knows who is requesting
-        const authHeaders = getAuthHeaders();
+        const authHeaders = getAuthHeaders(urlBeatId); // Pass beatId for guest token
         const response = await fetch(`/api/beats/${urlBeatId}/access?t=${Date.now()}`, {
           headers: {
             ...authHeaders,
@@ -149,6 +179,14 @@ function DrumMachineApp() {
 
     checkAccess();
   }, [urlBeatId]);
+
+  // PHASE 5: Switch to edit mode when session is joined
+  useEffect(() => {
+    if (isInSession && mode === "error") {
+      console.log("[DrumMachineApp] Session joined, switching from error to edit mode");
+      setMode("edit");
+    }
+  }, [isInSession, mode]);
 
   // Sync beat session state with URL
   useEffect(() => {
@@ -322,7 +360,7 @@ function DrumMachineApp() {
 
   // Show error screen for private beats or no access
   if (mode === "error") {
-    return <BeatNotAvailable />;
+    return <BeatNotAvailable beatId={urlBeatId} />;
   }
 
   // PHASE 3: Show listening mode for spectators
@@ -380,6 +418,13 @@ function DrumMachineApp() {
           {/* PHASE 4: Show spectator banner if in spectator mode */}
           {isSpectator && <SpectatorBanner />}
 
+          {/* PHASE 6: Guest auth prompt - show when guest has modified work */}
+          {!isAuthenticated && isGuestBeat && guestBeatModified && (
+            <GuestAuthPrompt
+              onSignIn={() => setAuthModalOpen(true)}
+            />
+          )}
+
           {/* PHASE 5: Queue notification badge for editors */}
           {!isSpectator && isInSession && (
             <QueueNotificationBadge onClick={() => setQueueModalOpen(true)} />
@@ -389,6 +434,13 @@ function DrumMachineApp() {
           <SessionQueueModal
             isOpen={queueModalOpen}
             onClose={() => setQueueModalOpen(false)}
+          />
+
+          {/* PHASE 6: Auth modal */}
+          <AuthModal
+            isOpen={authModalOpen}
+            onClose={() => setAuthModalOpen(false)}
+            onSuccess={handleAuthSuccess}
           />
 
           {/* PHASE 4: Pass isSpectator prop to DrumMachine for UI disabling */}
@@ -407,9 +459,6 @@ function DrumMachineApp() {
             onCreateNewRoom={handleCreateNewBeatFromCurrent}
             onBackToSelection={handleBackToSelection}
           />
-
-          {/* DEBUG: WebSocket diagnostics panel */}
-          <WebSocketDebug />
         </div>
       </motion.div>
     </AnimatePresence>

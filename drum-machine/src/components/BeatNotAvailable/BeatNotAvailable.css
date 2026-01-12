@@ -90,3 +90,44 @@
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.request-access-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #5bc0eb;
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(91, 192, 235, 0.3);
+}
+
+.request-access-button:hover:not(:disabled) {
+  background: #4aa8d8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 192, 235, 0.4);
+}
+
+.request-access-button:disabled {
+  background: #e2e8f0;
+  color: #718096;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.request-access-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(91, 192, 235, 0.3);
+}

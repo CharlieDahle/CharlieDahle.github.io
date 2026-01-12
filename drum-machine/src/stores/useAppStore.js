@@ -67,10 +67,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -95,10 +93,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -124,10 +120,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -158,10 +152,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -183,10 +175,8 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -198,10 +188,8 @@ export const useAppStore = create((set, get) => ({
     clearAllTracks: () => {
       set((state) => ({ pattern: { ...state.pattern, data: {} } }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
     },
 
     setPattern: (newPattern) => {
@@ -224,10 +212,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
     },
 
     // ... rest of pattern methods remain the same
@@ -322,10 +308,8 @@ export const useAppStore = create((set, get) => ({
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
       set((state) => ({ transport: { ...state.transport, bpm: clampedBpm } }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendBpmChange(clampedBpm);
     },
@@ -343,10 +327,8 @@ export const useAppStore = create((set, get) => ({
         };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
@@ -363,10 +345,8 @@ export const useAppStore = create((set, get) => ({
         };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
@@ -831,8 +811,14 @@ export const useAppStore = create((set, get) => ({
       newSocket.on("connect", () => {
         console.log(`Connected to server, ID: ${newSocket.id}`);
 
-        const { websocket } = get();
+        const { websocket, auth } = get();
         const wasReconnecting = websocket.reconnectStartTime !== null;
+
+        // PHASE 6: Send authentication if user is logged in
+        if (auth.isAuthenticated && auth.token) {
+          console.log("Sending authentication to socket server");
+          newSocket.emit("authenticate", { token: auth.token });
+        }
 
         set((state) => ({
           websocket: {
@@ -1123,17 +1109,32 @@ export const useAppStore = create((set, get) => ({
         }));
       });
 
-      newSocket.on("edit-access-granted", ({ beatId, message }) => {
+      newSocket.on("edit-access-granted", ({ beatId, role, accessToken, message }) => {
         console.log("Edit access granted:", message);
-        debugLog("in", "edit-access-granted", { beatId, message });
+        debugLog("in", "edit-access-granted", { beatId, role, message });
 
-        // Promote from spectator to editor
-        set((state) => ({
-          websocket: {
-            ...state.websocket,
-            isSpectator: false,
-          },
-        }));
+        // Store access token in localStorage for guest users
+        if (accessToken) {
+          localStorage.setItem(`guest-access-${beatId}`, accessToken);
+          console.log("Stored guest access token in localStorage");
+        }
+
+        const { isInSession } = get().websocket;
+
+        if (isInSession) {
+          // Already in session as spectator - promote to editor
+          set((state) => ({
+            websocket: {
+              ...state.websocket,
+              isSpectator: false,
+            },
+          }));
+          console.log("Promoted to editor in current session");
+        } else {
+          // Not in session - refresh page to re-check access
+          console.log("Reloading page to apply new access...");
+          window.location.reload();
+        }
 
         // Show success notification
         get().ui.setError(null);
@@ -1425,6 +1426,7 @@ export const useAppStore = create((set, get) => ({
                     response.roomState?.spectators ||
                     response.beatData?.spectators ||
                     [],
+                  queueRequests: response.pendingRequests || [], // PHASE 5: Load pending requests
                   error: null,
                 },
               }));
@@ -1470,10 +1472,17 @@ export const useAppStore = create((set, get) => ({
     },
 
     // PHASE 5: Request temporary edit access to a beat
-    requestEditAccess: (message = null) => {
-      const { socket, beatId } = get().websocket;
-      if (!socket || !beatId) {
-        console.error("Cannot request edit access: not connected or no beat ID");
+    requestEditAccess: (targetBeatId = null, message = null) => {
+      const { socket, beatId: currentBeatId } = get().websocket;
+      const beatId = targetBeatId || currentBeatId; // Allow passing beatId or use current
+
+      if (!socket) {
+        console.error("Cannot request edit access: not connected");
+        return;
+      }
+
+      if (!beatId) {
+        console.error("Cannot request edit access: no beat ID");
         return;
       }
 
@@ -1810,6 +1819,13 @@ export const useAppStore = create((set, get) => ({
           },
         }));
 
+        // PHASE 6: Re-authenticate socket if connected
+        const socket = get().websocket.socket;
+        if (socket && socket.connected) {
+          console.log("Re-authenticating socket after registration");
+          socket.emit("authenticate", { token: data.token });
+        }
+
         return data.user;
       } catch (error) {
         set((state) => ({
@@ -1862,6 +1878,13 @@ export const useAppStore = create((set, get) => ({
             error: null,
           },
         }));
+
+        // PHASE 6: Re-authenticate socket if connected
+        const socket = get().websocket.socket;
+        if (socket && socket.connected) {
+          console.log("Re-authenticating socket after login");
+          socket.emit("authenticate", { token: data.token });
+        }
 
         return data.user;
       } catch (error) {
@@ -2036,23 +2059,30 @@ export const useAppStore = create((set, get) => ({
     },
 
     // Helper to get auth headers for API calls
-    getAuthHeaders: () => {
+    getAuthHeaders: (beatId = null) => {
       const { token, isAuthenticated } = get().auth;
+
+      // Check for guest access token if beatId provided
+      const guestToken = beatId ? localStorage.getItem(`guest-access-${beatId}`) : null;
 
       console.log("🔐 Auth Debug:", {
         isAuthenticated,
         hasToken: !!token,
+        hasGuestToken: !!guestToken,
         tokenPreview: token ? `${token.substring(0, 10)}...` : "null",
       });
 
-      const headers = token
-        ? {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
-        : {
-            "Content-Type": "application/json",
-          };
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      if (guestToken) {
+        headers["X-Guest-Access-Token"] = guestToken;
+      }
 
       console.log("🔐 Generated headers:", headers);
       return headers;
@@ -2069,6 +2099,9 @@ export const useAppStore = create((set, get) => ({
     // NEW: Track the currently loaded beat
     currentlyLoadedBeat: null, // { id, name, lastModified }
     hasUnsavedChanges: false,
+    // PHASE 6: Track guest beat state
+    isGuestBeat: false, // Whether current beat is a guest-created orphan beat
+    guestBeatModified: false, // Whether guest has made edits (triggers warning)
 
     // Fetch user's saved beats
     fetchUserBeats: async () => {
@@ -2168,10 +2201,39 @@ export const useAppStore = create((set, get) => ({
 
     // NEW: Mark as having unsaved changes
     markAsModified: () => {
+      const isGuest = get().beats.isGuestBeat;
+      console.log('[Store] markAsModified called - isGuestBeat:', isGuest);
       set((state) => ({
         beats: {
           ...state.beats,
           hasUnsavedChanges: true,
+          // PHASE 6: Mark guest beat as modified if it's a guest beat
+          guestBeatModified: state.beats.isGuestBeat ? true : state.beats.guestBeatModified,
+        },
+      }));
+      console.log('[Store] After markAsModified - guestBeatModified:', get().beats.guestBeatModified);
+    },
+
+    // PHASE 6: Mark current beat as a guest beat (orphan beat)
+    markAsGuestBeat: () => {
+      console.log('[Store] markAsGuestBeat called - setting isGuestBeat to true');
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          isGuestBeat: true,
+          guestBeatModified: false, // Reset on creation
+        },
+      }));
+      console.log('[Store] isGuestBeat set:', get().beats.isGuestBeat);
+    },
+
+    // PHASE 6: Promote guest beat to owned beat (after sign-in)
+    promoteGuestBeat: () => {
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          isGuestBeat: false,
+          guestBeatModified: false, // Clear warning after promotion
         },
       }));
     },
@@ -3174,10 +3236,8 @@ export const useAppStore = create((set, get) => ({
       const completeEffectsState = get().effects.getTrackEffects(trackId);
       get().websocket.sendEffectStateApply(trackId, completeEffectsState);
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       console.log(
         `✅ Applied and broadcast effect changes for track ${trackId}`

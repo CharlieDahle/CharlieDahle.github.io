@@ -2614,7 +2614,7 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 
 ---
 
-### Phase 4: Spectator Mode (Week 2-3)
+### Phase 4: Spectator Mode ✅ COMPLETE
 
 **Goal:** Users can watch active sessions in real-time
 
@@ -2639,9 +2639,16 @@ CREATE INDEX idx_session_queue_status ON session_queue(status);
 
 ---
 
-### Phase 5: Admittance Queue (Week 3)
+### Phase 5: Admittance Queue ✅ COMPLETE
 
 **Goal:** Request temporary edit access to sessions
+
+**Implementation Notes:**
+- Uses floating badge notification (bottom-right) instead of inline queue
+- Modal popup for queue management (matches SoundSelectorModal styling)
+- Guest access via localStorage tokens (1-hour expiry)
+- Role selection: temporary/collaborator/co-owner
+- Works from both BeatNotAvailable page and SpectatorBanner
 
 **Tasks:**
 
