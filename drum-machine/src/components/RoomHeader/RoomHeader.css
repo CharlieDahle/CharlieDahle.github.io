@@ -115,6 +115,45 @@
   font-weight: 500;
 }
 
+/* PHASE 7: Auto-Save Status Badge (Google Docs Style) */
+.auto-save-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+}
+
+/* Saved state - green checkmark */
+.auto-save-status--saved {
+  color: #28a745;
+  background: transparent;
+}
+
+.auto-save-status--saved svg {
+  color: #28a745;
+}
+
+/* Pending/not saved state - gray */
+.auto-save-status--pending {
+  color: #6c757d;
+  background: transparent;
+}
+
+.auto-save-status--pending svg {
+  color: #6c757d;
+}
+
+/* Hover effect - subtle background */
+.auto-save-status:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 /* Header Actions Container */
 .header-actions {
   display: flex;

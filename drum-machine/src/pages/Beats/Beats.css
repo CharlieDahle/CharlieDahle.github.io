@@ -590,10 +590,69 @@
 .beat-card-footer {
   padding-top: 16px;
   border-top: 1px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-beat-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  color: #adb5bd;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+}
+
+.delete-beat-btn:hover {
+  background: #fff0f0;
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.delete-confirm {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #495057;
+}
+
+.delete-confirm-yes {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delete-confirm-yes:hover {
+  background: #c0392b;
+}
+
+.delete-confirm-no {
+  background: none;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #495057;
+}
+
+.delete-confirm-no:hover {
+  background: #f8f9fa;
 }
 
 .load-beat-btn {
-  width: 100%;
+  flex: 1;
   background: #5bc0eb;
   color: white;
   border: none;

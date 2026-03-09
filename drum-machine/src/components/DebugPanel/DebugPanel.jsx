@@ -19,6 +19,7 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
   const [activeTab, setActiveTab] = useState("pattern");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [messageLog, setMessageLog] = useState([]);
+  const [beatNameInput, setBeatNameInput] = useState("");
 
   // Get all the data we want to monitor
   const patternData = useAppStore((state) => state.pattern.data);
@@ -26,6 +27,15 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
   const websocketState = useAppStore((state) => state.websocket);
   const tracks = useAppStore((state) => state.tracks.list);
   const transport = useAppStore((state) => state.transport);
+  const currentlyLoadedBeat = useAppStore((state) => state.beats.currentlyLoadedBeat);
+  const renameBeat = useAppStore((state) => state.beats.renameBeat);
+  const isAuthenticated = useAppStore((state) => state.auth.isAuthenticated);
+  const beatId = useAppStore((state) => state.websocket.beatId);
+  const beatName = useAppStore((state) => state.websocket.beatName);
+
+  useEffect(() => {
+    setBeatNameInput(beatName || currentlyLoadedBeat?.name || "");
+  }, [beatName, currentlyLoadedBeat?.name, beatId]);
 
   // Message log management
   const addMessageToLog = (direction, type, data, timestamp = null) => {
@@ -237,6 +247,19 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
             {activeTab === "pattern" && (
               <div>
                 <h3>Pattern Overview</h3>
+                {beatId && isAuthenticated && (
+                  <div className="stat-item" style={{ marginBottom: "12px" }}>
+                    <span className="stat-label">Beat Name:</span>
+                    <input
+                      type="text"
+                      value={beatNameInput}
+                      onChange={(e) => setBeatNameInput(e.target.value)}
+                      onBlur={() => renameBeat(beatNameInput)}
+                      onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+                      style={{ background: "transparent", border: "1px solid #444", color: "inherit", padding: "2px 6px", borderRadius: "4px", fontSize: "inherit", width: "200px" }}
+                    />
+                  </div>
+                )}
                 <div className="stats-grid">
                   <div className="stat-item">
                     <span className="stat-label">Total Notes:</span>

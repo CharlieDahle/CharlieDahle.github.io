@@ -1072,6 +1072,21 @@ export const useAppStore = create((set, get) => ({
         get().transport.syncMeasureCount(measureCount);
       });
 
+      // PHASE 7: Auto-save events
+      newSocket.on("beat-auto-saved", ({ beatId, savedAt, savedBy }) => {
+        console.log("Beat auto-saved:", { beatId, savedAt, savedBy });
+        debugLog("in", "beat-auto-saved", { beatId, savedAt, savedBy });
+
+        // Update beats state with last saved info
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            lastSavedAt: savedAt,
+            lastSavedBy: savedBy,
+          },
+        }));
+      });
+
       // Track events
       newSocket.on("track-added", ({ trackData }) => {
         console.log("Track added:", trackData);
@@ -1418,6 +1433,7 @@ export const useAppStore = create((set, get) => ({
                 websocket: {
                   ...state.websocket,
                   beatId: targetBeatId.trim(),
+                  beatName: response.roomState?.beatName || response.beatData?.beatName || null,
                   isInSession: true,
                   isSpectator: response.isSpectator || asSpectator,
                   users:
@@ -2102,6 +2118,9 @@ export const useAppStore = create((set, get) => ({
     // PHASE 6: Track guest beat state
     isGuestBeat: false, // Whether current beat is a guest-created orphan beat
     guestBeatModified: false, // Whether guest has made edits (triggers warning)
+    // PHASE 7: Track auto-save status
+    lastSavedAt: null, // ISO timestamp string from last auto-save
+    lastSavedBy: null, // User ID who last saved the beat
 
     // Fetch user's saved beats
     fetchUserBeats: async () => {
@@ -2145,6 +2164,26 @@ export const useAppStore = create((set, get) => ({
           },
         }));
         throw error;
+      }
+    },
+
+    deleteBeat: async (beatId) => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatId}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (response.ok) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            userBeats: state.beats.userBeats.filter((b) => b.id !== beatId),
+          },
+        }));
+      } else {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete beat");
       }
     },
 
@@ -2413,6 +2452,28 @@ export const useAppStore = create((set, get) => ({
       }
 
       return false;
+    },
+
+    renameBeat: async (newName) => {
+      const beatId = get().websocket.beatId;
+      if (!beatId || !newName?.trim()) return;
+
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatId}/name`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      if (response.ok) {
+        set((state) => ({
+          websocket: { ...state.websocket, beatName: newName.trim() },
+          beats: state.beats.currentlyLoadedBeat ? {
+            ...state.beats,
+            currentlyLoadedBeat: { ...state.beats.currentlyLoadedBeat, name: newName.trim() },
+          } : state.beats,
+        }));
+      }
     },
 
     // Also update the loadBeat method to ensure proper state reset:

@@ -15,6 +15,7 @@ import {
   ChevronDown,
   DoorOpen,
   History,
+  Trash2,
 } from "lucide-react";
 import { getRecentRooms } from "../../utils/recentRooms";
 import "./Beats.css";
@@ -22,6 +23,7 @@ import "./Beats.css";
 function Beats() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingBeatId, setLoadingBeatId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState("");
@@ -42,6 +44,7 @@ function Beats() {
     clearError,
     getSaveButtonInfo,
     createNewBeat,
+    deleteBeat,
   } = useAppStore((state) => state.beats);
 
   // PHASE 2: WebSocket functions for joining beat sessions
@@ -237,6 +240,15 @@ function Beats() {
       navigate(`/DrumMachine/${beatId}`);
     } catch (error) {
       console.error("Failed to navigate to beat:", error);
+    }
+  };
+
+  const handleDeleteBeat = async (beat) => {
+    try {
+      await deleteBeat(beat.id);
+      setConfirmDeleteId(null);
+    } catch (error) {
+      console.error("Failed to delete beat:", error);
     }
   };
 
@@ -529,6 +541,32 @@ function Beats() {
                             "Load Beat"
                           )}
                         </button>
+
+                        {confirmDeleteId === beat.id ? (
+                          <div className="delete-confirm">
+                            <span>Delete?</span>
+                            <button
+                              className="delete-confirm-yes"
+                              onClick={() => handleDeleteBeat(beat)}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              className="delete-confirm-no"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="delete-beat-btn"
+                            onClick={() => setConfirmDeleteId(beat.id)}
+                            title="Delete beat"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
