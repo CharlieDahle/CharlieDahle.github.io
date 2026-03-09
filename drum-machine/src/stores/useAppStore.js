@@ -1242,8 +1242,8 @@ export const useAppStore = create((set, get) => ({
     startReconnection: () => {
       const { websocket } = get();
 
-      // Don't start if already failed or if we don't have a room to rejoin
-      if (websocket.connectionState === "failed" || !websocket.roomId) {
+      // Don't start if already failed or if we don't have a beat to rejoin
+      if (websocket.connectionState === "failed" || !websocket.beatId) {
         return;
       }
 
@@ -1767,6 +1767,7 @@ export const useAppStore = create((set, get) => ({
   // ============================================================================
   auth: {
     isAuthenticated: false,
+    isAuthInitialized: false,
     user: null,
     token: null,
     isLoading: false,
@@ -1784,6 +1785,7 @@ export const useAppStore = create((set, get) => ({
             auth: {
               ...state.auth,
               isAuthenticated: true,
+              isAuthInitialized: true,
               user,
               token,
             },
@@ -1791,7 +1793,10 @@ export const useAppStore = create((set, get) => ({
         } catch (error) {
           console.error("Failed to parse stored user data:", error);
           get().auth.logout(); // Clear invalid data
+          set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
         }
+      } else {
+        set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
       }
     },
 
@@ -2110,6 +2115,8 @@ export const useAppStore = create((set, get) => ({
   // ============================================================================
   beats: {
     userBeats: [],
+    sharedBeats: [],
+    publicBeats: [],
     isLoading: false,
     error: null,
     // NEW: Track the currently loaded beat
@@ -2184,6 +2191,42 @@ export const useAppStore = create((set, get) => ({
       } else {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete beat");
+      }
+    },
+
+    fetchSharedBeats: async () => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch("/api/beats/shared", { headers });
+      if (response.ok) {
+        const data = await response.json();
+        set((state) => ({ beats: { ...state.beats, sharedBeats: data.beats } }));
+      }
+    },
+
+    fetchPublicBeats: async () => {
+      const response = await fetch("/api/beats/public");
+      if (response.ok) {
+        const data = await response.json();
+        set((state) => ({ beats: { ...state.beats, publicBeats: data.beats } }));
+      }
+    },
+
+    updateBeatVisibility: async (beatRoomId, visibility) => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatRoomId}/visibility`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ visibility }),
+      });
+      if (response.ok) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            userBeats: state.beats.userBeats.map((b) =>
+              b.room_id === beatRoomId ? { ...b, visibility } : b
+            ),
+          },
+        }));
       }
     },
 

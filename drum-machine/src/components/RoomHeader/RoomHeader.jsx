@@ -11,7 +11,8 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const navigate = useNavigate();
 
   // PHASE 2: Get beat session info from WebSocket slice
-  const beatId = useAppStore((state) => state.websocket.beatId); // PHASE 2: renamed from roomId
+  const beatId = useAppStore((state) => state.websocket.beatId);
+  const beatName = useAppStore((state) => state.websocket.beatName);
   const users = useAppStore((state) => state.websocket.users);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
@@ -118,6 +119,9 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   const userCount = users.length;
   const isConnected = connectionState === "connected";
+  const isReconnecting = connectionState === "connecting" || connectionState === "disconnected";
+  const isSyncing = connectionState === "syncing";
+  const isFailed = connectionState === "failed";
 
   // PHASE 7: Get auto-save status text
   const getAutoSaveStatus = () => {
@@ -174,6 +178,24 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   return (
     <>
+      {/* Connection status banner */}
+      {beatId && (isReconnecting || isSyncing || isFailed) && (
+        <div className={`connection-banner connection-banner--${isFailed ? "failed" : isReconnecting ? "reconnecting" : "syncing"}`}>
+          {isFailed ? (
+            <>⚠ Could not reconnect. Your changes may not be saved.</>
+          ) : isReconnecting ? (
+            <>
+              <span className="connection-banner-spinner" />
+              Reconnecting...
+            </>
+          ) : (
+            <>
+              <span className="connection-banner-spinner" />
+              Syncing session...
+            </>
+          )}
+        </div>
+      )}
       <div className="floating-card room-header-card">
         <div className="room-header-content">
           <div className="title-section">
@@ -197,6 +219,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
             </div>
             <div className="room-info">
               <div className="room-code-line">
+                {beatName && <span className="beat-name-label">{beatName}</span>}
                 Beat ID: {beatId}
                 <div className="user-count-badge">
                   <Users size={16} />
@@ -209,9 +232,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
           </div>
 
           <div className="header-actions">
-            {/* Visibility Toggle - only show for authenticated users */}
-            <VisibilityToggle />
-
             {/* PHASE 7: Auto-Save Status Badge (Google Docs style) */}
             {(() => {
               const status = getAutoSaveStatus();
@@ -222,6 +242,9 @@ function RoomHeader({ debugMode, setDebugMode }) {
                 </div>
               ) : null;
             })()}
+
+            {/* Visibility Toggle - only show for authenticated users */}
+            <VisibilityToggle />
 
             {/* Navigate to Beats (if authenticated) or Sign In (if not) */}
             {isAuthenticated ? (

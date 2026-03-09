@@ -42,6 +42,7 @@ function DrumMachineApp() {
   const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
 
   // Get WebSocket state and actions
+  const isAuthInitialized = useAppStore((state) => state.auth.isAuthInitialized);
   const isConnected = useAppStore((state) => state.websocket.isConnected);
   const isInSession = useAppStore((state) => state.websocket.isInSession); // PHASE 2: renamed from isInRoom
   const isSpectator = useAppStore((state) => state.websocket.isSpectator); // PHASE 4
@@ -127,6 +128,8 @@ function DrumMachineApp() {
         return;
       }
 
+      if (!isAuthInitialized) return;
+
       try {
         setCheckingAccess(true);
         // Add cache-busting to prevent 304 responses
@@ -178,7 +181,7 @@ function DrumMachineApp() {
     };
 
     checkAccess();
-  }, [urlBeatId]);
+  }, [urlBeatId, isAuthInitialized]);
 
   // PHASE 5: Switch to edit mode when session is joined
   useEffect(() => {
@@ -231,6 +234,7 @@ function DrumMachineApp() {
         // Error will be handled by beat-not-found modal
       });
     }
+
 
     // If URL has no beat ID but we're in a session, leave it
     if (!urlBeatId && isInSession) {

@@ -7,15 +7,16 @@
 .visibility-button {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 10px 9px;
   border: 2px solid;
-  border-radius: 8px;
+  border-radius: 12px;
   background: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 .visibility-button:hover {
@@ -29,8 +30,8 @@
 }
 
 .visibility-button--public {
-  border-color: #48bb78;
-  color: #48bb78;
+  border-color: #ff97c4;
+  color: #ff97c4;
 }
 
 .visibility-button--unlisted {
