@@ -9,7 +9,7 @@ import "./RoomInterface.css";
 // Define blob count range outside component to prevent recreating on every render
 const ROOM_BLOB_COUNT = [2, 5];
 
-function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
+function RoomInterface({ onJoinBeat, isConnected, error }) { // PHASE 2: onCreateRoom removed, beats created via API
   const navigate = useNavigate();
   const [joinRoomId, setJoinRoomId] = useState("");
   const [createError, setCreateError] = useState("");
@@ -19,29 +19,72 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
   // Get auth state from store
   const { isAuthenticated, user, logout, saveStateBeforeLogin } = useAppStore((state) => state.auth);
 
-  const handleCreateRoom = async () => {
+  const handleCreateBeat = async () => {
+    // PHASE 2: Create beat via API, then navigate to its room_id
     setCreateError("");
 
     try {
-      const result = await onCreateRoom();
+      const getAuthHeaders = useAppStore.getState().auth.getAuthHeaders;
+
+      // Create beat in database via API
+      const response = await fetch('/api/beats', {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: 'Untitled Beat',
+          patternData: {}, // Backend expects camelCase
+          tracksConfig: [], // Will be initialized with defaults on backend
+          bpm: 120,
+          measureCount: 4
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create beat');
+      }
+
+      const data = await response.json();
+      console.log("Created new beat:", data);
+
+      // PHASE 6: Mark as guest beat if user is not authenticated
+      if (!isAuthenticated) {
+        console.log('[RoomInterface] Marking beat as guest beat');
+        useAppStore.getState().beats.markAsGuestBeat();
+      }
+
+      // Navigate to beat's persistent room_id
+      // DrumMachineApp will auto-join the beat session
+      // Response format: { message: "...", beat: { roomId: "...", ... } }
+      const beat = data.beat;
+      const roomId = beat.roomId || beat.room_id;
+      if (!roomId) {
+        throw new Error('Beat created but missing room_id');
+      }
+      navigate(`/DrumMachine/${roomId}`);
     } catch (err) {
-      setCreateError("Failed to create room. Please try again.");
+      console.error("Failed to create beat:", err);
+      setCreateError("Failed to create beat. Please try again.");
     }
   };
 
-  const handleJoinRoom = async () => {
+  const handleJoinBeat = async () => {
+    // PHASE 2: Simply navigate to beat ID, auto-join will happen in DrumMachineApp
     setJoinError("");
 
     if (!joinRoomId.trim()) {
-      setJoinError("Please enter a room code");
+      setJoinError("Please enter a beat code");
       return;
     }
 
     try {
-      await onJoinRoom(joinRoomId);
+      // Navigate to beat - DrumMachineApp will handle auto-join
+      navigate(`/DrumMachine/${joinRoomId.trim()}`);
     } catch (err) {
-      console.log("RoomInterface: Join failed:", err);
-      setJoinError("Room not found. Please check the code and try again.");
+      console.log("RoomInterface: Navigation failed:", err);
+      setJoinError("Failed to join beat. Please try again.");
     }
   };
 
@@ -102,7 +145,7 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
       </a>
 
       {/* Quick Rejoin Tab - Bottom Left */}
-      <QuickRejoin onJoinRoom={onJoinRoom} />
+      <QuickRejoin onJoinBeat={onJoinBeat} />
 
       {/* Status Badges - Top Right of Screen */}
       <div className="room-status-badges">
@@ -172,18 +215,17 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                 <div className="action-header">
                   <div className="action-icon action-icon--create">+</div>
                   <div>
-                    <h3 className="action-title">Create New Room</h3>
+                    <h3 className="action-title">Create New Beat</h3>
                     <p className="action-description">
-                      Start a new session and invite friends to join
+                      Start a new beat and collaborate in real-time
                     </p>
                   </div>
                 </div>
                 <button
                   className="room-btn room-btn--primary"
-                  onClick={handleCreateRoom}
-                  disabled={!isConnected}
+                  onClick={handleCreateBeat}
                 >
-                  Create Room
+                  Create Beat
                 </button>
 
                 {/* Create Room Messages */}
@@ -204,9 +246,9 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                 <div className="action-header">
                   <div className="action-icon action-icon--join">→</div>
                   <div>
-                    <h3 className="action-title">Join Existing Room</h3>
+                    <h3 className="action-title">Join Existing Beat</h3>
                     <p className="action-description">
-                      Enter a room code to join an active session
+                      Enter a beat code to join a collaborative session
                     </p>
                   </div>
                 </div>
@@ -214,20 +256,20 @@ function RoomInterface({ onCreateRoom, onJoinRoom, isConnected, error }) {
                   <input
                     type="text"
                     className="room-input"
-                    placeholder="Enter room code"
+                    placeholder="Enter beat code"
                     value={joinRoomId}
                     onChange={(e) =>
                       setJoinRoomId(formatRoomCode(e.target.value))
                     }
-                    onKeyDown={(e) => e.key === "Enter" && handleJoinRoom()}
-                    maxLength="8"
+                    onKeyDown={(e) => e.key === "Enter" && handleJoinBeat()}
+                    maxLength="36"
                   />
                   <button
                     className="room-btn room-btn--secondary"
-                    onClick={handleJoinRoom}
-                    disabled={!isConnected || !joinRoomId.trim()}
+                    onClick={handleJoinBeat}
+                    disabled={!joinRoomId.trim()}
                   >
-                    Join Room
+                    Join Beat
                   </button>
                 </div>
 

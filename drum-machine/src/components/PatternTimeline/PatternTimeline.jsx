@@ -5,12 +5,13 @@ import TransportControls from "../TransportControls/TransportControls";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
-function TrackLabel({ track, drumSounds }) {
+function TrackLabel({ track, drumSounds, isSpectator = false }) {
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
   const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
   const openVolumePopup = useAppStore((state) => state.ui.openVolumePopup);
 
   const handleVolumeClick = (e, track) => {
+    if (isSpectator) return;
     e.stopPropagation();
     const buttonRect = e.currentTarget.getBoundingClientRect();
     openVolumePopup(track, {
@@ -57,33 +58,35 @@ function TrackLabel({ track, drumSounds }) {
       <span className="track-name">{getDisplayName()}</span>
 
       {/* Always visible controls - removed hover state logic */}
-      <div className="track-controls">
-        <button
-          className="track-settings-btn"
-          onClick={() => openSoundModal(track)}
-          title="Change sound"
-        >
-          <Drum size={16} />
-        </button>
-        <button
-          className="track-effects-btn"
-          onClick={() => openEffectsModal(track)}
-          title="Track effects"
-        >
-          <Sliders size={16} />
-        </button>
-        <button
-          className="track-volume-btn"
-          onClick={(e) => handleVolumeClick(e, track)}
-          title={`Volume: ${Math.round((track.volume ?? 1.0) * 100)}%`}
-        >
-          {(track.volume ?? 1.0) === 0 ? (
-            <VolumeX size={16} />
-          ) : (
-            <Volume2 size={16} />
-          )}
-        </button>
-      </div>
+      {!isSpectator && (
+        <div className="track-controls">
+          <button
+            className="track-settings-btn"
+            onClick={() => openSoundModal(track)}
+            title="Change sound"
+          >
+            <Drum size={16} />
+          </button>
+          <button
+            className="track-effects-btn"
+            onClick={() => openEffectsModal(track)}
+            title="Track effects"
+          >
+            <Sliders size={16} />
+          </button>
+          <button
+            className="track-volume-btn"
+            onClick={(e) => handleVolumeClick(e, track)}
+            title={`Volume: ${Math.round((track.volume ?? 1.0) * 100)}%`}
+          >
+            {(track.volume ?? 1.0) === 0 ? (
+              <VolumeX size={16} />
+            ) : (
+              <Volume2 size={16} />
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -141,7 +144,7 @@ function VolumePopup({ track, position, onClose, onVolumeChange }) {
   );
 }
 
-function PatternTimeline() {
+function PatternTimeline({ isSpectator = false }) {
   // Get all state from the single store
   const pattern = useAppStore((state) => state.pattern.data);
   const tracks = useAppStore((state) => state.tracks.list);
@@ -300,6 +303,9 @@ function PatternTimeline() {
 
   // Handle track clicks for note placement
   const handleTrackMouseDown = (e, trackId) => {
+    // Block spectators from editing
+    if (isSpectator) return;
+
     if (e.target.classList.contains("timeline-note")) return;
 
     const track = e.currentTarget;
@@ -334,6 +340,9 @@ function PatternTimeline() {
 
   // Handle note dragging start
   const handleNoteMouseDown = (e, trackId, tick) => {
+    // Block spectators from editing
+    if (isSpectator) return;
+
     e.stopPropagation();
     setGhostNote(null);
     setIsDragging(true);
@@ -501,7 +510,7 @@ function PatternTimeline() {
   return (
     <div className="floating-card pattern-timeline">
       {/* Transport Controls Bar - INSIDE the card */}
-      <TransportControls />
+      <TransportControls isSpectator={isSpectator} />
 
       {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">
@@ -514,14 +523,17 @@ function PatternTimeline() {
               key={`label-${track.id}`}
               track={track}
               drumSounds={drumSounds}
+              isSpectator={isSpectator}
             />
           ))}
 
-          <div className="add-track-container">
-            <button className="add-track-btn" onClick={handleAddTrack}>
-              + Add Track
-            </button>
-          </div>
+          {!isSpectator && (
+            <div className="add-track-container">
+              <button className="add-track-btn" onClick={handleAddTrack}>
+                + Add Track
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Grid Area - Flexible with scroll */}

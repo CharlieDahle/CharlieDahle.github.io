@@ -1,0 +1,345 @@
+/* SessionQueueModal.css - Matches SoundSelectorModal/EffectsModal styling */
+.queue-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.queue-modal {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  width: 600px;
+  min-height: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.queue-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.queue-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+.queue-modal-close {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #6c757d;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.queue-modal-close:hover {
+  background: #f8f9fa;
+  color: #333;
+}
+
+.queue-modal-content {
+  padding: 24px 32px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.queue-modal-empty {
+  text-align: center;
+  color: #6c757d;
+  padding: 48px 32px;
+  font-size: 15px;
+}
+
+.queue-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.queue-modal-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 0.15s ease;
+}
+
+.queue-modal-item:hover {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.queue-modal-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-modal-username {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+.queue-modal-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.queue-modal-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.queue-modal-message {
+  font-size: 13px;
+  color: #6c757d;
+  font-style: italic;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Split button group - Accept with dropdown */
+.queue-accept-btn-group {
+  position: relative;
+  display: flex;
+}
+
+.queue-accept-main {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 12px 0 0 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.queue-accept-main:hover {
+  background: #218838;
+}
+
+/* Guest accept button - standalone with full rounded corners */
+.queue-accept-guest {
+  border-radius: 12px;
+}
+
+.queue-accept-guest:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.queue-accept-dropdown-toggle {
+  background: #218838;
+  color: white;
+  border: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0 12px 12px 0;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.queue-accept-dropdown-toggle:hover {
+  background: #1e7e34;
+}
+
+.queue-accept-btn-group:hover .queue-accept-main,
+.queue-accept-btn-group:hover .queue-accept-dropdown-toggle {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.queue-accept-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1010;
+  min-width: 220px;
+  animation: dropdown-appear 0.2s ease-out;
+  overflow: hidden;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.queue-accept-dropdown-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.queue-accept-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.queue-accept-dropdown-item:hover {
+  background: #f8f9fa;
+  color: #28a745;
+}
+
+.queue-dropdown-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.queue-dropdown-item-desc {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Deny button */
+.queue-deny {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.queue-deny:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.queue-deny:active,
+.queue-accept-main:active,
+.queue-accept-dropdown-toggle:active {
+  transform: translateY(0);
+}
+
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .queue-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .queue-modal-header {
+    padding: 20px 24px;
+  }
+
+  .queue-modal-title {
+    font-size: 20px;
+  }
+
+  .queue-modal-content {
+    padding: 16px 24px 24px;
+  }
+
+  .queue-modal-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .queue-modal-actions {
+    width: 100%;
+  }
+
+  .queue-accept-main,
+  .queue-deny {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}

@@ -28,7 +28,7 @@ const throttle = (func, limit) => {
     } else {
       clearTimeout(lastFunc);
       lastFunc = setTimeout(() => {
-        if ((Date.now() - lastRan) >= limit) {
+        if (Date.now() - lastRan >= limit) {
           func.apply(this, args);
           lastRan = Date.now();
         }
@@ -36,7 +36,6 @@ const throttle = (func, limit) => {
     }
   };
 };
-
 
 export const useAppStore = create((set, get) => ({
   // ============================================================================
@@ -68,10 +67,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -96,10 +93,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -125,10 +120,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -159,10 +152,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -184,10 +175,8 @@ export const useAppStore = create((set, get) => ({
         },
       }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       // Send to server
       get().websocket.sendPatternChange({
@@ -199,10 +188,8 @@ export const useAppStore = create((set, get) => ({
     clearAllTracks: () => {
       set((state) => ({ pattern: { ...state.pattern, data: {} } }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
     },
 
     setPattern: (newPattern) => {
@@ -225,10 +212,8 @@ export const useAppStore = create((set, get) => ({
         return { pattern: { ...state.pattern, data: newData } };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
     },
 
     // ... rest of pattern methods remain the same
@@ -280,7 +265,10 @@ export const useAppStore = create((set, get) => ({
       set((state) => {
         const { loopEnabled, loopStart, currentTick } = state.transport;
         // If loop is enabled and we're not already inside the loop, start at loop start
-        const shouldResetToLoopStart = loopEnabled && (currentTick < loopStart || currentTick >= get().transport.getLoopEnd());
+        const shouldResetToLoopStart =
+          loopEnabled &&
+          (currentTick < loopStart ||
+            currentTick >= get().transport.getLoopEnd());
 
         return {
           transport: {
@@ -320,10 +308,8 @@ export const useAppStore = create((set, get) => ({
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
       set((state) => ({ transport: { ...state.transport, bpm: clampedBpm } }));
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendBpmChange(clampedBpm);
     },
@@ -341,10 +327,8 @@ export const useAppStore = create((set, get) => ({
         };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
@@ -361,10 +345,8 @@ export const useAppStore = create((set, get) => ({
         };
       });
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
       get().websocket.sendMeasureCountChange(get().transport.measureCount);
     },
@@ -384,16 +366,23 @@ export const useAppStore = create((set, get) => ({
     // Loop control actions
     toggleLoop: () => {
       set((state) => ({
-        transport: { ...state.transport, loopEnabled: !state.transport.loopEnabled },
+        transport: {
+          ...state.transport,
+          loopEnabled: !state.transport.loopEnabled,
+        },
       }));
     },
 
     setLoopStart: (tick) => {
       set((state) => {
-        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        const totalTicks =
+          state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
         const loopEnd = state.transport.loopEnd ?? totalTicks;
         // Ensure loopStart is before loopEnd
-        const clampedTick = Math.max(0, Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT));
+        const clampedTick = Math.max(
+          0,
+          Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT)
+        );
         return {
           transport: { ...state.transport, loopStart: clampedTick },
         };
@@ -402,9 +391,13 @@ export const useAppStore = create((set, get) => ({
 
     setLoopEnd: (tick) => {
       set((state) => {
-        const totalTicks = state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
+        const totalTicks =
+          state.transport.TICKS_PER_BEAT * state.transport.BEATS_PER_LOOP;
         // Ensure loopEnd is after loopStart and within bounds
-        const clampedTick = Math.max(state.transport.loopStart + state.transport.TICKS_PER_BEAT, Math.min(tick, totalTicks));
+        const clampedTick = Math.max(
+          state.transport.loopStart + state.transport.TICKS_PER_BEAT,
+          Math.min(tick, totalTicks)
+        );
         return {
           transport: { ...state.transport, loopEnd: clampedTick },
         };
@@ -795,9 +788,12 @@ export const useAppStore = create((set, get) => ({
     isConnected: false,
     connectionState: "disconnected", // 'connected', 'disconnected', 'syncing', 'failed'
     error: null,
-    roomId: null,
-    isInRoom: false,
+    beatId: null,
+    isInSession: false,
+    isSpectator: false,
     users: [],
+    spectators: [],
+    queueRequests: [],
     lastRemoteTransportCommand: null,
 
     // Reconnection state
@@ -808,14 +804,21 @@ export const useAppStore = create((set, get) => ({
 
     initializeConnection: () => {
       console.log("Connecting to server...");
-      const newSocket = io("https://api.charliedahle.me");
+      // const newSocket = io("https://api.charliedahle.me"); // Production
+      const newSocket = io("http://localhost:3001"); // Local development
 
       // Connection events
       newSocket.on("connect", () => {
         console.log(`Connected to server, ID: ${newSocket.id}`);
 
-        const { websocket } = get();
+        const { websocket, auth } = get();
         const wasReconnecting = websocket.reconnectStartTime !== null;
+
+        // Send authentication if user is logged in
+        if (auth.isAuthenticated && auth.token) {
+          console.log("Sending authentication to socket server");
+          newSocket.emit("authenticate", { token: auth.token });
+        }
 
         set((state) => ({
           websocket: {
@@ -839,10 +842,12 @@ export const useAppStore = create((set, get) => ({
           debugLog("in", "connect", `Connected with ID: ${newSocket.id}`);
         }
 
-        // If we were reconnecting and still have a room, try to rejoin
-        if (wasReconnecting && websocket.roomId) {
-          console.log("Attempting to rejoin room after reconnection...");
-          get().websocket.attemptRejoinRoom();
+        // If we were reconnecting and still have a beat session, try to rejoin
+        if (wasReconnecting && websocket.beatId) {
+          console.log(
+            "Attempting to rejoin beat session after reconnection..."
+          );
+          get().websocket.attemptRejoinBeat();
         }
       });
 
@@ -875,16 +880,33 @@ export const useAppStore = create((set, get) => ({
       });
 
       // Room events
-      newSocket.on("user-joined", ({ userId, userCount }) => {
-        console.log("User joined:", userId);
-        debugLog("in", "user-joined", { userId, userCount });
-        set((state) => ({
-          websocket: {
-            ...state.websocket,
-            users: [...new Set([...state.websocket.users, userId])],
-          },
-        }));
-      });
+      newSocket.on(
+        "user-joined",
+        ({ userId, userCount, spectatorCount, isSpectator }) => {
+          console.log(
+            "User joined:",
+            userId,
+            isSpectator ? "(spectator)" : "(editor)"
+          );
+          debugLog("in", "user-joined", {
+            userId,
+            userCount,
+            spectatorCount,
+            isSpectator,
+          });
+          set((state) => ({
+            websocket: {
+              ...state.websocket,
+              users: isSpectator
+                ? state.websocket.users
+                : [...new Set([...state.websocket.users, userId])],
+              spectators: isSpectator
+                ? [...new Set([...state.websocket.spectators, userId])]
+                : state.websocket.spectators,
+            },
+          }));
+        }
+      );
 
       newSocket.on("user-left", ({ userId, userCount }) => {
         console.log("User left:", userId);
@@ -893,6 +915,9 @@ export const useAppStore = create((set, get) => ({
           websocket: {
             ...state.websocket,
             users: state.websocket.users.filter((id) => id !== userId),
+            spectators: state.websocket.spectators.filter(
+              (id) => id !== userId
+            ),
           },
         }));
       });
@@ -913,13 +938,10 @@ export const useAppStore = create((set, get) => ({
         get().effects.syncTrackEffectReset(trackId);
       });
 
-
-      
-      // NEW: Complete effect state application
       newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
         console.log("Effect state apply received:", { trackId, effectsState });
         debugLog("in", "effect-state-apply", { trackId, effectsState });
-        
+
         // Sync the entire effect state for this track
         get().effects.syncTrackEffectState(trackId, effectsState);
       });
@@ -1049,6 +1071,21 @@ export const useAppStore = create((set, get) => ({
         get().transport.syncMeasureCount(measureCount);
       });
 
+      // Auto-save events
+      newSocket.on("beat-auto-saved", ({ beatId, savedAt, savedBy }) => {
+        console.log("Beat auto-saved:", { beatId, savedAt, savedBy });
+        debugLog("in", "beat-auto-saved", { beatId, savedAt, savedBy });
+
+        // Update beats state with last saved info
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            lastSavedAt: savedAt,
+            lastSavedBy: savedBy,
+          },
+        }));
+      });
+
       // Track events
       newSocket.on("track-added", ({ trackData }) => {
         console.log("Track added:", trackData);
@@ -1074,6 +1111,126 @@ export const useAppStore = create((set, get) => ({
         get().tracks.syncUpdateTrackVolume(trackId, volume);
       });
 
+      // Queue events
+      newSocket.on("queue-request-added", (request) => {
+        console.log("Queue request added:", request);
+        debugLog("in", "queue-request-added", request);
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            queueRequests: [...state.websocket.queueRequests, request],
+          },
+        }));
+      });
+
+      newSocket.on("edit-access-granted", ({ beatId, role, accessToken, message }) => {
+        console.log("Edit access granted:", message);
+        debugLog("in", "edit-access-granted", { beatId, role, message });
+
+        // Store access token in localStorage for guest users
+        if (accessToken) {
+          localStorage.setItem(`guest-access-${beatId}`, accessToken);
+          console.log("Stored guest access token in localStorage");
+        }
+
+        const { isInSession } = get().websocket;
+
+        if (isInSession) {
+          // Already in session as spectator - promote to editor
+          set((state) => ({
+            websocket: {
+              ...state.websocket,
+              isSpectator: false,
+            },
+          }));
+          console.log("Promoted to editor in current session");
+        } else {
+          // Not in session - refresh page to re-check access
+          console.log("Reloading page to apply new access...");
+          window.location.reload();
+        }
+
+        // Show success notification
+        get().ui.setError(null);
+        console.log("You now have edit access!");
+      });
+
+      newSocket.on("edit-access-denied", ({ beatId, message }) => {
+        console.log("Edit access denied:", message);
+        debugLog("in", "edit-access-denied", { beatId, message });
+
+        // Show notification
+        get().ui.setError(message || "Your edit request was denied");
+        setTimeout(() => get().ui.clearError(), 5000);
+      });
+
+      newSocket.on("queue-request-removed", ({ requestId }) => {
+        console.log("Queue request removed:", requestId);
+        debugLog("in", "queue-request-removed", { requestId });
+
+        // Remove from queue
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            queueRequests: state.websocket.queueRequests.filter(
+              (req) => req.requestId !== requestId
+            ),
+          },
+        }));
+      });
+
+      newSocket.on("user-role-changed", ({ userId, username, role }) => {
+        console.log("User role changed:", { userId, username, role });
+        debugLog("in", "user-role-changed", { userId, username, role });
+
+        // Move user from spectators to editors or vice versa
+        set((state) => {
+          const newState = { ...state.websocket };
+
+          if (role === "spectator") {
+            // Demoted to spectator
+            newState.users = newState.users.filter((id) => id !== userId);
+            newState.spectators = [...new Set([...newState.spectators, userId])];
+          } else {
+            // Promoted to editor
+            newState.spectators = newState.spectators.filter((id) => id !== userId);
+            newState.users = [...new Set([...newState.users, userId])];
+          }
+
+          return { websocket: newState };
+        });
+      });
+
+      // Handle access revoked (beat became private)
+      newSocket.on("access-revoked", ({ message }) => {
+        console.log("Access revoked:", message);
+        debugLog("in", "access-revoked", { message });
+
+        // Leave the session and disconnect socket
+        const { socket, beatId } = get().websocket;
+        if (socket && beatId) {
+          socket.emit("leave-room", { roomId: beatId });
+        }
+
+        // Clear session state and set error
+        set((state) => ({
+          websocket: {
+            ...state.websocket,
+            isInSession: false,
+            beatId: null,
+            users: [],
+            spectators: [],
+            error: message || "Access to this beat has been revoked",
+          },
+        }));
+
+        // Navigate back to beats page
+        if (window.location.pathname.includes("/DrumMachine/")) {
+          window.history.pushState({}, '', '/beats');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+      });
+
       set((state) => ({
         websocket: { ...state.websocket, socket: newSocket },
       }));
@@ -1084,8 +1241,8 @@ export const useAppStore = create((set, get) => ({
     startReconnection: () => {
       const { websocket } = get();
 
-      // Don't start if already failed or if we don't have a room to rejoin
-      if (websocket.connectionState === "failed" || !websocket.roomId) {
+      // Don't start if already failed or if we don't have a beat to rejoin
+      if (websocket.connectionState === "failed" || !websocket.beatId) {
         return;
       }
 
@@ -1155,26 +1312,28 @@ export const useAppStore = create((set, get) => ({
       }));
     },
 
-    attemptRejoinRoom: () => {
+    attemptRejoinBeat: () => {
       const { websocket } = get();
 
-      if (!websocket.socket || !websocket.roomId) {
+      if (!websocket.socket || !websocket.beatId) {
         return;
       }
 
-      console.log("Attempting to rejoin room:", websocket.roomId);
-      debugLog("out", "rejoin-room-attempt", { roomId: websocket.roomId });
+      console.log("Attempting to rejoin beat:", websocket.beatId);
+      debugLog("out", "rejoin-beat-attempt", { beatId: websocket.beatId });
 
       websocket.socket.emit(
-        "join-room",
-        { roomId: websocket.roomId },
+        "join-beat",
+        { beatId: websocket.beatId },
         (response) => {
           if (response && response.success) {
-            console.log("Successfully rejoined room");
-            debugLog("in", "rejoin-room-success", response);
+            console.log("Successfully rejoined beat");
+            debugLog("in", "rejoin-beat-success", response);
 
             // Sync all state from server (server wins)
-            get().websocket.syncFromServer(response.roomState);
+            get().websocket.syncFromServer(
+              response.beatData || response.roomState
+            );
 
             // Show syncing state for 5 seconds, then connected
             setTimeout(() => {
@@ -1186,13 +1345,13 @@ export const useAppStore = create((set, get) => ({
               }));
             }, 5000);
           } else {
-            console.log("Room no longer exists");
-            debugLog("in", "rejoin-room-failed", "Room not found");
+            console.log("Beat no longer exists");
+            debugLog("in", "rejoin-beat-failed", "Beat not found");
             set((state) => ({
               websocket: {
                 ...state.websocket,
                 connectionState: "failed",
-                error: "room-not-found",
+                error: "beat-not-found",
               },
             }));
           }
@@ -1228,94 +1387,69 @@ export const useAppStore = create((set, get) => ({
       }
     },
 
-    createRoom: () => {
+    joinBeat: (targetBeatId, asSpectator = false) => {
       const { socket, isConnected } = get().websocket;
-      if (!socket || !isConnected) {
-        debugLog("out", "create-room-failed", "Not connected");
-        return Promise.reject("Not connected");
+      if (!socket || !isConnected || !targetBeatId.trim()) {
+        debugLog("out", "join-beat-failed", "Invalid connection or beat ID");
+        return Promise.reject("Invalid connection or beat ID");
       }
 
       return new Promise((resolve, reject) => {
-        console.log("Creating room...");
-        debugLog("out", "create-room", "Creating new room");
-
-        socket.emit("create-room", (response) => {
-          if (response.success) {
-            console.log("Room created:", response.roomId);
-            debugLog("in", "create-room-success", response);
-
-            // Save to recent rooms
-            addRecentRoom(response.roomId);
-
-            set((state) => ({
-              websocket: {
-                ...state.websocket,
-                roomId: response.roomId,
-                isInRoom: true,
-                users: response.roomState.users,
-                error: null,
-              },
-            }));
-            resolve(response.roomState);
-          } else {
-            console.error("Failed to create room:", response.error);
-            debugLog("in", "create-room-failed", response.error);
-            set((state) => ({
-              websocket: { ...state.websocket, error: "Failed to create room" },
-            }));
-            reject(response.error);
-          }
-        });
-      });
-    },
-
-    joinRoom: (targetRoomId) => {
-      const { socket, isConnected } = get().websocket;
-      if (!socket || !isConnected || !targetRoomId.trim()) {
-        debugLog("out", "join-room-failed", "Invalid connection or room ID");
-        return Promise.reject("Invalid connection or room ID");
-      }
-
-      return new Promise((resolve, reject) => {
-        console.log("Joining room:", targetRoomId);
-        debugLog("out", "join-room", { roomId: targetRoomId });
+        const mode = asSpectator ? "spectator" : "editor";
+        console.log(`Joining beat as ${mode}:`, targetBeatId);
+        debugLog("out", "join-beat", { beatId: targetBeatId, asSpectator });
 
         const timeout = setTimeout(() => {
-          debugLog("out", "join-room-timeout", "Request timed out");
-          reject(new Error("Join room request timed out"));
+          debugLog("out", "join-beat-timeout", "Request timed out");
+          reject(new Error("Join beat request timed out"));
         }, 10000);
 
         socket.emit(
-          "join-room",
-          { roomId: targetRoomId.trim() },
+          "join-room", // Note: Using join-room for backward compatibility
+          { roomId: targetBeatId.trim(), asSpectator },
           (response) => {
             clearTimeout(timeout);
 
             if (response && response.success) {
-              console.log("Successfully joined room:", targetRoomId);
-              debugLog("in", "join-room-success", response);
+              console.log(
+                `Successfully joined beat session as ${mode}:`,
+                targetBeatId
+              );
+              console.log("[joinBeat] Setting beatId to:", targetBeatId.trim());
+              debugLog("in", "join-beat-success", response);
 
-              // Save to recent rooms
-              addRecentRoom(targetRoomId.trim());
+              // Save to recent beats (only if not spectator)
+              if (!asSpectator) {
+                addRecentRoom(targetBeatId.trim());
+              }
 
               set((state) => ({
                 websocket: {
                   ...state.websocket,
-                  roomId: targetRoomId.trim(),
-                  isInRoom: true,
-                  users: response.roomState.users,
+                  beatId: targetBeatId.trim(),
+                  beatName: response.roomState?.beatName || response.beatData?.beatName || null,
+                  isInSession: true,
+                  isSpectator: response.isSpectator || asSpectator,
+                  users:
+                    response.roomState?.users || response.beatData?.users || [],
+                  spectators:
+                    response.roomState?.spectators ||
+                    response.beatData?.spectators ||
+                    [],
+                  queueRequests: response.pendingRequests || [],
                   error: null,
                 },
               }));
-              resolve(response.roomState);
+              console.log("[joinBeat] beatId after set:", get().websocket.beatId);
+              resolve(response.beatData || response.roomState);
             } else {
               const errorMsg = response?.error || "Unknown error";
-              console.error("Failed to join room:", errorMsg);
-              debugLog("in", "join-room-failed", errorMsg);
+              console.error("Failed to join beat:", errorMsg);
+              debugLog("in", "join-beat-failed", errorMsg);
               set((state) => ({
                 websocket: {
                   ...state.websocket,
-                  error: `Failed to join room: ${errorMsg}`,
+                  error: `Failed to join beat: ${errorMsg}`,
                 },
               }));
               reject(new Error(errorMsg));
@@ -1325,23 +1459,67 @@ export const useAppStore = create((set, get) => ({
       });
     },
 
-    leaveRoom: () => {
-      const { socket, isInRoom, roomId } = get().websocket;
-      if (!socket || !isInRoom) return;
+    leaveBeat: () => {
+      const { socket, isInSession, beatId } = get().websocket;
+      if (!socket || !isInSession) return;
 
-      console.log("Leaving room:", roomId);
-      debugLog("out", "leave-room", { roomId });
-      socket.emit("leave-room", { roomId });
+      console.log("Leaving beat session:", beatId);
+      debugLog("out", "leave-beat", { beatId });
+      socket.emit("leave-room", { roomId: beatId }); // Using leave-room for compatibility
 
       set((state) => ({
         websocket: {
           ...state.websocket,
-          isInRoom: false,
-          roomId: null,
+          isInSession: false,
+          beatId: null,
+          isSpectator: false,
           users: [],
+          spectators: [],
+          queueRequests: [],
           lastRemoteTransportCommand: null,
         },
       }));
+    },
+
+    // PHASE 5: Request temporary edit access to a beat
+    requestEditAccess: (targetBeatId = null, message = null) => {
+      const { socket, beatId: currentBeatId } = get().websocket;
+      const beatId = targetBeatId || currentBeatId; // Allow passing beatId or use current
+
+      if (!socket) {
+        console.error("Cannot request edit access: not connected");
+        return;
+      }
+
+      if (!beatId) {
+        console.error("Cannot request edit access: no beat ID");
+        return;
+      }
+
+      const username = get().auth.user?.username || null;
+
+      console.log("Requesting edit access for beat:", beatId);
+      debugLog("out", "request-edit-access", { beatId, username, message });
+
+      socket.emit("request-edit-access", { beatId, username, message });
+    },
+
+    // PHASE 5: Respond to a queue request (approve or deny)
+    respondToQueueRequest: (requestId, approve, role = 'temporary') => {
+      const { socket } = get().websocket;
+      if (!socket) {
+        console.error("Cannot respond to queue request: not connected");
+        return;
+      }
+
+      console.log(
+        `${approve ? "Approving" : "Denying"} queue request:`,
+        requestId,
+        approve ? `with role: ${role}` : ""
+      );
+      debugLog("out", "respond-to-queue-request", { requestId, approve, role });
+
+      socket.emit("respond-to-queue-request", { requestId, approve, role });
     },
 
     // Check if rooms still exist on server (for quick rejoin feature)
@@ -1375,158 +1553,162 @@ export const useAppStore = create((set, get) => ({
 
     // Safe send methods - only send if connected
     sendPatternChange: (change) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId, isConnected } = get().websocket;
+      console.log("[sendPatternChange] State check:", {
+        hasSocket: !!socket,
+        connectionState,
+        isConnected,
+        beatId,
+      });
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "pattern-change-failed", "Not connected");
         console.log("Skipping pattern change - not connected");
         return;
       }
 
-      const payload = { roomId, change };
+      const payload = { roomId: beatId, change }; // Using roomId for server compatibility
       console.log("Sending pattern change:", change);
       debugLog("out", "pattern-change", payload);
       socket.emit("pattern-change", payload);
     },
 
     sendBpmChange: (newBpm) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "bpm-change-failed", "Not connected");
         console.log("Skipping BPM change - not connected");
         return;
       }
 
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
-      const payload = { roomId, bpm: clampedBpm };
+      const payload = { roomId: beatId, bpm: clampedBpm };
       console.log("Sending BPM change:", clampedBpm);
       debugLog("out", "set-bpm", payload);
       socket.emit("set-bpm", payload);
     },
 
     sendMeasureCountChange: (measureCount) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "measure-count-failed", "Not connected");
         console.log("Skipping measure count change - not connected");
         return;
       }
 
-      const payload = { roomId, measureCount };
+      const payload = { roomId: beatId, measureCount };
       console.log("Sending measure count change:", measureCount);
       debugLog("out", "set-measure-count", payload);
       socket.emit("set-measure-count", payload);
     },
 
     sendTransportCommand: (command) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "transport-command-failed", "Not connected");
         console.log("Skipping transport command - not connected");
         return;
       }
 
-      const payload = { roomId, command };
+      const payload = { roomId: beatId, command };
       console.log("Sending transport command:", command);
       debugLog("out", "transport-command", payload);
       socket.emit("transport-command", payload);
     },
 
     sendAddTrack: (trackData) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "add-track-failed", "Not connected");
         console.log("Skipping add track - not connected");
         return;
       }
 
-      const payload = { roomId, trackData };
+      const payload = { roomId: beatId, trackData };
       console.log("Sending add track:", trackData);
       debugLog("out", "add-track", payload);
       socket.emit("add-track", payload);
     },
 
     sendRemoveTrack: (trackId) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "remove-track-failed", "Not connected");
         console.log("Skipping remove track - not connected");
         return;
       }
 
-      const payload = { roomId, trackId };
+      const payload = { roomId: beatId, trackId };
       console.log("Sending remove track:", trackId);
       debugLog("out", "remove-track", payload);
       socket.emit("remove-track", payload);
     },
 
     sendUpdateTrackSound: (trackId, soundFile) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "track-sound-failed", "Not connected");
         console.log("Skipping track sound update - not connected");
         return;
       }
 
-      const payload = { roomId, trackId, soundFile };
+      const payload = { roomId: beatId, trackId, soundFile };
       console.log("Sending track sound update:", trackId, soundFile);
       debugLog("out", "update-track-sound", payload);
       socket.emit("update-track-sound", payload);
     },
 
     sendUpdateTrackVolume: (trackId, volume) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "track-volume-failed", "Not connected");
         console.log("Skipping track volume update - not connected");
         return;
       }
 
-      const payload = { roomId, trackId, volume };
+      const payload = { roomId: beatId, trackId, volume };
       console.log("Sending track volume update:", trackId, volume);
       debugLog("out", "update-track-volume", payload);
       socket.emit("update-track-volume", payload);
     },
 
     sendEffectChainUpdate: (trackId, enabledEffects) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "effect-chain-failed", "Not connected");
         console.log("Skipping effect chain update - not connected");
         return;
       }
 
-      const payload = { roomId, trackId, enabledEffects };
+      const payload = { roomId: beatId, trackId, enabledEffects };
       console.log("Sending effect chain update:", { trackId, enabledEffects });
       debugLog("out", "effect-chain-update", payload);
       socket.emit("effect-chain-update", payload);
     },
 
-
     sendEffectReset: (trackId) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "effect-reset-failed", "Not connected");
         console.log("Skipping effect reset - not connected");
         return;
       }
 
-      const payload = { roomId, trackId };
+      const payload = { roomId: beatId, trackId }; // FIXED: Use roomId
       console.log("Sending effect reset:", trackId);
       debugLog("out", "effect-reset", payload);
       socket.emit("effect-reset", payload);
     },
 
-    
     // NEW: Send complete effect state (for apply button)
     sendEffectStateApply: (trackId, effectsState) => {
-      const { socket, connectionState, roomId } = get().websocket;
-      if (!socket || connectionState !== "connected" || !roomId) {
+      const { socket, connectionState, beatId } = get().websocket;
+      if (!socket || connectionState !== "connected" || !beatId) {
         debugLog("out", "effect-state-apply-failed", "Not connected");
         console.log("Skipping effect state apply - not connected");
         return;
       }
 
-      const payload = { roomId, trackId, effectsState };
+      const payload = { roomId: beatId, trackId, effectsState }; // FIXED: Use roomId
       console.log("Sending effect state apply:", payload);
       debugLog("out", "effect-state-apply", payload);
       socket.emit("effect-state-apply", payload);
@@ -1551,8 +1733,8 @@ export const useAppStore = create((set, get) => ({
           socket: null,
           isConnected: false,
           connectionState: "disconnected",
-          isInRoom: false,
-          roomId: null,
+          isInSession: false,
+          beatId: null,
           users: [],
           error: null,
           lastRemoteTransportCommand: null,
@@ -1579,6 +1761,7 @@ export const useAppStore = create((set, get) => ({
   // ============================================================================
   auth: {
     isAuthenticated: false,
+    isAuthInitialized: false,
     user: null,
     token: null,
     isLoading: false,
@@ -1596,6 +1779,7 @@ export const useAppStore = create((set, get) => ({
             auth: {
               ...state.auth,
               isAuthenticated: true,
+              isAuthInitialized: true,
               user,
               token,
             },
@@ -1603,7 +1787,10 @@ export const useAppStore = create((set, get) => ({
         } catch (error) {
           console.error("Failed to parse stored user data:", error);
           get().auth.logout(); // Clear invalid data
+          set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
         }
+      } else {
+        set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
       }
     },
 
@@ -1615,7 +1802,8 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          "https://api.charliedahle.me/api/auth/register",
+          // "https://api.charliedahle.me/api/auth/register", // Production
+          "/api/auth/register", // Local development - uses Vite proxy
           {
             method: "POST",
             headers: {
@@ -1646,6 +1834,13 @@ export const useAppStore = create((set, get) => ({
           },
         }));
 
+        // PHASE 6: Re-authenticate socket if connected
+        const socket = get().websocket.socket;
+        if (socket && socket.connected) {
+          console.log("Re-authenticating socket after registration");
+          socket.emit("authenticate", { token: data.token });
+        }
+
         return data.user;
       } catch (error) {
         set((state) => ({
@@ -1667,7 +1862,8 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          "https://api.charliedahle.me/api/auth/login",
+          // "https://api.charliedahle.me/api/auth/login", // Production
+          "/api/auth/login", // Local development - uses Vite proxy
           {
             method: "POST",
             headers: {
@@ -1697,6 +1893,13 @@ export const useAppStore = create((set, get) => ({
             error: null,
           },
         }));
+
+        // PHASE 6: Re-authenticate socket if connected
+        const socket = get().websocket.socket;
+        if (socket && socket.connected) {
+          console.log("Re-authenticating socket after login");
+          socket.emit("authenticate", { token: data.token });
+        }
 
         return data.user;
       } catch (error) {
@@ -1754,25 +1957,31 @@ export const useAppStore = create((set, get) => ({
 
         // Warn if state is getting large (> 500KB)
         if (sizeInKB > 500) {
-          console.warn(`⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`);
+          console.warn(
+            `⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`
+          );
         }
 
-        localStorage.setItem('drum_machine_pending_state', stateString);
+        localStorage.setItem("drum_machine_pending_state", stateString);
         console.log(`💾 Saved drum machine state before login (${sizeInKB}KB)`);
       } catch (error) {
         // Handle QuotaExceededError
-        if (error.name === 'QuotaExceededError') {
-          console.error('❌ localStorage quota exceeded! Cannot save state.');
-          alert('Unable to save your beat - storage is full. Please clear browser data or simplify your beat.');
+        if (error.name === "QuotaExceededError") {
+          console.error("❌ localStorage quota exceeded! Cannot save state.");
+          alert(
+            "Unable to save your beat - storage is full. Please clear browser data or simplify your beat."
+          );
         } else {
-          console.error('Failed to save drum machine state:', error);
+          console.error("Failed to save drum machine state:", error);
         }
       }
     },
 
     // Restore drum machine state after login
     restoreStateAfterLogin: () => {
-      const savedStateString = localStorage.getItem('drum_machine_pending_state');
+      const savedStateString = localStorage.getItem(
+        "drum_machine_pending_state"
+      );
 
       if (!savedStateString) {
         return null;
@@ -1783,15 +1992,16 @@ export const useAppStore = create((set, get) => ({
 
         // Check if state is expired (older than 1 hour)
         const ONE_HOUR = 60 * 60 * 1000;
-        const isExpired = savedState.timestamp && (Date.now() - savedState.timestamp > ONE_HOUR);
+        const isExpired =
+          savedState.timestamp && Date.now() - savedState.timestamp > ONE_HOUR;
 
         if (isExpired) {
-          console.log('⏰ Saved state expired (>1 hour old), discarding');
-          localStorage.removeItem('drum_machine_pending_state');
+          console.log("⏰ Saved state expired (>1 hour old), discarding");
+          localStorage.removeItem("drum_machine_pending_state");
           return null;
         }
 
-        console.log('🔄 Restoring drum machine state after login:', savedState);
+        console.log("🔄 Restoring drum machine state after login:", savedState);
 
         // Restore the state
         const state = get();
@@ -1816,12 +2026,12 @@ export const useAppStore = create((set, get) => ({
         }
 
         // Clear the saved state
-        localStorage.removeItem('drum_machine_pending_state');
+        localStorage.removeItem("drum_machine_pending_state");
 
         return savedState;
       } catch (error) {
-        console.error('Failed to restore drum machine state:', error);
-        localStorage.removeItem('drum_machine_pending_state');
+        console.error("Failed to restore drum machine state:", error);
+        localStorage.removeItem("drum_machine_pending_state");
         return null;
       }
     },
@@ -1829,13 +2039,13 @@ export const useAppStore = create((set, get) => ({
     // Helper to clear all app-related localStorage
     clearAllLocalStorage: () => {
       const keysToRemove = [
-        'drum_machine_token',
-        'drum_machine_user',
-        'drum_machine_pending_state',
+        "drum_machine_token",
+        "drum_machine_user",
+        "drum_machine_pending_state",
       ];
 
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log('🗑️ Cleared all drum machine localStorage');
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      console.log("🗑️ Cleared all drum machine localStorage");
     },
 
     // Helper to check localStorage usage
@@ -1843,14 +2053,18 @@ export const useAppStore = create((set, get) => ({
       const stats = {};
       let totalSize = 0;
 
-      ['drum_machine_token', 'drum_machine_user', 'drum_machine_pending_state'].forEach(key => {
+      [
+        "drum_machine_token",
+        "drum_machine_user",
+        "drum_machine_pending_state",
+      ].forEach((key) => {
         const item = localStorage.getItem(key);
         if (item) {
           const sizeInKB = (new Blob([item]).size / 1024).toFixed(2);
           stats[key] = `${sizeInKB}KB`;
           totalSize += parseFloat(sizeInKB);
         } else {
-          stats[key] = 'not set';
+          stats[key] = "not set";
         }
       });
 
@@ -1860,23 +2074,30 @@ export const useAppStore = create((set, get) => ({
     },
 
     // Helper to get auth headers for API calls
-    getAuthHeaders: () => {
+    getAuthHeaders: (beatId = null) => {
       const { token, isAuthenticated } = get().auth;
+
+      // Check for guest access token if beatId provided
+      const guestToken = beatId ? localStorage.getItem(`guest-access-${beatId}`) : null;
 
       console.log("🔐 Auth Debug:", {
         isAuthenticated,
         hasToken: !!token,
+        hasGuestToken: !!guestToken,
         tokenPreview: token ? `${token.substring(0, 10)}...` : "null",
       });
 
-      const headers = token
-        ? {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
-        : {
-            "Content-Type": "application/json",
-          };
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      if (guestToken) {
+        headers["X-Guest-Access-Token"] = guestToken;
+      }
 
       console.log("🔐 Generated headers:", headers);
       return headers;
@@ -1888,11 +2109,19 @@ export const useAppStore = create((set, get) => ({
   // ============================================================================
   beats: {
     userBeats: [],
+    sharedBeats: [],
+    publicBeats: [],
     isLoading: false,
     error: null,
     // NEW: Track the currently loaded beat
     currentlyLoadedBeat: null, // { id, name, lastModified }
     hasUnsavedChanges: false,
+    // PHASE 6: Track guest beat state
+    isGuestBeat: false, // Whether current beat is a guest-created orphan beat
+    guestBeatModified: false, // Whether guest has made edits (triggers warning)
+    // PHASE 7: Track auto-save status
+    lastSavedAt: null, // ISO timestamp string from last auto-save
+    lastSavedBy: null, // User ID who last saved the beat
 
     // Fetch user's saved beats
     fetchUserBeats: async () => {
@@ -1905,9 +2134,11 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const headers = get().auth.getAuthHeaders();
-        const response = await fetch("https://api.charliedahle.me/api/beats", {
-          headers,
-        });
+        const response = await fetch(
+          // "https://api.charliedahle.me/api/beats", // Production
+          "/api/beats", // Local development - uses Vite proxy
+          { headers }
+        );
 
         const data = await response.json();
 
@@ -1934,6 +2165,62 @@ export const useAppStore = create((set, get) => ({
           },
         }));
         throw error;
+      }
+    },
+
+    deleteBeat: async (beatId) => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatId}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (response.ok) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            userBeats: state.beats.userBeats.filter((b) => b.id !== beatId),
+          },
+        }));
+      } else {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete beat");
+      }
+    },
+
+    fetchSharedBeats: async () => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch("/api/beats/shared", { headers });
+      if (response.ok) {
+        const data = await response.json();
+        set((state) => ({ beats: { ...state.beats, sharedBeats: data.beats } }));
+      }
+    },
+
+    fetchPublicBeats: async () => {
+      const response = await fetch("/api/beats/public");
+      if (response.ok) {
+        const data = await response.json();
+        set((state) => ({ beats: { ...state.beats, publicBeats: data.beats } }));
+      }
+    },
+
+    updateBeatVisibility: async (beatRoomId, visibility) => {
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatRoomId}/visibility`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ visibility }),
+      });
+      if (response.ok) {
+        set((state) => ({
+          beats: {
+            ...state.beats,
+            userBeats: state.beats.userBeats.map((b) =>
+              b.room_id === beatRoomId ? { ...b, visibility } : b
+            ),
+          },
+        }));
       }
     },
 
@@ -1990,10 +2277,39 @@ export const useAppStore = create((set, get) => ({
 
     // NEW: Mark as having unsaved changes
     markAsModified: () => {
+      const isGuest = get().beats.isGuestBeat;
+      console.log('[Store] markAsModified called - isGuestBeat:', isGuest);
       set((state) => ({
         beats: {
           ...state.beats,
           hasUnsavedChanges: true,
+          // PHASE 6: Mark guest beat as modified if it's a guest beat
+          guestBeatModified: state.beats.isGuestBeat ? true : state.beats.guestBeatModified,
+        },
+      }));
+      console.log('[Store] After markAsModified - guestBeatModified:', get().beats.guestBeatModified);
+    },
+
+    // PHASE 6: Mark current beat as a guest beat (orphan beat)
+    markAsGuestBeat: () => {
+      console.log('[Store] markAsGuestBeat called - setting isGuestBeat to true');
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          isGuestBeat: true,
+          guestBeatModified: false, // Reset on creation
+        },
+      }));
+      console.log('[Store] isGuestBeat set:', get().beats.isGuestBeat);
+    },
+
+    // PHASE 6: Promote guest beat to owned beat (after sign-in)
+    promoteGuestBeat: () => {
+      set((state) => ({
+        beats: {
+          ...state.beats,
+          isGuestBeat: false,
+          guestBeatModified: false, // Clear warning after promotion
         },
       }));
     },
@@ -2026,7 +2342,8 @@ export const useAppStore = create((set, get) => ({
         const headers = get().auth.getAuthHeaders();
         console.log("💾 Request headers:", headers);
 
-        const url = "https://api.charliedahle.me/api/beats";
+        // const url = "https://api.charliedahle.me/api/beats"; // Production
+        const url = "/api/beats"; // Local development - uses Vite proxy
         console.log("💾 Making POST request to:", url);
 
         const response = await fetch(url, {
@@ -2161,7 +2478,8 @@ export const useAppStore = create((set, get) => ({
         );
 
         // Check if tracks have been modified from defaults
-        const hasCustomTracks = tracks.list.length > 4 ||
+        const hasCustomTracks =
+          tracks.list.length > 4 ||
           tracks.list.some((track) => {
             // Check if track has non-default properties
             return track.volume !== undefined && track.volume !== 1.0;
@@ -2171,6 +2489,28 @@ export const useAppStore = create((set, get) => ({
       }
 
       return false;
+    },
+
+    renameBeat: async (newName) => {
+      const beatId = get().websocket.beatId;
+      if (!beatId || !newName?.trim()) return;
+
+      const headers = get().auth.getAuthHeaders();
+      const response = await fetch(`/api/beats/${beatId}/name`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+
+      if (response.ok) {
+        set((state) => ({
+          websocket: { ...state.websocket, beatName: newName.trim() },
+          beats: state.beats.currentlyLoadedBeat ? {
+            ...state.beats,
+            currentlyLoadedBeat: { ...state.beats.currentlyLoadedBeat, name: newName.trim() },
+          } : state.beats,
+        }));
+      }
     },
 
     // Also update the loadBeat method to ensure proper state reset:
@@ -2185,7 +2525,8 @@ export const useAppStore = create((set, get) => ({
       try {
         const headers = get().auth.getAuthHeaders();
         const response = await fetch(
-          `https://api.charliedahle.me/api/beats/${beatId}`,
+          // `https://api.charliedahle.me/api/beats/${beatId}`, // Production
+          `/api/beats/${beatId}`, // Local development - uses Vite proxy
           {
             headers,
           }
@@ -2237,7 +2578,10 @@ export const useAppStore = create((set, get) => ({
           Object.keys(data.effectsState).forEach((trackId) => {
             effects.syncTrackEffectState(trackId, data.effectsState[trackId]);
           });
-          console.log("Effects state applied to store:", Object.keys(data.effectsState));
+          console.log(
+            "Effects state applied to store:",
+            Object.keys(data.effectsState)
+          );
         }
 
         // Track this as the currently loaded beat with NO unsaved changes
@@ -2310,8 +2654,10 @@ export const useAppStore = create((set, get) => ({
 
         // Decide endpoint and method based on whether we're updating
         const url = isUpdate
-          ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}`
-          : "https://api.charliedahle.me/api/beats";
+          // ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}` // Production
+          ? `/api/beats/${currentlyLoadedBeat.id}` // Local development - uses Vite proxy
+          // : "https://api.charliedahle.me/api/beats"; // Production
+          : "/api/beats"; // Local development - uses Vite proxy
 
         const method = isUpdate ? "PUT" : "POST";
 
@@ -2413,7 +2759,7 @@ export const useAppStore = create((set, get) => ({
     enabledEffects: {}, // { trackId: { effectType: boolean } }
     // Local pending changes before apply (NEW)
     pendingChanges: {}, // { trackId: { effectType: { param: value } } }
-    
+
     // Effect presets organized by drum type
     presets: {
       kick: {
@@ -2422,18 +2768,28 @@ export const useAppStore = create((set, get) => ({
           description: "Punchy and controlled",
           effects: {
             eq: { high: -3, mid: 2, low: 4 },
-            compressor: { threshold: -20, ratio: 6, attack: 0.001, release: 0.05 },
-            filter: { frequency: 15000, Q: 1 }
-          }
+            compressor: {
+              threshold: -20,
+              ratio: 6,
+              attack: 0.001,
+              release: 0.05,
+            },
+            filter: { frequency: 15000, Q: 1 },
+          },
         },
         punchy: {
           name: "Punchy",
           description: "Heavy and impactful",
           effects: {
             eq: { high: 0, mid: 4, low: 6 },
-            compressor: { threshold: -18, ratio: 8, attack: 0.005, release: 0.08 },
-            distortion: { amount: 0.1, oversample: "2x" }
-          }
+            compressor: {
+              threshold: -18,
+              ratio: 8,
+              attack: 0.005,
+              release: 0.08,
+            },
+            distortion: { amount: 0.1, oversample: "2x" },
+          },
         },
         vintage: {
           name: "Vintage",
@@ -2442,18 +2798,23 @@ export const useAppStore = create((set, get) => ({
             eq: { high: -4, mid: 1, low: 3 },
             filter: { frequency: 8000, Q: 0.7 },
             distortion: { amount: 0.15, oversample: "2x" },
-            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 }
-          }
+            chorus: { rate: 0.5, depth: 0.1, wet: 0.2 },
+          },
         },
         sub: {
           name: "808",
           description: "Deep sub-bass",
           effects: {
             eq: { high: -6, mid: -2, low: 8 },
-            compressor: { threshold: -16, ratio: 4, attack: 0.01, release: 0.15 },
-            chorus: { rate: 1, depth: 0.2, wet: 0.3 }
-          }
-        }
+            compressor: {
+              threshold: -16,
+              ratio: 4,
+              attack: 0.01,
+              release: 0.15,
+            },
+            chorus: { rate: 1, depth: 0.2, wet: 0.3 },
+          },
+        },
       },
       snare: {
         crispy: {
@@ -2461,38 +2822,58 @@ export const useAppStore = create((set, get) => ({
           description: "Bright and cutting",
           effects: {
             eq: { high: 6, mid: 2, low: -2 },
-            compressor: { threshold: -22, ratio: 5, attack: 0.002, release: 0.06 },
-            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 }
-          }
+            compressor: {
+              threshold: -22,
+              ratio: 5,
+              attack: 0.002,
+              release: 0.06,
+            },
+            reverb: { roomSize: 0.2, decay: 0.4, wet: 0.15 },
+          },
         },
         fat: {
           name: "Fat",
           description: "Full and powerful",
           effects: {
             eq: { high: 1, mid: 4, low: 1 },
-            compressor: { threshold: -18, ratio: 6, attack: 0.005, release: 0.1 },
-            distortion: { amount: 0.08, oversample: "2x" }
-          }
+            compressor: {
+              threshold: -18,
+              ratio: 6,
+              attack: 0.005,
+              release: 0.1,
+            },
+            distortion: { amount: 0.08, oversample: "2x" },
+          },
         },
         gated: {
           name: "Gated",
           description: "Tight and controlled",
           effects: {
-            compressor: { threshold: -16, ratio: 10, attack: 0.001, release: 0.03 },
+            compressor: {
+              threshold: -16,
+              ratio: 10,
+              attack: 0.001,
+              release: 0.03,
+            },
             filter: { frequency: 200, Q: 1.2 },
-            eq: { high: 2, mid: 0, low: -4 }
-          }
+            eq: { high: 2, mid: 0, low: -4 },
+          },
         },
         vintage: {
           name: "Vintage",
           description: "Classic analog warmth",
           effects: {
             eq: { high: -2, mid: -1, low: 0 },
-            compressor: { threshold: -20, ratio: 4, attack: 0.01, release: 0.1 },
+            compressor: {
+              threshold: -20,
+              ratio: 4,
+              attack: 0.01,
+              release: 0.1,
+            },
             distortion: { amount: 0.12, oversample: "2x" },
-            filter: { frequency: 12000, Q: 0.8 }
-          }
-        }
+            filter: { frequency: 12000, Q: 0.8 },
+          },
+        },
       },
       hihat: {
         bright: {
@@ -2500,9 +2881,14 @@ export const useAppStore = create((set, get) => ({
           description: "Sparkly and present",
           effects: {
             eq: { high: 4, mid: 1, low: -3 },
-            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
-            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
-          }
+            compressor: {
+              threshold: -25,
+              ratio: 3,
+              attack: 0.001,
+              release: 0.04,
+            },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 },
+          },
         },
         sizzle: {
           name: "Sizzle",
@@ -2510,17 +2896,22 @@ export const useAppStore = create((set, get) => ({
           effects: {
             eq: { high: 8, mid: 3, low: -4 },
             distortion: { amount: 0.06, oversample: "4x" },
-            filter: { frequency: 18000, Q: 1.5 }
-          }
+            filter: { frequency: 18000, Q: 1.5 },
+          },
         },
         tight: {
           name: "Tight",
           description: "Controlled and precise",
           effects: {
-            compressor: { threshold: -20, ratio: 8, attack: 0.001, release: 0.02 },
+            compressor: {
+              threshold: -20,
+              ratio: 8,
+              attack: 0.001,
+              release: 0.02,
+            },
             filter: { frequency: 400, Q: 1.0 },
-            eq: { high: 0, mid: -2, low: -6 }
-          }
+            eq: { high: 0, mid: -2, low: -6 },
+          },
         },
         spacey: {
           name: "Spacey",
@@ -2528,9 +2919,9 @@ export const useAppStore = create((set, get) => ({
           effects: {
             chorus: { rate: 3, depth: 0.4, wet: 0.4 },
             reverb: { roomSize: 0.6, decay: 1.2, wet: 0.3 },
-            eq: { high: 2, mid: 0, low: -2 }
-          }
-        }
+            eq: { high: 2, mid: 0, low: -2 },
+          },
+        },
       },
       openhat: {
         bright: {
@@ -2538,9 +2929,14 @@ export const useAppStore = create((set, get) => ({
           description: "Sparkly and present",
           effects: {
             eq: { high: 4, mid: 1, low: -3 },
-            compressor: { threshold: -25, ratio: 3, attack: 0.001, release: 0.04 },
-            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 }
-          }
+            compressor: {
+              threshold: -25,
+              ratio: 3,
+              attack: 0.001,
+              release: 0.04,
+            },
+            reverb: { roomSize: 0.15, decay: 0.3, wet: 0.1 },
+          },
         },
         sizzle: {
           name: "Sizzle",
@@ -2548,8 +2944,8 @@ export const useAppStore = create((set, get) => ({
           effects: {
             eq: { high: 8, mid: 3, low: -4 },
             distortion: { amount: 0.06, oversample: "4x" },
-            filter: { frequency: 18000, Q: 1.5 }
-          }
+            filter: { frequency: 18000, Q: 1.5 },
+          },
         },
         washy: {
           name: "Washy",
@@ -2557,8 +2953,8 @@ export const useAppStore = create((set, get) => ({
           effects: {
             reverb: { roomSize: 0.7, decay: 2.5, wet: 0.4 },
             chorus: { rate: 1.5, depth: 0.3, wet: 0.25 },
-            eq: { high: 1, mid: -1, low: -4 }
-          }
+            eq: { high: 1, mid: -1, low: -4 },
+          },
         },
         vintage: {
           name: "Vintage",
@@ -2567,10 +2963,10 @@ export const useAppStore = create((set, get) => ({
             eq: { high: -1, mid: 1, low: -2 },
             filter: { frequency: 14000, Q: 0.9 },
             distortion: { amount: 0.05, oversample: "2x" },
-            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 }
-          }
-        }
-      }
+            reverb: { roomSize: 0.4, decay: 1.0, wet: 0.2 },
+          },
+        },
+      },
     },
 
     // Default effect settings
@@ -2717,7 +3113,6 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
-
     },
 
     // Enable an effect with specific settings
@@ -2841,11 +3236,11 @@ export const useAppStore = create((set, get) => ({
         const newTrackEffects = { ...state.effects.trackEffects };
         const newEnabledEffects = { ...state.effects.enabledEffects };
         const newPendingChanges = { ...state.effects.pendingChanges };
-        
+
         delete newTrackEffects[trackId];
         delete newEnabledEffects[trackId];
         delete newPendingChanges[trackId];
-        
+
         return {
           effects: {
             ...state.effects,
@@ -2910,14 +3305,20 @@ export const useAppStore = create((set, get) => ({
     applyEffectChanges: (trackId) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId];
-      
-      if (!trackPendingChanges || Object.keys(trackPendingChanges).length === 0) {
+
+      if (
+        !trackPendingChanges ||
+        Object.keys(trackPendingChanges).length === 0
+      ) {
         console.log(`No pending changes to apply for track ${trackId}`);
         return;
       }
-      
-      console.log(`Applying effect changes for track ${trackId}:`, trackPendingChanges);
-      
+
+      console.log(
+        `Applying effect changes for track ${trackId}:`,
+        trackPendingChanges
+      );
+
       // Clear pending changes since we're applying them
       set((state) => ({
         effects: {
@@ -2928,60 +3329,60 @@ export const useAppStore = create((set, get) => ({
           },
         },
       }));
-      
+
       // Send the complete effect state to other clients (using new apply method)
       const completeEffectsState = get().effects.getTrackEffects(trackId);
       get().websocket.sendEffectStateApply(trackId, completeEffectsState);
 
-      // Mark as modified for beat tracking
-      if (get().auth.isAuthenticated) {
-        get().beats.markAsModified();
-      }
+      // Mark as modified for beat tracking (both authenticated and guest users)
+      get().beats.markAsModified();
 
-      console.log(`✅ Applied and broadcast effect changes for track ${trackId}`);
+      console.log(
+        `✅ Applied and broadcast effect changes for track ${trackId}`
+      );
     },
-    
+
     // NEW: Reset a single effect to default values
     resetEffect: (trackId, effectType) => {
       console.log(`Resetting ${effectType} effect for track ${trackId}`);
-      
+
       get().effects.disableEffect(trackId, effectType);
     },
-    
+
     // NEW: Reset all effects for a track
     resetAllEffects: (trackId) => {
       console.log(`Resetting all effects for track ${trackId}`);
-      
+
       get().effects.resetTrackEffects(trackId);
     },
-    
+
     // NEW: Check if there are pending changes for a track
     hasPendingChanges: (trackId) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId];
-      
+
       if (!trackPendingChanges) return false;
-      
+
       // Check if any effect has pending changes
       return Object.keys(trackPendingChanges).some(
-        (effectType) => 
-          trackPendingChanges[effectType] && 
+        (effectType) =>
+          trackPendingChanges[effectType] &&
           Object.keys(trackPendingChanges[effectType]).length > 0
       );
     },
-    
+
     // NEW: Get pending changes for a specific effect
     getPendingChanges: (trackId, effectType = null) => {
       const { pendingChanges } = get().effects;
       const trackPendingChanges = pendingChanges[trackId] || {};
-      
+
       if (effectType) {
         return trackPendingChanges[effectType] || {};
       }
-      
+
       return trackPendingChanges;
     },
-    
+
     // NEW: Clear pending changes without applying
     clearPendingChanges: (trackId, effectType = null) => {
       if (effectType) {
@@ -3011,23 +3412,26 @@ export const useAppStore = create((set, get) => ({
         }));
       }
     },
-    
+
     // NEW: Sync complete effect state from remote (for apply button)
     syncTrackEffectState: (trackId, effectsState) => {
-      console.log(`Syncing complete effect state for ${trackId}:`, effectsState);
-      
+      console.log(
+        `Syncing complete effect state for ${trackId}:`,
+        effectsState
+      );
+
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
-      
+
       // Update enabled effects tracking
       const newEnabledEffects = {};
       Object.keys(effectsState).forEach((effectType) => {
         newEnabledEffects[effectType] = get().effects.isEffectEnabled(
-          effectType, 
+          effectType,
           effectsState[effectType]
         );
       });
-      
+
       set((state) => ({
         effects: {
           ...state.effects,
@@ -3049,13 +3453,13 @@ export const useAppStore = create((set, get) => ({
     },
 
     // PRESET METHODS
-    
+
     // Get available presets for a track type (kick, snare, hihat, openhat)
     getPresetsForTrackType: (trackType) => {
       const presets = get().effects.presets[trackType] || {};
       return Object.entries(presets).map(([key, preset]) => ({
         id: key,
-        ...preset
+        ...preset,
       }));
     },
 
@@ -3063,27 +3467,32 @@ export const useAppStore = create((set, get) => ({
     applyPreset: (trackId, trackType, presetId) => {
       const presets = get().effects.presets[trackType];
       if (!presets || !presets[presetId]) {
-        console.warn(`Preset ${presetId} not found for track type ${trackType}`);
+        console.warn(
+          `Preset ${presetId} not found for track type ${trackType}`
+        );
         return;
       }
 
       const preset = presets[presetId];
-      console.log(`Applying preset "${preset.name}" to track ${trackId}:`, preset.effects);
+      console.log(
+        `Applying preset "${preset.name}" to track ${trackId}:`,
+        preset.effects
+      );
 
       // Initialize if doesn't exist
       get().effects.initializeTrackEffects(trackId);
 
       // Get current effects state
       const currentEffects = get().effects.getTrackEffects(trackId);
-      
+
       // Merge preset effects with current effects (preset wins for specified parameters)
       const newEffects = { ...currentEffects };
-      
+
       Object.entries(preset.effects).forEach(([effectType, effectParams]) => {
         if (newEffects[effectType]) {
           newEffects[effectType] = {
             ...newEffects[effectType],
-            ...effectParams
+            ...effectParams,
           };
         }
       });
@@ -3106,38 +3515,50 @@ export const useAppStore = create((set, get) => ({
 
       // Send the complete effect state to other clients
       get().websocket.sendEffectStateApply(trackId, newEffects);
-      
+
       console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
     },
 
     // Get sound category from sound file path
     getSoundCategoryFromPath: (soundFile) => {
       if (!soundFile) return null;
-      
+
       // Extract category from file path (e.g., "kicks/kick01.wav" -> "kicks")
-      const pathParts = soundFile.split('/');
+      const pathParts = soundFile.split("/");
       return pathParts.length > 1 ? pathParts[0] : null;
     },
 
     // Get display-friendly category name for UI
     getCategoryDisplayName: (trackId) => {
       const track = get().tracks.getTrackById(trackId);
-      if (!track || !track.soundFile) return 'Track';
-      
-      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
-      
+      if (!track || !track.soundFile) return "Track";
+
+      const soundCategory = get().effects.getSoundCategoryFromPath(
+        track.soundFile
+      );
+
       // Map categories to display names
       switch (soundCategory) {
-        case 'kicks': return 'Kick';
-        case 'snares': return 'Snare';
-        case 'hihats': return 'Hi-Hat';
-        case 'openhats': return 'Open Hat';
-        case 'cymbals': return 'Cymbal';
-        case '808s': return '808';
-        case 'claps': return 'Clap';
-        case 'percs': return 'Percussion';
-        case 'vox': return 'Vocal';
-        default: return 'Track';
+        case "kicks":
+          return "Kick";
+        case "snares":
+          return "Snare";
+        case "hihats":
+          return "Hi-Hat";
+        case "openhats":
+          return "Open Hat";
+        case "cymbals":
+          return "Cymbal";
+        case "808s":
+          return "808";
+        case "claps":
+          return "Clap";
+        case "percs":
+          return "Percussion";
+        case "vox":
+          return "Vocal";
+        default:
+          return "Track";
       }
     },
 
@@ -3145,24 +3566,31 @@ export const useAppStore = create((set, get) => ({
     getTrackTypeFromId: (trackId) => {
       const track = get().tracks.getTrackById(trackId);
       if (!track || !track.soundFile) return null;
-      
-      const soundCategory = get().effects.getSoundCategoryFromPath(track.soundFile);
-      
+
+      const soundCategory = get().effects.getSoundCategoryFromPath(
+        track.soundFile
+      );
+
       // Map sound categories to preset categories
       switch (soundCategory) {
-        case 'kicks': return 'kick';
-        case 'snares': return 'snare';
-        case 'hihats': return 'hihat';
-        case 'openhats':
-        case 'cymbals': return 'openhat';
-        default: return null; // No presets for this category
+        case "kicks":
+          return "kick";
+        case "snares":
+          return "snare";
+        case "hihats":
+          return "hihat";
+        case "openhats":
+        case "cymbals":
+          return "openhat";
+        default:
+          return null; // No presets for this category
       }
     },
 
     // Get track number (1-based) from track ID
     getTrackNumber: (trackId) => {
       const tracks = get().tracks.list;
-      const trackIndex = tracks.findIndex(track => track.id === trackId);
+      const trackIndex = tracks.findIndex((track) => track.id === trackId);
       return trackIndex + 1; // Convert to 1-based numbering
     },
 
@@ -3171,33 +3599,35 @@ export const useAppStore = create((set, get) => ({
       const trackType = get().effects.getTrackTypeFromId(trackId);
       const currentEffects = get().effects.getTrackEffects(trackId);
       const presets = get().effects.presets[trackType] || {};
-      
+
       // Check each preset to see if it matches current settings
       for (const [presetId, preset] of Object.entries(presets)) {
         let isMatch = true;
-        
+
         // Check if all preset parameters match current effects
-        for (const [effectType, effectParams] of Object.entries(preset.effects)) {
+        for (const [effectType, effectParams] of Object.entries(
+          preset.effects
+        )) {
           if (!currentEffects[effectType]) {
             isMatch = false;
             break;
           }
-          
+
           for (const [param, value] of Object.entries(effectParams)) {
             if (Math.abs(currentEffects[effectType][param] - value) > 0.01) {
               isMatch = false;
               break;
             }
           }
-          
+
           if (!isMatch) break;
         }
-        
+
         if (isMatch) {
           return { id: presetId, ...preset };
         }
       }
-      
+
       return null; // No matching preset
     },
   },

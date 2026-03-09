@@ -1,0 +1,132 @@
+.spectator-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #5bc0eb;
+  border-bottom: 2px solid #4aa8d8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.spectator-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.spectator-icon {
+  color: white;
+  flex-shrink: 0;
+}
+
+.spectator-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.spectator-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  letter-spacing: 0.3px;
+}
+
+.spectator-description {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.spectator-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.spectator-stat {
+  font-size: 13px;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+.spectator-request-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: white;
+  color: #5bc0eb;
+  border: 2px solid white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.spectator-request-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.spectator-request-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.spectator-request-button.requested {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  cursor: default;
+}
+
+.spectator-request-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .spectator-banner-content {
+    padding: 10px 16px;
+  }
+
+  .spectator-description {
+    display: none;
+  }
+
+  .spectator-stats {
+    gap: 8px;
+  }
+
+  .spectator-stat {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+
+  .spectator-request-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

@@ -1,90 +1,76 @@
-// src/components/RoomHeader/RoomHeader.jsx - Streamlined version
+// src/components/RoomHeader/RoomHeader.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Save, Edit, FileText, Users, User } from "lucide-react";
+import { ChevronLeft, Save, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
-import SaveBeatModal from "../SaveBeatModal/SaveBeatModal";
-import UnsavedWorkModal from "../UnsavedWorkModal/UnsavedWorkModal";
+import AuthModal from "../AuthModal/AuthModal.jsx";
+import VisibilityToggle from "../VisibilityToggle/VisibilityToggle.jsx";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
   const navigate = useNavigate();
 
-  // Get room info from WebSocket slice
-  const roomId = useAppStore((state) => state.websocket.roomId);
+  const beatId = useAppStore((state) => state.websocket.beatId);
+  const beatName = useAppStore((state) => state.websocket.beatName);
   const users = useAppStore((state) => state.websocket.users);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
-  const leaveRoom = useAppStore((state) => state.websocket.leaveRoom);
+  const leaveBeat = useAppStore((state) => state.websocket.leaveBeat);
 
   // Get auth state
   const { isAuthenticated, saveStateBeforeLogin } = useAppStore((state) => state.auth);
 
-  // Get beat tracking info
-  const { getSaveButtonInfo, hasUnsavedWork } = useAppStore((state) => state.beats);
-  const saveButtonInfo = getSaveButtonInfo();
+  // Get beat tracking info for navigation warnings
+  const { hasUnsavedWork } = useAppStore((state) => state.beats);
 
-  // Save beat modal state
-  const [showSaveBeatModal, setShowSaveBeatModal] = useState(false);
+  const isGuestBeat = useAppStore((state) => state.beats.isGuestBeat);
+  const guestBeatModified = useAppStore((state) => state.beats.guestBeatModified);
+
+  const lastSavedAt = useAppStore((state) => state.beats.lastSavedAt);
+  const lastSavedBy = useAppStore((state) => state.beats.lastSavedBy);
+
+  // Unsaved work modal state (for navigation warnings only)
   const [showUnsavedWorkModal, setShowUnsavedWorkModal] = useState(false);
-  const [shouldNavigateAfterSave, setShouldNavigateAfterSave] = useState(false);
+  const [shouldNavigateAfterDiscard, setShouldNavigateAfterDiscard] = useState(false);
+
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
 
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
   const [clickTimer, setClickTimer] = useState(null);
 
-  const handleLeaveRoom = () => {
-    // Call the leaveRoom function from the store
-    leaveRoom();
-    // Navigate back to room selection (removes room ID from URL)
+  const handleLeaveBeat = () => {
+    leaveBeat();
     // Use replace: true to avoid adding to history stack
     navigate('/DrumMachine', { replace: true });
   };
 
-  const handleSaveBeat = () => {
-    if (isAuthenticated) {
-      setShouldNavigateAfterSave(false);
-      setShowSaveBeatModal(true);
-    }
-  };
-
   const handleNavigateToBeats = () => {
-    // Check if there's unsaved work
-    if (hasUnsavedWork()) {
-      setShowUnsavedWorkModal(true);
-    } else {
-      navigate("/beats");
-    }
-  };
-
-  const handleSaveAndNavigate = () => {
-    setShowUnsavedWorkModal(false);
-    setShouldNavigateAfterSave(true);
-    setShowSaveBeatModal(true);
-  };
-
-  const handleAfterSave = () => {
-    if (shouldNavigateAfterSave) {
-      navigate("/beats");
-      setShouldNavigateAfterSave(false);
-    }
-  };
-
-  const handleDiscardAndNavigate = () => {
-    setShowUnsavedWorkModal(false);
     navigate("/beats");
   };
 
-  const handleCancelNavigation = () => {
-    setShowUnsavedWorkModal(false);
+  const handleSignInClick = () => {
+    setShowAuthModal(true);
   };
 
-  const handleSignInClick = () => {
-    // Save current drum machine state before redirecting to login
-    saveStateBeforeLogin();
-    navigate("/login");
+  const handleAuthSuccess = () => {
+    promoteGuestBeat();
+    setShowAuthModal(false);
   };
+
+  // Re-render every minute to update "X minutes ago" text
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    if (!lastSavedAt) return;
+
+    const interval = setInterval(() => {
+      forceUpdate((n) => n + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [lastSavedAt]);
 
   // Secret debug mode trigger - click the logo 5 times quickly
   const handleTitleClick = () => {
@@ -122,44 +108,82 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   const userCount = users.length;
   const isConnected = connectionState === "connected";
+  const isReconnecting = connectionState === "connecting" || connectionState === "disconnected";
+  const isSyncing = connectionState === "syncing";
+  const isFailed = connectionState === "failed";
 
-  // Determine if we should show the save/update button
-  const shouldShowSaveButton = () => {
-    if (!isAuthenticated || !isConnected) return false;
+  const getAutoSaveStatus = () => {
+    if (!isAuthenticated || !isConnected || isGuestBeat) {
+      return null; // Don't show for guests or disconnected users
+    }
 
-    // Don't show if explicitly hidden (saved beat with no changes)
-    if (saveButtonInfo.hideButton) return false;
-
-    // Show for new beats or existing beats with changes
-    return !saveButtonInfo.isUpdate || saveButtonInfo.showUnsavedIndicator;
-  };
-
-  // Get the save button configuration
-  const getSaveButtonConfig = () => {
-    if (!saveButtonInfo.isUpdate) {
-      // New beat (not loaded from server)
+    if (!lastSavedAt) {
       return {
-        text: "Save",
-        icon: <Save size={16} />,
-        className: "header-action-btn header-action-btn--save",
-      };
-    } else if (saveButtonInfo.showUnsavedIndicator) {
-      // Existing beat with changes
-      return {
-        text: "Update",
-        icon: <Edit size={16} />,
-        className: "header-action-btn header-action-btn--update",
+        text: "Not saved yet",
+        icon: <Save size={14} />,
+        className: "auto-save-status auto-save-status--pending",
+        tooltip: "Changes will auto-save every 2 minutes"
       };
     }
 
-    // This shouldn't render based on shouldShowSaveButton logic
-    return null;
-  };
+    const savedTime = new Date(lastSavedAt);
+    const now = new Date();
+    const diffMs = now - savedTime;
+    const diffMinutes = Math.floor(diffMs / 60000);
 
-  const saveButtonConfig = getSaveButtonConfig();
+    // Show "All changes saved" if saved within last minute
+    if (diffMinutes < 1) {
+      return {
+        text: "All changes saved",
+        icon: <Save size={14} />,
+        className: "auto-save-status auto-save-status--saved",
+        tooltip: "Auto-saved just now"
+      };
+    }
+
+    // Show time-based status for older saves
+    let timeAgo = "";
+    if (diffMinutes === 1) timeAgo = "1 minute ago";
+    else if (diffMinutes < 60) timeAgo = `${diffMinutes} minutes ago`;
+    else {
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours === 1) timeAgo = "1 hour ago";
+      else if (diffHours < 24) timeAgo = `${diffHours} hours ago`;
+      else {
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays === 1) timeAgo = "1 day ago";
+        else timeAgo = `${diffDays} days ago`;
+      }
+    }
+
+    return {
+      text: `Saved ${timeAgo}`,
+      icon: <Save size={14} />,
+      className: "auto-save-status auto-save-status--saved",
+      tooltip: `Last auto-saved ${timeAgo}`
+    };
+  };
 
   return (
     <>
+      {/* Connection status banner */}
+      {beatId && (isReconnecting || isSyncing || isFailed) && (
+        <div className={`connection-banner connection-banner--${isFailed ? "failed" : isReconnecting ? "reconnecting" : "syncing"}`}>
+          {isFailed ? (
+            <>⚠ Could not reconnect. Your changes may not be saved.</>
+          ) : isReconnecting ? (
+            <>
+              <span className="connection-banner-spinner" />
+              Reconnecting...
+            </>
+          ) : (
+            <>
+              <span className="connection-banner-spinner" />
+              Syncing session...
+            </>
+          )}
+        </div>
+      )}
       <div className="floating-card room-header-card">
         <div className="room-header-content">
           <div className="title-section">
@@ -183,7 +207,8 @@ function RoomHeader({ debugMode, setDebugMode }) {
             </div>
             <div className="room-info">
               <div className="room-code-line">
-                Room: {roomId}
+                {beatName && <span className="beat-name-label">{beatName}</span>}
+                Beat ID: {beatId}
                 <div className="user-count-badge">
                   <Users size={16} />
                   <span>
@@ -195,22 +220,18 @@ function RoomHeader({ debugMode, setDebugMode }) {
           </div>
 
           <div className="header-actions">
-            {/* Save/Update Button - only show when needed */}
-            {shouldShowSaveButton() && saveButtonConfig && (
-              <button
-                className={saveButtonConfig.className}
-                onClick={handleSaveBeat}
-                disabled={!isConnected}
-                title={
-                  saveButtonInfo.isUpdate
-                    ? `Update "${saveButtonInfo.beatName}" with your changes`
-                    : "Save this beat to your library"
-                }
-              >
-                {saveButtonConfig.icon}
-                <span>{saveButtonConfig.text}</span>
-              </button>
-            )}
+            {(() => {
+              const status = getAutoSaveStatus();
+              return status ? (
+                <div className={status.className} title={status.tooltip}>
+                  {status.icon}
+                  <span>{status.text}</span>
+                </div>
+              ) : null;
+            })()}
+
+            {/* Visibility Toggle - only show for authenticated users */}
+            <VisibilityToggle />
 
             {/* Navigate to Beats (if authenticated) or Sign In (if not) */}
             {isAuthenticated ? (
@@ -224,42 +245,40 @@ function RoomHeader({ debugMode, setDebugMode }) {
                 <span>My Beats</span>
               </button>
             ) : (
-              <button
-                className="header-action-btn header-action-btn--signin"
-                onClick={handleSignInClick}
-                title="Sign in to save beats"
-              >
-                <User size={16} />
-                <span>Sign In</span>
-              </button>
+              <>
+                {isGuestBeat && guestBeatModified && (
+                  <span className="guest-warning-text">
+                    Sign in to save your work
+                  </span>
+                )}
+                <button
+                  className="header-action-btn header-action-btn--signin"
+                  onClick={handleSignInClick}
+                  title="Sign in to save beats"
+                >
+                  <User size={16} />
+                  <span>Sign In</span>
+                </button>
+              </>
             )}
 
-            {/* Leave Room Button */}
+            {/* Leave Beat Button */}
             <button
               className="header-action-btn header-action-btn--leave"
-              onClick={handleLeaveRoom}
+              onClick={handleLeaveBeat}
               disabled={!isConnected}
             >
               <ChevronLeft size={16} />
-              <span>Leave Room</span>
+              <span>Leave Beat</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Save Beat Modal */}
-      <SaveBeatModal
-        isOpen={showSaveBeatModal}
-        onClose={() => setShowSaveBeatModal(false)}
-        onSaveSuccess={handleAfterSave}
-      />
-
-      {/* Unsaved Work Modal */}
-      <UnsavedWorkModal
-        isOpen={showUnsavedWorkModal}
-        onSave={handleSaveAndNavigate}
-        onDiscard={handleDiscardAndNavigate}
-        onCancel={handleCancelNavigation}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
       />
     </>
   );

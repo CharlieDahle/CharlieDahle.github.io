@@ -6,7 +6,8 @@ import DrumScheduler from "../DrumScheduler/DrumScheduler";
 import RoomHeader from "../RoomHeader/RoomHeader";
 import DebugPanel from "../DebugPanel/DebugPanel";
 
-function DrumMachine({ remoteTransportCommand }) {
+// PHASE 4: Added isSpectator prop for disabling UI in spectator mode
+function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
   // Get all state from the single store
   const pattern = useAppStore((state) => state.pattern.data);
   const tracks = useAppStore((state) => state.tracks.list);
@@ -157,8 +158,13 @@ function DrumMachine({ remoteTransportCommand }) {
 
   return (
     <div className="drum-machine-layout">
-      <RoomHeader debugMode={debugMode} setDebugMode={setDebugMode} />
-      <PatternTimeline />
+      {/* PHASE 4: Pass isSpectator to child components */}
+      <RoomHeader
+        debugMode={debugMode}
+        setDebugMode={setDebugMode}
+        isSpectator={isSpectator}
+      />
+      <PatternTimeline isSpectator={isSpectator} />
       {/* Debug panel appears as its own card below PatternTimeline */}
       <DebugPanel
         isOpen={debugMode}
