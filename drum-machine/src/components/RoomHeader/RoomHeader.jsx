@@ -1,23 +1,22 @@
-// src/components/RoomHeader/RoomHeader.jsx - Streamlined version
+// src/components/RoomHeader/RoomHeader.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Save, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
-import AuthModal from "../AuthModal/AuthModal.jsx"; // PHASE 6
+import AuthModal from "../AuthModal/AuthModal.jsx";
 import VisibilityToggle from "../VisibilityToggle/VisibilityToggle.jsx";
 import "./RoomHeader.css";
 
 function RoomHeader({ debugMode, setDebugMode }) {
   const navigate = useNavigate();
 
-  // PHASE 2: Get beat session info from WebSocket slice
   const beatId = useAppStore((state) => state.websocket.beatId);
   const beatName = useAppStore((state) => state.websocket.beatName);
   const users = useAppStore((state) => state.websocket.users);
   const connectionState = useAppStore(
     (state) => state.websocket.connectionState
   );
-  const leaveBeat = useAppStore((state) => state.websocket.leaveBeat); // PHASE 2: renamed from leaveRoom
+  const leaveBeat = useAppStore((state) => state.websocket.leaveBeat);
 
   // Get auth state
   const { isAuthenticated, saveStateBeforeLogin } = useAppStore((state) => state.auth);
@@ -25,11 +24,9 @@ function RoomHeader({ debugMode, setDebugMode }) {
   // Get beat tracking info for navigation warnings
   const { hasUnsavedWork } = useAppStore((state) => state.beats);
 
-  // PHASE 6: Get guest beat state for warning
   const isGuestBeat = useAppStore((state) => state.beats.isGuestBeat);
   const guestBeatModified = useAppStore((state) => state.beats.guestBeatModified);
 
-  // PHASE 7: Get auto-save status
   const lastSavedAt = useAppStore((state) => state.beats.lastSavedAt);
   const lastSavedBy = useAppStore((state) => state.beats.lastSavedBy);
 
@@ -37,7 +34,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const [showUnsavedWorkModal, setShowUnsavedWorkModal] = useState(false);
   const [shouldNavigateAfterDiscard, setShouldNavigateAfterDiscard] = useState(false);
 
-  // PHASE 6: Auth modal state
   const [showAuthModal, setShowAuthModal] = useState(false);
   const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
 
@@ -46,32 +42,25 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const [clickTimer, setClickTimer] = useState(null);
 
   const handleLeaveBeat = () => {
-    // PHASE 2: Leave beat session and navigate back to beat selection
-    // Call the leaveBeat function from the store
     leaveBeat();
-    // Navigate back to beat selection (removes beat ID from URL)
     // Use replace: true to avoid adding to history stack
     navigate('/DrumMachine', { replace: true });
   };
 
   const handleNavigateToBeats = () => {
-    // PHASE 7: With auto-save, we don't need to prompt - just navigate
-    // Auto-save will handle saving changes before session terminates
     navigate("/beats");
   };
 
   const handleSignInClick = () => {
-    // PHASE 6: Open auth modal instead of navigating to /login
     setShowAuthModal(true);
   };
 
   const handleAuthSuccess = () => {
-    // PHASE 6: Promote guest beat to owned beat after sign-in
     promoteGuestBeat();
     setShowAuthModal(false);
   };
 
-  // PHASE 7: Re-render every minute to update "X minutes ago" text
+  // Re-render every minute to update "X minutes ago" text
   const [, forceUpdate] = useState(0);
   useEffect(() => {
     if (!lastSavedAt) return;
@@ -123,7 +112,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
   const isSyncing = connectionState === "syncing";
   const isFailed = connectionState === "failed";
 
-  // PHASE 7: Get auto-save status text
   const getAutoSaveStatus = () => {
     if (!isAuthenticated || !isConnected || isGuestBeat) {
       return null; // Don't show for guests or disconnected users
@@ -232,7 +220,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
           </div>
 
           <div className="header-actions">
-            {/* PHASE 7: Auto-Save Status Badge (Google Docs style) */}
             {(() => {
               const status = getAutoSaveStatus();
               return status ? (
@@ -259,7 +246,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
               </button>
             ) : (
               <>
-                {/* PHASE 6: Show warning text for guest users with modified beats */}
                 {isGuestBeat && guestBeatModified && (
                   <span className="guest-warning-text">
                     Sign in to save your work
@@ -289,7 +275,6 @@ function RoomHeader({ debugMode, setDebugMode }) {
         </div>
       </div>
 
-      {/* PHASE 6: Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}

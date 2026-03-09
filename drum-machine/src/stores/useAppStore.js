@@ -788,12 +788,12 @@ export const useAppStore = create((set, get) => ({
     isConnected: false,
     connectionState: "disconnected", // 'connected', 'disconnected', 'syncing', 'failed'
     error: null,
-    beatId: null, // CHANGED: renamed from roomId (now using beats.room_id UUID)
-    isInSession: false, // CHANGED: renamed from isInRoom
-    isSpectator: false, // PHASE 4: Track if user is spectating
+    beatId: null,
+    isInSession: false,
+    isSpectator: false,
     users: [],
-    spectators: [], // PHASE 4: Track spectator socket IDs
-    queueRequests: [], // PHASE 5: Pending edit access requests
+    spectators: [],
+    queueRequests: [],
     lastRemoteTransportCommand: null,
 
     // Reconnection state
@@ -814,7 +814,7 @@ export const useAppStore = create((set, get) => ({
         const { websocket, auth } = get();
         const wasReconnecting = websocket.reconnectStartTime !== null;
 
-        // PHASE 6: Send authentication if user is logged in
+        // Send authentication if user is logged in
         if (auth.isAuthenticated && auth.token) {
           console.log("Sending authentication to socket server");
           newSocket.emit("authenticate", { token: auth.token });
@@ -938,7 +938,6 @@ export const useAppStore = create((set, get) => ({
         get().effects.syncTrackEffectReset(trackId);
       });
 
-      // NEW: Complete effect state application
       newSocket.on("effect-state-apply", ({ trackId, effectsState }) => {
         console.log("Effect state apply received:", { trackId, effectsState });
         debugLog("in", "effect-state-apply", { trackId, effectsState });
@@ -1072,7 +1071,7 @@ export const useAppStore = create((set, get) => ({
         get().transport.syncMeasureCount(measureCount);
       });
 
-      // PHASE 7: Auto-save events
+      // Auto-save events
       newSocket.on("beat-auto-saved", ({ beatId, savedAt, savedBy }) => {
         console.log("Beat auto-saved:", { beatId, savedAt, savedBy });
         debugLog("in", "beat-auto-saved", { beatId, savedAt, savedBy });
@@ -1112,7 +1111,7 @@ export const useAppStore = create((set, get) => ({
         get().tracks.syncUpdateTrackVolume(trackId, volume);
       });
 
-      // PHASE 5: Queue events
+      // Queue events
       newSocket.on("queue-request-added", (request) => {
         console.log("Queue request added:", request);
         debugLog("in", "queue-request-added", request);
@@ -1388,11 +1387,6 @@ export const useAppStore = create((set, get) => ({
       }
     },
 
-    // PHASE 2 CHANGE: Removed createRoom()
-    // Beats are now created via POST /api/beats which returns a persistent room_id
-    // Components should create beats via API, then call joinBeat(room_id)
-
-    // PHASE 4: Updated to support spectator mode
     joinBeat: (targetBeatId, asSpectator = false) => {
       const { socket, isConnected } = get().websocket;
       if (!socket || !isConnected || !targetBeatId.trim()) {
@@ -1442,7 +1436,7 @@ export const useAppStore = create((set, get) => ({
                     response.roomState?.spectators ||
                     response.beatData?.spectators ||
                     [],
-                  queueRequests: response.pendingRequests || [], // PHASE 5: Load pending requests
+                  queueRequests: response.pendingRequests || [],
                   error: null,
                 },
               }));
@@ -1478,10 +1472,10 @@ export const useAppStore = create((set, get) => ({
           ...state.websocket,
           isInSession: false,
           beatId: null,
-          isSpectator: false, // PHASE 4: Reset spectator state
+          isSpectator: false,
           users: [],
-          spectators: [], // PHASE 4: Clear spectators
-          queueRequests: [], // PHASE 5: Clear queue requests
+          spectators: [],
+          queueRequests: [],
           lastRemoteTransportCommand: null,
         },
       }));
@@ -1572,7 +1566,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, change }; // FIXED: Use roomId for server compatibility
+      const payload = { roomId: beatId, change }; // Using roomId for server compatibility
       console.log("Sending pattern change:", change);
       debugLog("out", "pattern-change", payload);
       socket.emit("pattern-change", payload);
@@ -1587,7 +1581,7 @@ export const useAppStore = create((set, get) => ({
       }
 
       const clampedBpm = Math.max(60, Math.min(300, newBpm));
-      const payload = { roomId: beatId, bpm: clampedBpm }; // FIXED: Use roomId
+      const payload = { roomId: beatId, bpm: clampedBpm };
       console.log("Sending BPM change:", clampedBpm);
       debugLog("out", "set-bpm", payload);
       socket.emit("set-bpm", payload);
@@ -1601,7 +1595,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, measureCount }; // FIXED: Use roomId
+      const payload = { roomId: beatId, measureCount };
       console.log("Sending measure count change:", measureCount);
       debugLog("out", "set-measure-count", payload);
       socket.emit("set-measure-count", payload);
@@ -1615,7 +1609,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, command }; // FIXED: Use roomId
+      const payload = { roomId: beatId, command };
       console.log("Sending transport command:", command);
       debugLog("out", "transport-command", payload);
       socket.emit("transport-command", payload);
@@ -1629,7 +1623,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, trackData }; // FIXED: Use roomId
+      const payload = { roomId: beatId, trackData };
       console.log("Sending add track:", trackData);
       debugLog("out", "add-track", payload);
       socket.emit("add-track", payload);
@@ -1643,7 +1637,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, trackId }; // FIXED: Use roomId
+      const payload = { roomId: beatId, trackId };
       console.log("Sending remove track:", trackId);
       debugLog("out", "remove-track", payload);
       socket.emit("remove-track", payload);
@@ -1657,7 +1651,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, trackId, soundFile }; // FIXED: Use roomId
+      const payload = { roomId: beatId, trackId, soundFile };
       console.log("Sending track sound update:", trackId, soundFile);
       debugLog("out", "update-track-sound", payload);
       socket.emit("update-track-sound", payload);
@@ -1671,7 +1665,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, trackId, volume }; // FIXED: Use roomId
+      const payload = { roomId: beatId, trackId, volume };
       console.log("Sending track volume update:", trackId, volume);
       debugLog("out", "update-track-volume", payload);
       socket.emit("update-track-volume", payload);
@@ -1685,7 +1679,7 @@ export const useAppStore = create((set, get) => ({
         return;
       }
 
-      const payload = { roomId: beatId, trackId, enabledEffects }; // FIXED: Use roomId
+      const payload = { roomId: beatId, trackId, enabledEffects };
       console.log("Sending effect chain update:", { trackId, enabledEffects });
       debugLog("out", "effect-chain-update", payload);
       socket.emit("effect-chain-update", payload);

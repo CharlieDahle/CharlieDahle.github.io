@@ -4,11 +4,11 @@ import { useAppStore } from '../../stores/useAppStore';
 import './SpectatorBanner.css';
 
 /**
- * SpectatorBanner - Phase 4: Spectator Mode + Phase 5: Request to Edit
+ * SpectatorBanner
  *
- * Displays a prominent banner when user is in spectator mode,
- * indicating they are viewing a live session but cannot edit.
- * Includes a "Request to Edit" button for Phase 5 queue system.
+ * Displays a banner when the user is in spectator mode, indicating they are
+ * viewing a live session but cannot edit. Includes a "Request to Edit" button
+ * to enter the edit-access queue.
  */
 const SpectatorBanner = () => {
   const { users, spectators } = useAppStore((state) => state.websocket);
