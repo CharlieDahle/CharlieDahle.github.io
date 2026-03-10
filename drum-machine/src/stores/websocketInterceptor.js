@@ -63,7 +63,7 @@ export function interceptWebSocketMessages(socket) {
     });
   });
 
-  console.log("🔍 WebSocket message interceptor activated");
+  console.log("WebSocket message interceptor activated");
 }
 
 // Helper to add manual debug logs

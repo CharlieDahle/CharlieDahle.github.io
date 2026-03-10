@@ -42,7 +42,7 @@ function ListeningMode({ beatId }) {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/beats/${beatId}`);
+        const response = await fetch(`https://api.charliedahle.me/api/beats/${beatId}`);
 
         if (!response.ok) {
           if (response.status === 404) {

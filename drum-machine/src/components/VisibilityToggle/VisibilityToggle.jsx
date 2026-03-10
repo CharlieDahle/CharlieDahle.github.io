@@ -22,7 +22,7 @@ function VisibilityToggle() {
       if (!beatId || !isAuthenticated) return;
 
       try {
-        const response = await fetch(`/api/beats/${beatId}/access`, {
+        const response = await fetch(`https://api.charliedahle.me/api/beats/${beatId}/access`, {
           headers: getAuthHeaders(),
         });
 
@@ -45,7 +45,7 @@ function VisibilityToggle() {
       setIsChanging(true);
       setShowDropdown(false);
 
-      const response = await fetch(`/api/beats/${beatId}/visibility`, {
+      const response = await fetch(`https://api.charliedahle.me/api/beats/${beatId}/visibility`, {
         method: "PUT",
         headers: {
           ...getAuthHeaders(),

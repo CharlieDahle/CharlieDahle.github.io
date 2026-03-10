@@ -126,7 +126,7 @@ function DrumMachineApp() {
         // Add cache-busting to prevent 304 responses
         // Include auth headers so server knows who is requesting
         const authHeaders = getAuthHeaders(urlBeatId); // Pass beatId for guest token
-        const response = await fetch(`/api/beats/${urlBeatId}/access?t=${Date.now()}`, {
+        const response = await fetch(`https://api.charliedahle.me/api/beats/${urlBeatId}/access?t=${Date.now()}`, {
           headers: {
             ...authHeaders,
             'Cache-Control': 'no-cache',
