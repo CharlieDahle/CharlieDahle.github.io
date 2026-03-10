@@ -27,12 +27,15 @@ const throttle = (func, limit) => {
       lastRan = Date.now();
     } else {
       clearTimeout(lastFunc);
-      lastFunc = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(this, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
+      lastFunc = setTimeout(
+        () => {
+          if (Date.now() - lastRan >= limit) {
+            func.apply(this, args);
+            lastRan = Date.now();
+          }
+        },
+        limit - (Date.now() - lastRan),
+      );
     }
   };
 };
@@ -54,7 +57,7 @@ export const useAppStore = create((set, get) => ({
 
         const normalizedNotes = newData[trackId].map(normalizeNote);
         const existingNoteIndex = normalizedNotes.findIndex(
-          (note) => note.tick === tick
+          (note) => note.tick === tick,
         );
 
         if (existingNoteIndex === -1) {
@@ -86,7 +89,7 @@ export const useAppStore = create((set, get) => ({
         if (newData[trackId]) {
           const normalizedNotes = newData[trackId].map(normalizeNote);
           newData[trackId] = normalizedNotes.filter(
-            (note) => note.tick !== tick
+            (note) => note.tick !== tick,
           );
         }
 
@@ -113,7 +116,7 @@ export const useAppStore = create((set, get) => ({
           newData[trackId] = normalizedNotes.map((note) =>
             note.tick === tick
               ? { ...note, velocity: clampVelocity(velocity) }
-              : note
+              : note,
           );
         }
 
@@ -139,7 +142,7 @@ export const useAppStore = create((set, get) => ({
         if (newData[trackId]) {
           const normalizedNotes = newData[trackId].map(normalizeNote);
           const noteToMove = normalizedNotes.find(
-            (note) => note.tick === fromTick
+            (note) => note.tick === fromTick,
           );
 
           if (noteToMove) {
@@ -236,7 +239,7 @@ export const useAppStore = create((set, get) => ({
       const data = get().pattern.data;
       return Object.values(data).reduce(
         (total, notes) => total + notes.length,
-        0
+        0,
       );
     },
 
@@ -381,7 +384,7 @@ export const useAppStore = create((set, get) => ({
         // Ensure loopStart is before loopEnd
         const clampedTick = Math.max(
           0,
-          Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT)
+          Math.min(tick, loopEnd - state.transport.TICKS_PER_BEAT),
         );
         return {
           transport: { ...state.transport, loopStart: clampedTick },
@@ -396,7 +399,7 @@ export const useAppStore = create((set, get) => ({
         // Ensure loopEnd is after loopStart and within bounds
         const clampedTick = Math.max(
           state.transport.loopStart + state.transport.TICKS_PER_BEAT,
-          Math.min(tick, totalTicks)
+          Math.min(tick, totalTicks),
         );
         return {
           transport: { ...state.transport, loopEnd: clampedTick },
@@ -489,12 +492,12 @@ export const useAppStore = create((set, get) => ({
         soundFile: (() => {
           // Find first kick sound from the flat array
           const kickSound = drumSounds.find(
-            (sound) => sound.category === "kicks"
+            (sound) => sound.category === "kicks",
           );
           return kickSound ? kickSound.file : "kicks/Ac_K.wav"; // fallback
         })(),
         availableSounds: drumSounds.filter(
-          (sound) => sound.category === "kicks"
+          (sound) => sound.category === "kicks",
         ),
         volume: 1.0,
       },
@@ -504,12 +507,12 @@ export const useAppStore = create((set, get) => ({
         color: "#f39c12",
         soundFile: (() => {
           const snareSound = drumSounds.find(
-            (sound) => sound.category === "snares"
+            (sound) => sound.category === "snares",
           );
           return snareSound ? snareSound.file : "snares/Box_Snr2.wav"; // fallback
         })(),
         availableSounds: drumSounds.filter(
-          (sound) => sound.category === "snares"
+          (sound) => sound.category === "snares",
         ),
         volume: 1.0,
       },
@@ -519,12 +522,12 @@ export const useAppStore = create((set, get) => ({
         color: "#2ecc71",
         soundFile: (() => {
           const hihatSound = drumSounds.find(
-            (sound) => sound.category === "hihats"
+            (sound) => sound.category === "hihats",
           );
           return hihatSound ? hihatSound.file : "hihats/Jls_H.wav"; // fallback
         })(),
         availableSounds: drumSounds.filter(
-          (sound) => sound.category === "hihats"
+          (sound) => sound.category === "hihats",
         ),
         volume: 1.0,
       },
@@ -535,13 +538,13 @@ export const useAppStore = create((set, get) => ({
         soundFile: (() => {
           const openhatSound = drumSounds.find(
             (sound) =>
-              sound.category === "openhats" || sound.category === "cymbals"
+              sound.category === "openhats" || sound.category === "cymbals",
           );
           return openhatSound ? openhatSound.file : "cymbals/CL_OHH1.wav"; // fallback
         })(),
         availableSounds: drumSounds.filter(
           (sound) =>
-            sound.category === "openhats" || sound.category === "cymbals"
+            sound.category === "openhats" || sound.category === "cymbals",
         ),
         volume: 1.0,
       },
@@ -593,7 +596,9 @@ export const useAppStore = create((set, get) => ({
         tracks: {
           ...state.tracks,
           list: state.tracks.list.map((track) =>
-            track.id === trackId ? { ...track, soundFile: newSoundFile } : track
+            track.id === trackId
+              ? { ...track, soundFile: newSoundFile }
+              : track,
           ),
         },
       }));
@@ -610,7 +615,7 @@ export const useAppStore = create((set, get) => ({
         tracks: {
           ...state.tracks,
           list: state.tracks.list.map((track) =>
-            track.id === trackId ? { ...track, volume: clampedVolume } : track
+            track.id === trackId ? { ...track, volume: clampedVolume } : track,
           ),
         },
       }));
@@ -624,7 +629,7 @@ export const useAppStore = create((set, get) => ({
         tracks: {
           ...state.tracks,
           list: state.tracks.list.map((track) =>
-            track.id === trackId ? { ...track, ...updates } : track
+            track.id === trackId ? { ...track, ...updates } : track,
           ),
         },
       }));
@@ -659,7 +664,9 @@ export const useAppStore = create((set, get) => ({
         tracks: {
           ...state.tracks,
           list: state.tracks.list.map((track) =>
-            track.id === trackId ? { ...track, soundFile: newSoundFile } : track
+            track.id === trackId
+              ? { ...track, soundFile: newSoundFile }
+              : track,
           ),
         },
       }));
@@ -670,7 +677,7 @@ export const useAppStore = create((set, get) => ({
         tracks: {
           ...state.tracks,
           list: state.tracks.list.map((track) =>
-            track.id === trackId ? { ...track, volume } : track
+            track.id === trackId ? { ...track, volume } : track,
           ),
         },
       }));
@@ -804,8 +811,7 @@ export const useAppStore = create((set, get) => ({
 
     initializeConnection: () => {
       console.log("Connecting to server...");
-      // const newSocket = io("https://api.charliedahle.me"); // Production
-      const newSocket = io("http://localhost:3001"); // Local development
+      const newSocket = io("https://api.charliedahle.me");
 
       // Connection events
       newSocket.on("connect", () => {
@@ -845,7 +851,7 @@ export const useAppStore = create((set, get) => ({
         // If we were reconnecting and still have a beat session, try to rejoin
         if (wasReconnecting && websocket.beatId) {
           console.log(
-            "Attempting to rejoin beat session after reconnection..."
+            "Attempting to rejoin beat session after reconnection...",
           );
           get().websocket.attemptRejoinBeat();
         }
@@ -886,7 +892,7 @@ export const useAppStore = create((set, get) => ({
           console.log(
             "User joined:",
             userId,
-            isSpectator ? "(spectator)" : "(editor)"
+            isSpectator ? "(spectator)" : "(editor)",
           );
           debugLog("in", "user-joined", {
             userId,
@@ -905,7 +911,7 @@ export const useAppStore = create((set, get) => ({
                 : state.websocket.spectators,
             },
           }));
-        }
+        },
       );
 
       newSocket.on("user-left", ({ userId, userCount }) => {
@@ -916,7 +922,7 @@ export const useAppStore = create((set, get) => ({
             ...state.websocket,
             users: state.websocket.users.filter((id) => id !== userId),
             spectators: state.websocket.spectators.filter(
-              (id) => id !== userId
+              (id) => id !== userId,
             ),
           },
         }));
@@ -963,7 +969,7 @@ export const useAppStore = create((set, get) => ({
               const normalizedNotes =
                 newData[change.trackId].map(normalizeNote);
               const existingNoteIndex = normalizedNotes.findIndex(
-                (note) => note.tick === change.tick
+                (note) => note.tick === change.tick,
               );
               if (existingNoteIndex === -1) {
                 newData[change.trackId] = [
@@ -985,7 +991,7 @@ export const useAppStore = create((set, get) => ({
                 const normalizedNotes =
                   newData[change.trackId].map(normalizeNote);
                 newData[change.trackId] = normalizedNotes.filter(
-                  (note) => note.tick !== change.tick
+                  (note) => note.tick !== change.tick,
                 );
               }
               return { pattern: { ...state.pattern, data: newData } };
@@ -1001,7 +1007,7 @@ export const useAppStore = create((set, get) => ({
                 newData[change.trackId] = normalizedNotes.map((note) =>
                   note.tick === change.tick
                     ? { ...note, velocity: clampVelocity(change.velocity) }
-                    : note
+                    : note,
                 );
               }
               return { pattern: { ...state.pattern, data: newData } };
@@ -1015,7 +1021,7 @@ export const useAppStore = create((set, get) => ({
                 const normalizedNotes =
                   newData[change.trackId].map(normalizeNote);
                 const noteToMove = normalizedNotes.find(
-                  (note) => note.tick === change.fromTick
+                  (note) => note.tick === change.fromTick,
                 );
                 if (noteToMove) {
                   newData[change.trackId] = normalizedNotes
@@ -1123,37 +1129,40 @@ export const useAppStore = create((set, get) => ({
         }));
       });
 
-      newSocket.on("edit-access-granted", ({ beatId, role, accessToken, message }) => {
-        console.log("Edit access granted:", message);
-        debugLog("in", "edit-access-granted", { beatId, role, message });
+      newSocket.on(
+        "edit-access-granted",
+        ({ beatId, role, accessToken, message }) => {
+          console.log("Edit access granted:", message);
+          debugLog("in", "edit-access-granted", { beatId, role, message });
 
-        // Store access token in localStorage for guest users
-        if (accessToken) {
-          localStorage.setItem(`guest-access-${beatId}`, accessToken);
-          console.log("Stored guest access token in localStorage");
-        }
+          // Store access token in localStorage for guest users
+          if (accessToken) {
+            localStorage.setItem(`guest-access-${beatId}`, accessToken);
+            console.log("Stored guest access token in localStorage");
+          }
 
-        const { isInSession } = get().websocket;
+          const { isInSession } = get().websocket;
 
-        if (isInSession) {
-          // Already in session as spectator - promote to editor
-          set((state) => ({
-            websocket: {
-              ...state.websocket,
-              isSpectator: false,
-            },
-          }));
-          console.log("Promoted to editor in current session");
-        } else {
-          // Not in session - refresh page to re-check access
-          console.log("Reloading page to apply new access...");
-          window.location.reload();
-        }
+          if (isInSession) {
+            // Already in session as spectator - promote to editor
+            set((state) => ({
+              websocket: {
+                ...state.websocket,
+                isSpectator: false,
+              },
+            }));
+            console.log("Promoted to editor in current session");
+          } else {
+            // Not in session - refresh page to re-check access
+            console.log("Reloading page to apply new access...");
+            window.location.reload();
+          }
 
-        // Show success notification
-        get().ui.setError(null);
-        console.log("You now have edit access!");
-      });
+          // Show success notification
+          get().ui.setError(null);
+          console.log("You now have edit access!");
+        },
+      );
 
       newSocket.on("edit-access-denied", ({ beatId, message }) => {
         console.log("Edit access denied:", message);
@@ -1173,7 +1182,7 @@ export const useAppStore = create((set, get) => ({
           websocket: {
             ...state.websocket,
             queueRequests: state.websocket.queueRequests.filter(
-              (req) => req.requestId !== requestId
+              (req) => req.requestId !== requestId,
             ),
           },
         }));
@@ -1190,10 +1199,14 @@ export const useAppStore = create((set, get) => ({
           if (role === "spectator") {
             // Demoted to spectator
             newState.users = newState.users.filter((id) => id !== userId);
-            newState.spectators = [...new Set([...newState.spectators, userId])];
+            newState.spectators = [
+              ...new Set([...newState.spectators, userId]),
+            ];
           } else {
             // Promoted to editor
-            newState.spectators = newState.spectators.filter((id) => id !== userId);
+            newState.spectators = newState.spectators.filter(
+              (id) => id !== userId,
+            );
             newState.users = [...new Set([...newState.users, userId])];
           }
 
@@ -1226,8 +1239,8 @@ export const useAppStore = create((set, get) => ({
 
         // Navigate back to beats page
         if (window.location.pathname.includes("/DrumMachine/")) {
-          window.history.pushState({}, '', '/beats');
-          window.dispatchEvent(new PopStateEvent('popstate'));
+          window.history.pushState({}, "", "/beats");
+          window.dispatchEvent(new PopStateEvent("popstate"));
         }
       });
 
@@ -1267,11 +1280,11 @@ export const useAppStore = create((set, get) => ({
       const maxDelay = 30000;
       const delay = Math.min(
         baseDelay * Math.pow(2, websocket.reconnectAttempts),
-        maxDelay
+        maxDelay,
       );
 
       console.log(
-        `Reconnection attempt ${websocket.reconnectAttempts + 1} in ${delay}ms`
+        `Reconnection attempt ${websocket.reconnectAttempts + 1} in ${delay}ms`,
       );
       debugLog("out", "reconnect-attempt", {
         attempt: websocket.reconnectAttempts + 1,
@@ -1332,7 +1345,7 @@ export const useAppStore = create((set, get) => ({
 
             // Sync all state from server (server wins)
             get().websocket.syncFromServer(
-              response.beatData || response.roomState
+              response.beatData || response.roomState,
             );
 
             // Show syncing state for 5 seconds, then connected
@@ -1355,7 +1368,7 @@ export const useAppStore = create((set, get) => ({
               },
             }));
           }
-        }
+        },
       );
     },
 
@@ -1413,7 +1426,7 @@ export const useAppStore = create((set, get) => ({
             if (response && response.success) {
               console.log(
                 `Successfully joined beat session as ${mode}:`,
-                targetBeatId
+                targetBeatId,
               );
               console.log("[joinBeat] Setting beatId to:", targetBeatId.trim());
               debugLog("in", "join-beat-success", response);
@@ -1427,7 +1440,10 @@ export const useAppStore = create((set, get) => ({
                 websocket: {
                   ...state.websocket,
                   beatId: targetBeatId.trim(),
-                  beatName: response.roomState?.beatName || response.beatData?.beatName || null,
+                  beatName:
+                    response.roomState?.beatName ||
+                    response.beatData?.beatName ||
+                    null,
                   isInSession: true,
                   isSpectator: response.isSpectator || asSpectator,
                   users:
@@ -1440,7 +1456,10 @@ export const useAppStore = create((set, get) => ({
                   error: null,
                 },
               }));
-              console.log("[joinBeat] beatId after set:", get().websocket.beatId);
+              console.log(
+                "[joinBeat] beatId after set:",
+                get().websocket.beatId,
+              );
               resolve(response.beatData || response.roomState);
             } else {
               const errorMsg = response?.error || "Unknown error";
@@ -1454,7 +1473,7 @@ export const useAppStore = create((set, get) => ({
               }));
               reject(new Error(errorMsg));
             }
-          }
+          },
         );
       });
     },
@@ -1505,7 +1524,7 @@ export const useAppStore = create((set, get) => ({
     },
 
     // PHASE 5: Respond to a queue request (approve or deny)
-    respondToQueueRequest: (requestId, approve, role = 'temporary') => {
+    respondToQueueRequest: (requestId, approve, role = "temporary") => {
       const { socket } = get().websocket;
       if (!socket) {
         console.error("Cannot respond to queue request: not connected");
@@ -1515,7 +1534,7 @@ export const useAppStore = create((set, get) => ({
       console.log(
         `${approve ? "Approving" : "Denying"} queue request:`,
         requestId,
-        approve ? `with role: ${role}` : ""
+        approve ? `with role: ${role}` : "",
       );
       debugLog("out", "respond-to-queue-request", { requestId, approve, role });
 
@@ -1752,7 +1771,7 @@ export const useAppStore = create((set, get) => ({
     // This method is kept for backward compatibility with any existing WebSocket events
     // that might still call it, but the actual logic is now in the websocket slice
     console.log(
-      "applyPatternChange called - this should use websocket slice instead"
+      "applyPatternChange called - this should use websocket slice instead",
     );
   },
 
@@ -1787,7 +1806,9 @@ export const useAppStore = create((set, get) => ({
         } catch (error) {
           console.error("Failed to parse stored user data:", error);
           get().auth.logout(); // Clear invalid data
-          set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
+          set((state) => ({
+            auth: { ...state.auth, isAuthInitialized: true },
+          }));
         }
       } else {
         set((state) => ({ auth: { ...state.auth, isAuthInitialized: true } }));
@@ -1802,15 +1823,14 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          // "https://api.charliedahle.me/api/auth/register", // Production
-          "/api/auth/register", // Local development - uses Vite proxy
+          "https://api.charliedahle.me/api/auth/register",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ username, password }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -1862,15 +1882,14 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const response = await fetch(
-          // "https://api.charliedahle.me/api/auth/login", // Production
-          "/api/auth/login", // Local development - uses Vite proxy
+          "https://api.charliedahle.me/api/auth/login",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ username, password }),
-          }
+          },
         );
 
         const data = await response.json();
@@ -1958,7 +1977,7 @@ export const useAppStore = create((set, get) => ({
         // Warn if state is getting large (> 500KB)
         if (sizeInKB > 500) {
           console.warn(
-            `⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`
+            `⚠️ Drum machine state is large (${sizeInKB}KB). Consider simplifying.`,
           );
         }
 
@@ -1969,7 +1988,7 @@ export const useAppStore = create((set, get) => ({
         if (error.name === "QuotaExceededError") {
           console.error("❌ localStorage quota exceeded! Cannot save state.");
           alert(
-            "Unable to save your beat - storage is full. Please clear browser data or simplify your beat."
+            "Unable to save your beat - storage is full. Please clear browser data or simplify your beat.",
           );
         } else {
           console.error("Failed to save drum machine state:", error);
@@ -1980,7 +1999,7 @@ export const useAppStore = create((set, get) => ({
     // Restore drum machine state after login
     restoreStateAfterLogin: () => {
       const savedStateString = localStorage.getItem(
-        "drum_machine_pending_state"
+        "drum_machine_pending_state",
       );
 
       if (!savedStateString) {
@@ -2078,7 +2097,9 @@ export const useAppStore = create((set, get) => ({
       const { token, isAuthenticated } = get().auth;
 
       // Check for guest access token if beatId provided
-      const guestToken = beatId ? localStorage.getItem(`guest-access-${beatId}`) : null;
+      const guestToken = beatId
+        ? localStorage.getItem(`guest-access-${beatId}`)
+        : null;
 
       console.log("🔐 Auth Debug:", {
         isAuthenticated,
@@ -2134,11 +2155,9 @@ export const useAppStore = create((set, get) => ({
 
       try {
         const headers = get().auth.getAuthHeaders();
-        const response = await fetch(
-          // "https://api.charliedahle.me/api/beats", // Production
-          "/api/beats", // Local development - uses Vite proxy
-          { headers }
-        );
+        const response = await fetch("https://api.charliedahle.me/api/beats", {
+          headers,
+        });
 
         const data = await response.json();
 
@@ -2170,10 +2189,13 @@ export const useAppStore = create((set, get) => ({
 
     deleteBeat: async (beatId) => {
       const headers = get().auth.getAuthHeaders();
-      const response = await fetch(`/api/beats/${beatId}`, {
-        method: "DELETE",
-        headers,
-      });
+      const response = await fetch(
+        `https://api.charliedahle.me/api/beats/${beatId}`,
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
 
       if (response.ok) {
         set((state) => ({
@@ -2190,34 +2212,46 @@ export const useAppStore = create((set, get) => ({
 
     fetchSharedBeats: async () => {
       const headers = get().auth.getAuthHeaders();
-      const response = await fetch("/api/beats/shared", { headers });
+      const response = await fetch(
+        "https://api.charliedahle.me/api/beats/shared",
+        { headers },
+      );
       if (response.ok) {
         const data = await response.json();
-        set((state) => ({ beats: { ...state.beats, sharedBeats: data.beats } }));
+        set((state) => ({
+          beats: { ...state.beats, sharedBeats: data.beats },
+        }));
       }
     },
 
     fetchPublicBeats: async () => {
-      const response = await fetch("/api/beats/public");
+      const response = await fetch(
+        "https://api.charliedahle.me/api/beats/public",
+      );
       if (response.ok) {
         const data = await response.json();
-        set((state) => ({ beats: { ...state.beats, publicBeats: data.beats } }));
+        set((state) => ({
+          beats: { ...state.beats, publicBeats: data.beats },
+        }));
       }
     },
 
     updateBeatVisibility: async (beatRoomId, visibility) => {
       const headers = get().auth.getAuthHeaders();
-      const response = await fetch(`/api/beats/${beatRoomId}/visibility`, {
-        method: "PUT",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility }),
-      });
+      const response = await fetch(
+        `https://api.charliedahle.me/api/beats/${beatRoomId}/visibility`,
+        {
+          method: "PUT",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ visibility }),
+        },
+      );
       if (response.ok) {
         set((state) => ({
           beats: {
             ...state.beats,
             userBeats: state.beats.userBeats.map((b) =>
-              b.room_id === beatRoomId ? { ...b, visibility } : b
+              b.room_id === beatRoomId ? { ...b, visibility } : b,
             ),
           },
         }));
@@ -2278,21 +2312,28 @@ export const useAppStore = create((set, get) => ({
     // NEW: Mark as having unsaved changes
     markAsModified: () => {
       const isGuest = get().beats.isGuestBeat;
-      console.log('[Store] markAsModified called - isGuestBeat:', isGuest);
+      console.log("[Store] markAsModified called - isGuestBeat:", isGuest);
       set((state) => ({
         beats: {
           ...state.beats,
           hasUnsavedChanges: true,
           // PHASE 6: Mark guest beat as modified if it's a guest beat
-          guestBeatModified: state.beats.isGuestBeat ? true : state.beats.guestBeatModified,
+          guestBeatModified: state.beats.isGuestBeat
+            ? true
+            : state.beats.guestBeatModified,
         },
       }));
-      console.log('[Store] After markAsModified - guestBeatModified:', get().beats.guestBeatModified);
+      console.log(
+        "[Store] After markAsModified - guestBeatModified:",
+        get().beats.guestBeatModified,
+      );
     },
 
     // PHASE 6: Mark current beat as a guest beat (orphan beat)
     markAsGuestBeat: () => {
-      console.log('[Store] markAsGuestBeat called - setting isGuestBeat to true');
+      console.log(
+        "[Store] markAsGuestBeat called - setting isGuestBeat to true",
+      );
       set((state) => ({
         beats: {
           ...state.beats,
@@ -2300,7 +2341,7 @@ export const useAppStore = create((set, get) => ({
           guestBeatModified: false, // Reset on creation
         },
       }));
-      console.log('[Store] isGuestBeat set:', get().beats.isGuestBeat);
+      console.log("[Store] isGuestBeat set:", get().beats.isGuestBeat);
     },
 
     // PHASE 6: Promote guest beat to owned beat (after sign-in)
@@ -2342,8 +2383,7 @@ export const useAppStore = create((set, get) => ({
         const headers = get().auth.getAuthHeaders();
         console.log("💾 Request headers:", headers);
 
-        // const url = "https://api.charliedahle.me/api/beats"; // Production
-        const url = "/api/beats"; // Local development - uses Vite proxy
+        const url = "https://api.charliedahle.me/api/beats";
         console.log("💾 Making POST request to:", url);
 
         const response = await fetch(url, {
@@ -2355,7 +2395,7 @@ export const useAppStore = create((set, get) => ({
         console.log("💾 Response status:", response.status);
         console.log(
           "💾 Response headers:",
-          Object.fromEntries(response.headers.entries())
+          Object.fromEntries(response.headers.entries()),
         );
 
         // Check content type before parsing
@@ -2371,8 +2411,8 @@ export const useAppStore = create((set, get) => ({
             throw new Error(
               `Server error (${response.status}): ${textResponse.slice(
                 0,
-                200
-              )}...`
+                200,
+              )}...`,
             );
           } else {
             throw new Error("Server returned unexpected response format");
@@ -2474,7 +2514,8 @@ export const useAppStore = create((set, get) => ({
       if (!currentlyLoadedBeat) {
         // Check if there are any notes in the pattern
         const hasNotes = Object.keys(pattern.data).some(
-          (trackId) => pattern.data[trackId] && pattern.data[trackId].length > 0
+          (trackId) =>
+            pattern.data[trackId] && pattern.data[trackId].length > 0,
         );
 
         // Check if tracks have been modified from defaults
@@ -2496,19 +2537,27 @@ export const useAppStore = create((set, get) => ({
       if (!beatId || !newName?.trim()) return;
 
       const headers = get().auth.getAuthHeaders();
-      const response = await fetch(`/api/beats/${beatId}/name`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ name: newName.trim() }),
-      });
+      const response = await fetch(
+        `https://api.charliedahle.me/api/beats/${beatId}/name`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ name: newName.trim() }),
+        },
+      );
 
       if (response.ok) {
         set((state) => ({
           websocket: { ...state.websocket, beatName: newName.trim() },
-          beats: state.beats.currentlyLoadedBeat ? {
-            ...state.beats,
-            currentlyLoadedBeat: { ...state.beats.currentlyLoadedBeat, name: newName.trim() },
-          } : state.beats,
+          beats: state.beats.currentlyLoadedBeat
+            ? {
+                ...state.beats,
+                currentlyLoadedBeat: {
+                  ...state.beats.currentlyLoadedBeat,
+                  name: newName.trim(),
+                },
+              }
+            : state.beats,
         }));
       }
     },
@@ -2525,11 +2574,10 @@ export const useAppStore = create((set, get) => ({
       try {
         const headers = get().auth.getAuthHeaders();
         const response = await fetch(
-          // `https://api.charliedahle.me/api/beats/${beatId}`, // Production
-          `/api/beats/${beatId}`, // Local development - uses Vite proxy
+          `https://api.charliedahle.me/api/beats/${beatId}`,
           {
             headers,
-          }
+          },
         );
 
         const data = await response.json();
@@ -2580,7 +2628,7 @@ export const useAppStore = create((set, get) => ({
           });
           console.log(
             "Effects state applied to store:",
-            Object.keys(data.effectsState)
+            Object.keys(data.effectsState),
           );
         }
 
@@ -2654,10 +2702,8 @@ export const useAppStore = create((set, get) => ({
 
         // Decide endpoint and method based on whether we're updating
         const url = isUpdate
-          // ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}` // Production
-          ? `/api/beats/${currentlyLoadedBeat.id}` // Local development - uses Vite proxy
-          // : "https://api.charliedahle.me/api/beats"; // Production
-          : "/api/beats"; // Local development - uses Vite proxy
+          ? `https://api.charliedahle.me/api/beats/${currentlyLoadedBeat.id}`
+          : "https://api.charliedahle.me/api/beats";
 
         const method = isUpdate ? "PUT" : "POST";
 
@@ -2684,8 +2730,8 @@ export const useAppStore = create((set, get) => ({
             throw new Error(
               `Server error (${response.status}): ${textResponse.slice(
                 0,
-                200
-              )}...`
+                200,
+              )}...`,
             );
           } else {
             throw new Error("Server returned unexpected response format");
@@ -2697,7 +2743,7 @@ export const useAppStore = create((set, get) => ({
 
         if (!response.ok) {
           throw new Error(
-            data.error || `Failed to ${isUpdate ? "update" : "save"} beat`
+            data.error || `Failed to ${isUpdate ? "update" : "save"} beat`,
           );
         }
 
@@ -3316,7 +3362,7 @@ export const useAppStore = create((set, get) => ({
 
       console.log(
         `Applying effect changes for track ${trackId}:`,
-        trackPendingChanges
+        trackPendingChanges,
       );
 
       // Clear pending changes since we're applying them
@@ -3338,7 +3384,7 @@ export const useAppStore = create((set, get) => ({
       get().beats.markAsModified();
 
       console.log(
-        `✅ Applied and broadcast effect changes for track ${trackId}`
+        `✅ Applied and broadcast effect changes for track ${trackId}`,
       );
     },
 
@@ -3367,7 +3413,7 @@ export const useAppStore = create((set, get) => ({
       return Object.keys(trackPendingChanges).some(
         (effectType) =>
           trackPendingChanges[effectType] &&
-          Object.keys(trackPendingChanges[effectType]).length > 0
+          Object.keys(trackPendingChanges[effectType]).length > 0,
       );
     },
 
@@ -3417,7 +3463,7 @@ export const useAppStore = create((set, get) => ({
     syncTrackEffectState: (trackId, effectsState) => {
       console.log(
         `Syncing complete effect state for ${trackId}:`,
-        effectsState
+        effectsState,
       );
 
       // Initialize if doesn't exist
@@ -3428,7 +3474,7 @@ export const useAppStore = create((set, get) => ({
       Object.keys(effectsState).forEach((effectType) => {
         newEnabledEffects[effectType] = get().effects.isEffectEnabled(
           effectType,
-          effectsState[effectType]
+          effectsState[effectType],
         );
       });
 
@@ -3468,7 +3514,7 @@ export const useAppStore = create((set, get) => ({
       const presets = get().effects.presets[trackType];
       if (!presets || !presets[presetId]) {
         console.warn(
-          `Preset ${presetId} not found for track type ${trackType}`
+          `Preset ${presetId} not found for track type ${trackType}`,
         );
         return;
       }
@@ -3476,7 +3522,7 @@ export const useAppStore = create((set, get) => ({
       const preset = presets[presetId];
       console.log(
         `Applying preset "${preset.name}" to track ${trackId}:`,
-        preset.effects
+        preset.effects,
       );
 
       // Initialize if doesn't exist
@@ -3516,7 +3562,7 @@ export const useAppStore = create((set, get) => ({
       // Send the complete effect state to other clients
       get().websocket.sendEffectStateApply(trackId, newEffects);
 
-      console.log(`✅ Applied preset "${preset.name}" to track ${trackId}`);
+      console.log(`Applied preset "${preset.name}" to track ${trackId}`);
     },
 
     // Get sound category from sound file path
@@ -3534,7 +3580,7 @@ export const useAppStore = create((set, get) => ({
       if (!track || !track.soundFile) return "Track";
 
       const soundCategory = get().effects.getSoundCategoryFromPath(
-        track.soundFile
+        track.soundFile,
       );
 
       // Map categories to display names
@@ -3568,7 +3614,7 @@ export const useAppStore = create((set, get) => ({
       if (!track || !track.soundFile) return null;
 
       const soundCategory = get().effects.getSoundCategoryFromPath(
-        track.soundFile
+        track.soundFile,
       );
 
       // Map sound categories to preset categories
@@ -3606,7 +3652,7 @@ export const useAppStore = create((set, get) => ({
 
         // Check if all preset parameters match current effects
         for (const [effectType, effectParams] of Object.entries(
-          preset.effects
+          preset.effects,
         )) {
           if (!currentEffects[effectType]) {
             isMatch = false;

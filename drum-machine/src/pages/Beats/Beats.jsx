@@ -110,7 +110,7 @@ function Beats() {
   const handleCreateNew = async () => {
     try {
       const getAuthHeaders = useAppStore.getState().auth.getAuthHeaders;
-      const response = await fetch("/api/beats", {
+      const response = await fetch("https://api.charliedahle.me/api/beats", {
         method: "POST",
         headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({

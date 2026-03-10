@@ -27,7 +27,7 @@ function RoomInterface({ onJoinBeat, isConnected, error }) { // PHASE 2: onCreat
       const getAuthHeaders = useAppStore.getState().auth.getAuthHeaders;
 
       // Create beat in database via API
-      const response = await fetch('/api/beats', {
+      const response = await fetch('https://api.charliedahle.me/api/beats', {
         method: 'POST',
         headers: {
           ...getAuthHeaders(),

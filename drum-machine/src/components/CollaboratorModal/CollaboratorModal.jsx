@@ -20,7 +20,7 @@ function CollaboratorModal({ beat, onClose }) {
   const fetchCollaborators = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/beats/${beat.id}/collaborators`, {
+      const response = await fetch(`https://api.charliedahle.me/api/beats/${beat.id}/collaborators`, {
         headers: getAuthHeaders(),
       });
       if (response.ok) {
@@ -78,7 +78,7 @@ function CollaboratorModal({ beat, onClose }) {
         return;
       }
 
-      const addRes = await fetch(`/api/beats/${beat.id}/collaborators`, {
+      const addRes = await fetch(`https://api.charliedahle.me/api/beats/${beat.id}/collaborators`, {
         method: "POST",
         headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ userId: match.id, role: "collaborator" }),
@@ -101,7 +101,7 @@ function CollaboratorModal({ beat, onClose }) {
 
   const handleRemove = async (userId) => {
     try {
-      const res = await fetch(`/api/beats/${beat.id}/collaborators/${userId}`, {
+      const res = await fetch(`https://api.charliedahle.me/api/beats/${beat.id}/collaborators/${userId}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
@@ -122,7 +122,7 @@ function CollaboratorModal({ beat, onClose }) {
       prev.map((c) => (c.user_id === userId ? { ...c, role: newRole } : c))
     );
     try {
-      const res = await fetch(`/api/beats/${beat.id}/collaborators`, {
+      const res = await fetch(`https://api.charliedahle.me/api/beats/${beat.id}/collaborators`, {
         method: "POST",
         headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role: newRole }),
