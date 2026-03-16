@@ -1,9 +1,70 @@
 .photos-page {
   position: relative;
   width: 100vw;
-  min-height: 100vh;
+  flex: 1;
   overflow: hidden;
   background: #5a9e4a;
+}
+
+/* ── Root + Header ────────────────────────────────────────────────────────── */
+
+.photos-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.photos-header {
+  background: #f5f0e0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #d9d0b8;
+}
+
+.photos-header-back {
+  color: #2d6a1f;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: color 0.15s;
+}
+
+.photos-header-back:hover { color: #1a4a10; }
+
+.photos-header-upload {
+  background: none;
+  border: none;
+  color: #2d6a1f;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.photos-header-upload:hover:not(:disabled) {
+  color: #1a4a10;
+  background: rgba(45, 106, 31, 0.08);
+}
+
+.photos-header-upload:disabled { opacity: 0.5; cursor: default; }
+
+.photos-header-upload--success { color: #1a7a1a; }
+.photos-header-upload--error   { color: #8b1a1a; }
+
+.camera-icon {
+  width: 20px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 /* ── Grass decorations ────────────────────────────────────────────────────── */
@@ -81,7 +142,7 @@
 }
 
 .road-lane-1 { top: calc(35% + 30px); }
-.road-lane-2 { top: calc(84% + 30px); }
+.road-lane-2 { top: calc(79% + 30px); }
 
 .road-far-edge {
   height: 5px;
@@ -91,7 +152,28 @@
 .road-surface {
   height: 58px;
   background: #242424;
+  position: relative;
 }
+
+.road-surface::before,
+.road-surface::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(
+    to right,
+    #ffffff 0px,
+    #ffffff 40px,
+    transparent 40px,
+    transparent 56px
+  );
+  opacity: 0.75;
+}
+
+.road-surface::before { top: 10px; }
+.road-surface::after  { bottom: 10px; }
 
 .road-near-edge {
   height: 20px;
@@ -112,12 +194,12 @@
 
 /* Lane-1 truck body sits BEHIND flowers */
 .truck-container.lane-1 {
-  top: 35%;
+  top: 33.8%;
   z-index: 0;
 }
 
 .truck-container.lane-2 {
-  top: 84%;
+  top: 77.8%;
   z-index: 2;
 }
 
@@ -129,8 +211,8 @@
   z-index: 2;
 }
 
-.truck-photo-outer.lane-1 { top: 35%; }
-.truck-photo-outer.lane-2 { top: 84%; }
+.truck-photo-outer.lane-1 { top: 33.8%; }
+.truck-photo-outer.lane-2 { top: 77.8%; }
 
 .truck-shadow {
   position: absolute;
@@ -188,6 +270,66 @@
   opacity: 1;
 }
 
+
+/* ── Webcam modal (desktop) ───────────────────────────────────────────────── */
+
+.webcam-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.webcam-video {
+  max-width: 90vw;
+  max-height: 75vh;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.webcam-controls {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.webcam-snap {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: white;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, background 0.1s;
+}
+
+.webcam-snap:hover  { background: #eee; transform: scale(1.05); }
+.webcam-snap:active { transform: scale(0.95); }
+
+.webcam-cancel {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  background: transparent;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.webcam-cancel:hover { border-color: white; }
+
+/* ── Lightbox ─────────────────────────────────────────────────────────────── */
 
 .lightbox {
   position: fixed;

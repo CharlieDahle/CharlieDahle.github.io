@@ -3,11 +3,11 @@ import './Photos.css'
 import truckRaw from '../../assets/proud_true_toyota.svg?raw'
 import wheelSvg from '../../assets/better_wheels.svg'
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:3001' : 'https://api.charliedahle.me'
+const API_BASE = 'https://api.charliedahle.me'
 
 // ── Truck color variants ───────────────────────────────────────────────────────
 // Blue weighted 2x so it appears most often, with red and yellow mixed in
-const TRUCK_COLORS = ['#2ba9f5', '#2ba9f5', '#e63946', '#f7c948']
+const TRUCK_COLORS = ['#2ba9f5', '#e63946', '#f7c948', '#e8e0d0', '#2d6a1f']
 
 function makeTruckSrc(bodyColor) {
   const svg = truckRaw.replace('fill: #2ba9f5', `fill: ${bodyColor}`)
@@ -87,13 +87,112 @@ const SPAWN_CLEAR = 220
 function Photos() {
   const [photos, setPhotos] = useState([])
   const [carList, setCarList] = useState([])
+  const [uploadStatus, setUploadStatus] = useState('idle') // idle | uploading | success | error
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef(null)
 
-  useEffect(() => {
+  const fetchPhotos = useCallback(() => {
     fetch(`${API_BASE}/api/photos`)
       .then(r => r.json())
       .then(data => setPhotos(data.photos || []))
       .catch(err => console.error('Failed to load photos:', err))
   }, [])
+
+  useEffect(() => { fetchPhotos() }, [fetchPhotos])
+
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // ── Webcam state (desktop only) ─────────────────────────────────────────────
+  const [showWebcam, setShowWebcam] = useState(false)
+  const videoRef  = useRef(null)
+  const streamRef = useRef(null)
+
+  const stopWebcam = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    setShowWebcam(false)
+  }, [])
+
+  const startWebcam = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      streamRef.current = stream
+      setShowWebcam(true)
+      // attach stream after render
+      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream }, 0)
+    } catch {
+      fileInputRef.current?.click()
+    }
+  }, [])
+
+  // ── Core upload logic ───────────────────────────────────────────────────────
+  const uploadFile = useCallback(async (file) => {
+    setUploadStatus('uploading')
+    try {
+      const presignRes = await fetch(`${API_BASE}/api/photos/presign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, mimeType: file.type, fileSize: file.size }),
+      })
+      if (!presignRes.ok) {
+        const err = await presignRes.json()
+        throw new Error(err.error || 'Upload failed')
+      }
+      const { uploadUrl, r2Key } = await presignRes.json()
+      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      await fetch(`${API_BASE}/api/photos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ r2Key, filename: file.name, mimeType: file.type }),
+      })
+      fetchPhotos()
+      setUploadStatus('success')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+    } catch (err) {
+      setUploadError(err.message)
+      setUploadStatus('error')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+    }
+  }, [fetchPhotos])
+
+  // ── Mobile: file input handler ──────────────────────────────────────────────
+  const handleFileSelect = useCallback(async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    e.target.value = ''
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be under 10MB')
+      setUploadStatus('error')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+      return
+    }
+    await uploadFile(file)
+  }, [uploadFile])
+
+  // ── Desktop: snap webcam frame ──────────────────────────────────────────────
+  const captureWebcam = useCallback(() => {
+    const video = videoRef.current
+    if (!video) return
+    const canvas = document.createElement('canvas')
+    canvas.width  = video.videoWidth
+    canvas.height = video.videoHeight
+    canvas.getContext('2d').drawImage(video, 0, 0)
+    canvas.toBlob(async (blob) => {
+      stopWebcam()
+      const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' })
+      await uploadFile(file)
+    }, 'image/jpeg', 0.92)
+  }, [stopWebcam, uploadFile])
+
+  // ── Sign click: route to webcam or camera roll ──────────────────────────────
+  const handleSignClick = useCallback(() => {
+    if (uploadStatus !== 'idle') return
+    if (isMobile) {
+      fileInputRef.current?.click()
+    } else {
+      startWebcam()
+    }
+  }, [uploadStatus, isMobile, startWebcam])
 
   // Physics state (mutated directly in animation loop)
   const carsRef = useRef([])
@@ -269,8 +368,28 @@ function Photos() {
     setExpandedPhoto(car.photo)
   }, [])
 
+  const uploadLabel = uploadStatus === 'uploading' ? 'Uploading...'
+    : uploadStatus === 'success' ? 'Added!'
+    : uploadStatus === 'error'   ? (uploadError || 'Try again')
+    : null
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
+    <div className="photos-root">
+      <header className="photos-header">
+        <a href="https://charliedahle.me" className="photos-header-back">← charliedahle.me</a>
+        <button
+          className={`photos-header-upload photos-header-upload--${uploadStatus}`}
+          onClick={handleSignClick}
+          disabled={uploadStatus !== 'idle'}
+        >
+          <svg className="camera-icon" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 1.5L5.5 4H2C1.4 4 1 4.4 1 5V15C1 15.6 1.4 16 2 16H18C18.6 16 19 15.6 19 15V5C19 4.4 18.6 4 18 4H14.5L13 1.5H7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+          {uploadLabel && <span>{uploadLabel}</span>}
+        </button>
+      </header>
     <div className="photos-page">
       {DECORATIONS.map(d => (
         <div
@@ -344,11 +463,30 @@ function Photos() {
           </React.Fragment>
         )
       })}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+      {showWebcam && (
+        <div className="webcam-modal">
+          <video ref={videoRef} className="webcam-video" autoPlay playsInline />
+          <div className="webcam-controls">
+            <button className="webcam-cancel" onClick={stopWebcam}>✕</button>
+            <button className="webcam-snap"   onClick={captureWebcam}>📷</button>
+          </div>
+        </div>
+      )}
+
       {expandedPhoto && (
         <div className="lightbox" onClick={() => setExpandedPhoto(null)}>
           <img src={expandedPhoto} className="lightbox-photo" />
         </div>
       )}
+    </div>
     </div>
   )
 }
