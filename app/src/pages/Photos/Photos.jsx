@@ -2,16 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import './Photos.css'
 import truckRaw from '../../assets/proud_true_toyota.svg?raw'
 import wheelSvg from '../../assets/better_wheels.svg'
-import photo0 from '../../assets/0849A997-343A-4503-A10B-3D2A5C865905_1_105_c.jpeg'
-import photo1 from '../../assets/2974EBA1-7477-4B14-BAD5-B4C84AA02EE9_4_5005_c.jpeg'
-import photo2 from '../../assets/4BF5CF70-0469-496D-BC77-48E403032578_1_105_c.jpeg'
-import photo3 from '../../assets/766B4972-4A32-4113-9734-6A13C42A4EB1_1_105_c.jpeg'
-import photo4 from '../../assets/7AE19D3F-84EA-4018-BAA0-851E7516B780_1_105_c.jpeg'
-import photo5 from '../../assets/7B6A08D5-0A4E-4B1B-A7A0-B413268C9CA7_1_105_c.jpeg'
-import photo6 from '../../assets/93339879-019E-4EB2-B2BB-B46291517DA0_1_105_c.jpeg'
-import photo7 from '../../assets/FA696A26-159A-4BFF-8F2A-EEB19BC061F7_1_105_c.jpeg'
 
-const PHOTOS = [photo0, photo1, photo2, photo3, photo4, photo5, photo6, photo7]
+const API_BASE = import.meta.env.DEV ? 'http://localhost:3001' : 'https://api.charliedahle.me'
 
 // ── Truck color variants ───────────────────────────────────────────────────────
 // Blue weighted 2x so it appears most often, with red and yellow mixed in
@@ -93,7 +85,15 @@ const SPAWN_CLEAR = 220
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Photos() {
+  const [photos, setPhotos] = useState([])
   const [carList, setCarList] = useState([])
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/photos`)
+      .then(r => r.json())
+      .then(data => setPhotos(data.photos || []))
+      .catch(err => console.error('Failed to load photos:', err))
+  }, [])
 
   // Physics state (mutated directly in animation loop)
   const carsRef = useRef([])
@@ -197,7 +197,7 @@ function Photos() {
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Spawning ────────────────────────────────────────────────────────────────
   const spawnCar = useCallback((lane) => {
@@ -206,9 +206,10 @@ function Photos() {
 
     if (lane === 1 && laneCars.some(c => c.x < SPAWN_CLEAR)) return
     if (lane === 2 && laneCars.some(c => c.x > vw - SPAWN_CLEAR)) return
+    if (photos.length === 0) return
 
     const id        = nextId++
-    const photo     = PHOTOS[photoIndex++ % PHOTOS.length]
+    const photo     = photos[photoIndex++ % photos.length].url
     const bodyColor = TRUCK_COLORS[Math.floor(Math.random() * TRUCK_COLORS.length)]
     const truckSrc  = makeTruckSrc(bodyColor)
     const maxSpeed  = 160 + Math.random() * 150
@@ -223,9 +224,11 @@ function Photos() {
       : startX + PHOTO_LEFT
 
     setCarList(prev => [...prev, { id, lane, initialX: startX, initialPhotoX, photo, truckSrc, stopped: false }])
-  }, [])
+  }, [photos])
 
   useEffect(() => {
+    if (photos.length === 0) return
+
     const makeScheduler = (laneNum, timerRef) => {
       const scheduleNext = () => {
         const delay = 2000 + Math.random() * 4000
@@ -247,7 +250,7 @@ function Photos() {
       clearTimeout(spawnTimerRef1.current)
       clearTimeout(spawnTimerRef2.current)
     }
-  }, [spawnCar])
+  }, [spawnCar, photos])
 
   // ── Click to stop / resume ──────────────────────────────────────────────────
   const handleTruckClick = useCallback((id) => {
