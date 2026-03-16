@@ -113,18 +113,6 @@ function Photos() {
     setShowWebcam(false)
   }, [])
 
-  const startWebcam = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      streamRef.current = stream
-      setShowWebcam(true)
-      // attach stream after render
-      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream }, 0)
-    } catch {
-      fileInputRef.current?.click()
-    }
-  }, [])
-
   // ── Core upload logic ───────────────────────────────────────────────────────
   const uploadFile = useCallback(async (file) => {
     setUploadStatus('uploading')
@@ -147,13 +135,38 @@ function Photos() {
       })
       fetchPhotos()
       setUploadStatus('success')
-      setTimeout(() => setUploadStatus('idle'), 3000)
+      setTimeout(() => setUploadStatus('idle'), 2500)
     } catch (err) {
       setUploadError(err.message)
       setUploadStatus('error')
       setTimeout(() => setUploadStatus('idle'), 3000)
     }
   }, [fetchPhotos])
+
+  const startWebcam = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      streamRef.current = stream
+      setShowWebcam(true)
+      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream }, 0)
+    } catch {
+      fileInputRef.current?.click()
+    }
+  }, [])
+
+  const captureWebcam = useCallback(() => {
+    const video = videoRef.current
+    if (!video) return
+    const canvas = document.createElement('canvas')
+    canvas.width  = video.videoWidth
+    canvas.height = video.videoHeight
+    canvas.getContext('2d').drawImage(video, 0, 0)
+    canvas.toBlob(async (blob) => {
+      stopWebcam()
+      const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' })
+      await uploadFile(file)
+    }, 'image/jpeg', 0.92)
+  }, [stopWebcam, uploadFile])
 
   // ── Mobile: file input handler ──────────────────────────────────────────────
   const handleFileSelect = useCallback(async (e) => {
@@ -169,20 +182,6 @@ function Photos() {
     await uploadFile(file)
   }, [uploadFile])
 
-  // ── Desktop: snap webcam frame ──────────────────────────────────────────────
-  const captureWebcam = useCallback(() => {
-    const video = videoRef.current
-    if (!video) return
-    const canvas = document.createElement('canvas')
-    canvas.width  = video.videoWidth
-    canvas.height = video.videoHeight
-    canvas.getContext('2d').drawImage(video, 0, 0)
-    canvas.toBlob(async (blob) => {
-      stopWebcam()
-      const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' })
-      await uploadFile(file)
-    }, 'image/jpeg', 0.92)
-  }, [stopWebcam, uploadFile])
 
   // ── Sign click: route to webcam or camera roll ──────────────────────────────
   const handleSignClick = useCallback(() => {
@@ -368,28 +367,25 @@ function Photos() {
     setExpandedPhoto(car.photo)
   }, [])
 
-  const uploadLabel = uploadStatus === 'uploading' ? 'Uploading...'
-    : uploadStatus === 'success' ? 'Added!'
-    : uploadStatus === 'error'   ? (uploadError || 'Try again')
-    : null
-
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="photos-root">
       <header className="photos-header">
         <a href="https://charliedahle.me" className="photos-header-back">← charliedahle.me</a>
         <button
-          className={`photos-header-upload photos-header-upload--${uploadStatus}`}
+          className="photos-header-camera"
           onClick={handleSignClick}
-          disabled={uploadStatus !== 'idle'}
+          disabled={uploadStatus === 'uploading'}
+          aria-label="Upload photo"
         >
           <svg className="camera-icon" viewBox="0 0 20 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7 1.5L5.5 4H2C1.4 4 1 4.4 1 5V15C1 15.6 1.4 16 2 16H18C18.6 16 19 15.6 19 15V5C19 4.4 18.6 4 18 4H14.5L13 1.5H7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
-          {uploadLabel && <span>{uploadLabel}</span>}
         </button>
       </header>
+      {uploadStatus === 'success' && <div className="upload-toast">Photo uploaded!</div>}
+      {uploadStatus === 'error'   && <div className="upload-toast upload-toast--error">{uploadError || 'Upload failed'}</div>}
     <div className="photos-page">
       {DECORATIONS.map(d => (
         <div
@@ -472,12 +468,9 @@ function Photos() {
         onChange={handleFileSelect}
       />
       {showWebcam && (
-        <div className="webcam-modal">
+        <div className="webcam-modal" onClick={captureWebcam}>
           <video ref={videoRef} className="webcam-video" autoPlay playsInline />
-          <div className="webcam-controls">
-            <button className="webcam-cancel" onClick={stopWebcam}>✕</button>
-            <button className="webcam-snap"   onClick={captureWebcam}>📷</button>
-          </div>
+          <div className="webcam-hint">click to capture</div>
         </div>
       )}
 
