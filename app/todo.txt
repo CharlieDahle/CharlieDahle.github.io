@@ -1,0 +1,6 @@
+TODO
+
+1. When loading a public beat as spectator - define desired behavior (read-only/listening mode?)
+2. ALREADY DONE - SessionQueueModal already has Temporary/Collaborator/Co-Owner dropdown, server handles all three
+3. Add explanatory tooltips (question mark icon) - where exactly?
+4. Outstanding edit requests visible on /beats page + icon/badge for newly shared beats

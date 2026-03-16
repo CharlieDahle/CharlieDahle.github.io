@@ -1,0 +1,209 @@
+.photos-page {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #5a9e4a;
+}
+
+/* ── Grass decorations ────────────────────────────────────────────────────── */
+
+/* Flower: round center + 4 petal blobs via box-shadow */
+/* Main div = stem; ::before = flower head painted on top */
+.decor-flower {
+  position: absolute;
+  width: 2px;
+  height: 26px;
+  background: #3a7a28;
+  border-radius: 1px;
+  transform-origin: bottom center;
+  z-index: 1;
+}
+
+.decor-flower::before {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f5c518;
+  box-shadow:
+    0 -7px 0 4px var(--petal),
+    7px 0  0 4px var(--petal),
+    0  7px 0 4px var(--petal),
+    -7px 0 0 4px var(--petal);
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Plant: stem with two leaf ovals */
+.decor-plant {
+  position: absolute;
+  width: 2px;
+  height: 18px;
+  background: #3a8030;
+  border-radius: 2px 2px 0 0;
+  transform-origin: bottom center;
+  z-index: 1;
+}
+
+.decor-plant::before {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 6px;
+  background: #4a9a38;
+  border-radius: 50%;
+  top: 3px;
+  left: 1px;
+  transform: rotate(-35deg);
+}
+
+.decor-plant::after {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 6px;
+  background: #4a9a38;
+  border-radius: 50%;
+  top: 7px;
+  left: -10px;
+  transform: rotate(35deg);
+}
+
+.road {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.road-lane-1 { top: calc(35% + 30px); }
+.road-lane-2 { top: calc(84% + 30px); }
+
+.road-far-edge {
+  height: 5px;
+  background: #888;
+}
+
+.road-surface {
+  height: 58px;
+  background: #242424;
+}
+
+.road-near-edge {
+  height: 20px;
+  background: #505050;
+}
+
+.truck-container {
+  position: absolute;
+  will-change: transform;
+  user-select: none;
+  cursor: pointer;
+}
+
+.truck-container.stopped .truck-img,
+.truck-container.stopped .wheel {
+  filter: brightness(0.85);
+}
+
+/* Lane-1 truck body sits BEHIND flowers */
+.truck-container.lane-1 {
+  top: 35%;
+  z-index: 0;
+}
+
+.truck-container.lane-2 {
+  top: 84%;
+  z-index: 2;
+}
+
+/* Photo container — always in front of flowers, unflipped */
+.truck-photo-outer {
+  position: absolute;
+  will-change: transform;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.truck-photo-outer.lane-1 { top: 35%; }
+.truck-photo-outer.lane-2 { top: 84%; }
+
+.truck-shadow {
+  position: absolute;
+  bottom: -10px;
+  left: 5%;
+  width: 90%;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  filter: blur(7px);
+  z-index: -1;
+}
+
+.truck-img {
+  width: 100%;
+  height: 100%;
+}
+
+.wheel {
+  position: absolute;
+  will-change: transform;
+}
+
+.photo-wrapper {
+  position: relative;
+}
+
+.truck-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 3px solid #d0d0d0;
+  border-radius: 8px;
+  display: block;
+}
+
+.photo-expand-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: white;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.photo-wrapper:hover .photo-expand-hint {
+  opacity: 1;
+}
+
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.lightbox-photo {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
