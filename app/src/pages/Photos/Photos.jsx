@@ -100,19 +100,6 @@ function Photos() {
 
   useEffect(() => { fetchPhotos() }, [fetchPhotos])
 
-  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-
-  // ── Webcam state (desktop only) ─────────────────────────────────────────────
-  const [showWebcam, setShowWebcam] = useState(false)
-  const videoRef  = useRef(null)
-  const streamRef = useRef(null)
-
-  const stopWebcam = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    streamRef.current = null
-    setShowWebcam(false)
-  }, [])
-
   // ── Core upload logic ───────────────────────────────────────────────────────
   const uploadFile = useCallback(async (file) => {
     setUploadStatus('uploading')
@@ -143,32 +130,7 @@ function Photos() {
     }
   }, [fetchPhotos])
 
-  const startWebcam = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-      streamRef.current = stream
-      setShowWebcam(true)
-      setTimeout(() => { if (videoRef.current) videoRef.current.srcObject = stream }, 0)
-    } catch {
-      fileInputRef.current?.click()
-    }
-  }, [])
-
-  const captureWebcam = useCallback(() => {
-    const video = videoRef.current
-    if (!video) return
-    const canvas = document.createElement('canvas')
-    canvas.width  = video.videoWidth
-    canvas.height = video.videoHeight
-    canvas.getContext('2d').drawImage(video, 0, 0)
-    canvas.toBlob(async (blob) => {
-      stopWebcam()
-      const file = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' })
-      await uploadFile(file)
-    }, 'image/jpeg', 0.92)
-  }, [stopWebcam, uploadFile])
-
-  // ── Mobile: file input handler ──────────────────────────────────────────────
+  // ── File input handler ──────────────────────────────────────────────────────
   const handleFileSelect = useCallback(async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -183,15 +145,48 @@ function Photos() {
   }, [uploadFile])
 
 
-  // ── Sign click: route to webcam or camera roll ──────────────────────────────
-  const handleSignClick = useCallback(() => {
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  const handleSignClick = useCallback(async () => {
     if (uploadStatus !== 'idle') return
-    if (isMobile) {
-      fileInputRef.current?.click()
-    } else {
-      startWebcam()
+
+    try {
+      setUploadStatus('uploading')
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : 'user' } })
+      const track = stream.getVideoTracks()[0]
+
+      if ('ImageCapture' in window) {
+        // Chrome/Edge: native ImageCapture, no video element needed
+        const imageCapture = new ImageCapture(track)
+        await new Promise(r => setTimeout(r, 600))
+        const blob = await imageCapture.takePhoto()
+        track.stop()
+        const file = new File([blob], 'photo.jpg', { type: blob.type || 'image/jpeg' })
+        await uploadFile(file)
+      } else {
+        // Firefox/Safari: hidden video + canvas
+        const video = document.createElement('video')
+        video.srcObject = stream
+        video.playsInline = true
+        video.muted = true
+        await new Promise(r => { video.onloadedmetadata = r })
+        await video.play()
+        await new Promise(r => setTimeout(r, 600))
+        const canvas = document.createElement('canvas')
+        canvas.width  = video.videoWidth
+        canvas.height = video.videoHeight
+        canvas.getContext('2d').drawImage(video, 0, 0)
+        track.stop()
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92))
+        const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
+        await uploadFile(file)
+      }
+    } catch (err) {
+      setUploadError(err.message || 'Camera error')
+      setUploadStatus('error')
+      setTimeout(() => setUploadStatus('idle'), 3000)
     }
-  }, [uploadStatus, isMobile, startWebcam])
+  }, [uploadStatus, uploadFile])
 
   // Physics state (mutated directly in animation loop)
   const carsRef = useRef([])
@@ -459,21 +454,6 @@ function Photos() {
           </React.Fragment>
         )
       })}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleFileSelect}
-      />
-      {showWebcam && (
-        <div className="webcam-modal" onClick={captureWebcam}>
-          <video ref={videoRef} className="webcam-video" autoPlay playsInline />
-          <div className="webcam-hint">click to capture</div>
-        </div>
-      )}
-
       {expandedPhoto && (
         <div className="lightbox" onClick={() => setExpandedPhoto(null)}>
           <img src={expandedPhoto} className="lightbox-photo" />
