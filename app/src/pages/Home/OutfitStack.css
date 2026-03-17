@@ -1,0 +1,131 @@
+.outfit-stack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.outfit-item {
+  position: absolute;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.outfit-item:hover {
+  filter:
+    drop-shadow(2px 0   0 #ddd)
+    drop-shadow(-2px 0  0 #ddd)
+    drop-shadow(0  2px  0 #ddd)
+    drop-shadow(0 -2px  0 #ddd)
+    drop-shadow(1px 1px 0 #ddd)
+    drop-shadow(-1px -1px 0 #ddd)
+    drop-shadow(1px -1px 0 #ddd)
+    drop-shadow(-1px 1px 0 #ddd);
+}
+
+.outfit-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #333;
+  font-size: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  text-shadow:
+    1px  0   3px rgba(191, 214, 255, 0.95),
+    -1px 0   3px rgba(191, 214, 255, 0.95),
+    0    1px 3px rgba(191, 214, 255, 0.95),
+    0   -1px 3px rgba(191, 214, 255, 0.95);
+}
+
+.outfit-item:hover .outfit-label {
+  opacity: 1;
+}
+
+.outfit-straw .outfit-label {
+  left: 38%;
+}
+
+/* Counter-rotate labels on rotated items */
+.outfit-shirt .outfit-label {
+  transform: translate(-50%, -50%) rotate(15deg);
+}
+.outfit-pants .outfit-label {
+  transform: translate(-50%, -50%) rotate(-7deg);
+  top: 20%;
+}
+
+/* ── Items ── */
+
+.outfit-zidane {
+  width: 150px;
+  top: 80px;
+  left: 100px;
+}
+.outfit-zidane:hover {
+  transform: scale(1.06);
+}
+
+.outfit-volvo {
+  width: 130px;
+  top: 420px;
+  left: 200px;
+}
+.outfit-volvo img {
+  transform: rotate(25deg);
+}
+.outfit-volvo:hover {
+  transform: scale(1.08);
+}
+
+.outfit-book {
+  width: 160px;
+  bottom: 100px;
+  right: 140px;
+  transform: rotate(-5deg);
+}
+.outfit-book:hover {
+  transform: rotate(-5deg) scale(1.08);
+}
+
+.outfit-straw {
+  width: 270px;
+  top: 40px;
+  right: 40px;
+}
+.outfit-straw:hover {
+  transform: scale(1.08);
+}
+
+.outfit-pants {
+  width: 220px;
+  top: 220px;
+  left: 820px;
+  transform: rotate(7deg);
+}
+.outfit-pants:hover {
+  transform: rotate(7deg) scale(1.08);
+}
+
+.outfit-shirt {
+  width: 320px;
+  top: 90px;
+  left: 460px;
+  transform: rotate(-15deg);
+}
+.outfit-shirt:hover {
+  transform: rotate(-15deg) scale(1.08);
+}
+
+.outfit-bass {
+  width: 300px;
+  top: 520px;
+  left: 500px;
+}
+.outfit-bass:hover {
+  transform: scale(1.08);
+}

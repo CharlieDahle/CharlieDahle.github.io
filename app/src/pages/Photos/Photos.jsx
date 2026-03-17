@@ -44,7 +44,15 @@ function randomDecorations() {
 const DECORATIONS = randomDecorations()
 
 let nextId = 0
-let photoIndex = 0
+
+function shuffleArray(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 // ── Truck geometry ────────────────────────────────────────────────────────────
 const TRUCK_ASPECT = 544.1 / 219.57
@@ -87,6 +95,7 @@ const SPAWN_CLEAR = 220
 function Photos() {
   const [photos, setPhotos] = useState([])
   const [carList, setCarList] = useState([])
+  const photoQueueRef = useRef([])
   const [uploadStatus, setUploadStatus] = useState('idle') // idle | uploading | success | error
   const [uploadError, setUploadError] = useState('')
   const fileInputRef = useRef(null)
@@ -292,6 +301,16 @@ function Photos() {
     return () => cancelAnimationFrame(rafRef.current)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reset queue whenever photos list changes so new uploads get included
+  useEffect(() => { photoQueueRef.current = [] }, [photos])
+
+  const getNextPhoto = useCallback(() => {
+    if (photoQueueRef.current.length === 0) {
+      photoQueueRef.current = shuffleArray(photos).map(p => p.url)
+    }
+    return photoQueueRef.current.pop()
+  }, [photos])
+
   // ── Spawning ────────────────────────────────────────────────────────────────
   const spawnCar = useCallback((lane) => {
     const vw = window.innerWidth
@@ -302,7 +321,7 @@ function Photos() {
     if (photos.length === 0) return
 
     const id        = nextId++
-    const photo     = photos[photoIndex++ % photos.length].url
+    const photo     = getNextPhoto()
     const bodyColor = TRUCK_COLORS[Math.floor(Math.random() * TRUCK_COLORS.length)]
     const truckSrc  = makeTruckSrc(bodyColor)
     const maxSpeed  = 160 + Math.random() * 150
@@ -317,7 +336,7 @@ function Photos() {
       : startX + PHOTO_LEFT
 
     setCarList(prev => [...prev, { id, lane, initialX: startX, initialPhotoX, photo, truckSrc, stopped: false }])
-  }, [photos])
+  }, [photos, getNextPhoto])
 
   useEffect(() => {
     if (photos.length === 0) return
@@ -326,9 +345,8 @@ function Photos() {
       const scheduleNext = () => {
         const delay = 2000 + Math.random() * 4000
         timerRef.current = setTimeout(() => {
-          // Don't spawn while any car in this lane is stopped — timer keeps ticking
-          const laneHasStopped = carsRef.current.some(c => c.lane === laneNum && c.stopped)
-          if (!laneHasStopped) spawnCar(laneNum)
+          const laneCars = carsRef.current.filter(c => c.lane === laneNum)
+          if (laneCars.length < 4) spawnCar(laneNum)
           scheduleNext()
         }, delay)
       }

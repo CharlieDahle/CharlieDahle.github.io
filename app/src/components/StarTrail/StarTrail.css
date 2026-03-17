@@ -1,0 +1,24 @@
+.star-trail-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  color: #fde74c;
+  transform: translate(-50%, -50%);
+  animation: star-trail-fade 0.7s ease-out forwards;
+  user-select: none;
+  line-height: 1;
+}
+
+@keyframes star-trail-fade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--drift-x)), calc(-50% + var(--drift-y)))
+      scale(0.2)
+      rotate(var(--spin));
+  }
+}
