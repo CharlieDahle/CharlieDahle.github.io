@@ -39,6 +39,10 @@ body {
   pointer-events: none;
 }
 
+.view-hidden * {
+  pointer-events: none !important;
+}
+
 
 .outfit-center-label {
   position: absolute;

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import './OutfitStack.css'
 
-const OutfitStack = ({ onOpenGuestbook }) => {
+const OutfitStack = ({ onOpenGuestbook, onOpenAboutMe }) => {
   return (
     <div className="outfit-stack">
 
@@ -17,7 +17,7 @@ const OutfitStack = ({ onOpenGuestbook }) => {
         </div>
       </Link>
 
-      <div className="outfit-item outfit-shirt">
+      <div className="outfit-item outfit-shirt" onClick={onOpenAboutMe}>
         <img src="/shirt.png" alt="Shirt" style={{ width: '100%', display: 'block' }} />
         <span className="outfit-label">About me</span>
       </div>

@@ -3,12 +3,14 @@ import './Home.css'
 import ShapeStack from '../ShapeStack/ShapeStack.jsx'
 import OutfitStack from './OutfitStack.jsx'
 import GuestbookModal from '../../components/GuestbookModal/GuestbookModal.jsx'
+import AboutMeModal from '../../components/AboutMeModal/AboutMeModal.jsx'
 import { Layers, Shirt } from 'lucide-react'
 import StarTrail from '../../components/StarTrail/StarTrail.jsx'
 
 function Home() {
   const [view, setView] = useState('shapes')
   const [guestbookOpen, setGuestbookOpen] = useState(false)
+  const [aboutMeOpen, setAboutMeOpen] = useState(false)
 
   return (
     <div className={`home-container ${view === 'outfit' ? 'home-outfit-bg' : ''}`}>
@@ -16,12 +18,12 @@ function Home() {
 
       {/* Shape stack view */}
       <div className={`view-wrapper ${view === 'shapes' ? 'view-active' : 'view-hidden'}`}>
-        <ShapeStack />
+        <ShapeStack onOpenAboutMe={() => setAboutMeOpen(true)} />
       </div>
 
       {/* Outfit view */}
       <div className={`view-wrapper ${view === 'outfit' ? 'view-active' : 'view-hidden'}`}>
-        <OutfitStack onOpenGuestbook={() => setGuestbookOpen(true)} />
+        <OutfitStack onOpenGuestbook={() => setGuestbookOpen(true)} onOpenAboutMe={() => setAboutMeOpen(true)} />
       </div>
 
       {/* View toggle */}
@@ -43,6 +45,7 @@ function Home() {
       </div>
 
       <GuestbookModal isOpen={guestbookOpen} onClose={() => setGuestbookOpen(false)} />
+      <AboutMeModal isOpen={aboutMeOpen} onClose={() => setAboutMeOpen(false)} />
       <StarTrail />
     </div>
   )

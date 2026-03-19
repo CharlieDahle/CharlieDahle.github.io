@@ -8,6 +8,7 @@ export default function StarTrail() {
     let lastX = 0, lastY = 0
 
     const onMove = (e) => {
+      if (document.querySelector('.guestbook-overlay, .aboutme-overlay')) return
       const dx = e.clientX - lastX
       const dy = e.clientY - lastY
       if (dx * dx + dy * dy < 80) return // distance throttle

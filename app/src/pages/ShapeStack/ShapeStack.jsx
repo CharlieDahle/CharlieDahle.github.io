@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './ShapeStack.css'
 import { Link } from 'react-router-dom'
 
-function ShapeStack() {
+function ShapeStack({ onOpenAboutMe }) {
   const [hoveredBlob, setHoveredBlob] = useState(null)
 
   // Define text for each blob
@@ -62,6 +62,7 @@ function ShapeStack() {
           className="blob-shape shape-6 blob-6"
           onMouseEnter={() => setHoveredBlob(6)}
           onMouseLeave={() => setHoveredBlob(null)}
+          onClick={onOpenAboutMe}
         ></div>
         <div className="center-text">
           {currentText}
