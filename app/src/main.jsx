@@ -22,28 +22,13 @@ import Beats from "./pages/Beats/Beats.jsx";
 import Photos from "./pages/Photos/Photos.jsx";
 import Books from "./pages/Books/Books.jsx";
 
-// App initialization component - handles both auth AND websocket
+// App initialization component - handles auth only
 function AppInitializer({ children }) {
   const initializeAuth = useAppStore((state) => state.auth.initializeAuth);
-  const initializeConnection = useAppStore(
-    (state) => state.websocket.initializeConnection
-  );
-  const cleanup = useAppStore((state) => state.websocket.cleanup);
 
   useEffect(() => {
-    // Initialize auth state from localStorage on app start
     initializeAuth();
-
-    // Initialize WebSocket connection on app start
-    console.log("🔌 Initializing WebSocket connection from main.jsx");
-    initializeConnection();
-
-    // Cleanup on unmount
-    return () => {
-      console.log("🔌 Cleaning up WebSocket connection from main.jsx");
-      cleanup();
-    };
-  }, [initializeAuth, initializeConnection, cleanup]);
+  }, [initializeAuth]);
 
   return children;
 }

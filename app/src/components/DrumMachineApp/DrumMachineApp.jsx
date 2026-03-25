@@ -56,6 +56,8 @@ function DrumMachineApp() {
     (state) => state.websocket.lastRemoteTransportCommand,
   );
 
+  const initializeConnection = useAppStore((state) => state.websocket.initializeConnection);
+  const cleanup = useAppStore((state) => state.websocket.cleanup);
   const joinBeat = useAppStore((state) => state.websocket.joinBeat);
   const getAuthHeaders = useAppStore((state) => state.auth.getAuthHeaders);
 
@@ -93,6 +95,12 @@ function DrumMachineApp() {
     damping: 15,
     mass: 0.8,
   };
+
+  // Initialize WebSocket connection only when on the drum machine page
+  useEffect(() => {
+    initializeConnection();
+    return () => cleanup();
+  }, [initializeConnection, cleanup]);
 
   // Handle beforeunload for guest beats
   useEffect(() => {
