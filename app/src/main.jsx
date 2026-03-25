@@ -20,6 +20,7 @@ import { useAppStore } from "./stores";
 import Login from "./pages/Login/Login.jsx";
 import Beats from "./pages/Beats/Beats.jsx";
 import Photos from "./pages/Photos/Photos.jsx";
+import Books from "./pages/Books/Books.jsx";
 
 // App initialization component - handles both auth AND websocket
 function AppInitializer({ children }) {
@@ -117,6 +118,15 @@ function AppRouter() {
             element={
               <AnimatedPage>
                 <Photos />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/books"
+            element={
+              <AnimatedPage>
+                <Books />
               </AnimatedPage>
             }
           />
