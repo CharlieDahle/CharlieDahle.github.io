@@ -3,11 +3,17 @@ import { useState } from "react";
 const API_BASE = "https://api.charliedahle.me";
 
 function Books() {
-  const [status, setStatus] = useState("idle"); // idle | loading | error
+  const [status, setStatus] = useState("idle"); // idle | loading | error | done
+  const [result, setResult] = useState(null); // { url, filename }
 
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    if (result) {
+      URL.revokeObjectURL(result.url);
+      setResult(null);
+    }
 
     setStatus("loading");
 
@@ -24,18 +30,14 @@ function Books() {
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name.replace(/\.epub$/i, ".kepub.epub");
-      a.click();
-      URL.revokeObjectURL(url);
+      const filename = file.name.replace(/\.epub$/i, ".kepub.epub");
 
-      setStatus("idle");
+      setResult({ url, filename });
+      setStatus("done");
     } catch {
       setStatus("error");
     }
 
-    // reset input so the same file can be re-uploaded
     e.target.value = "";
   }
 
@@ -48,7 +50,7 @@ function Books() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: "12px",
+        gap: "16px",
       }}
     >
       <label style={{ cursor: status === "loading" ? "default" : "pointer" }}>
@@ -61,17 +63,51 @@ function Books() {
         />
         <div
           style={{
-            padding: "14px 28px",
+            padding: "12px 24px",
             background: status === "loading" ? "#666" : "#000",
             color: "#fff",
             borderRadius: "8px",
-            fontSize: "16px",
+            fontSize: "15px",
             userSelect: "none",
           }}
         >
           {status === "loading" ? "Converting…" : "Upload EPUB"}
         </div>
       </label>
+
+      {status === "done" && result && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "12px 16px",
+            border: "1px solid #e0e0e0",
+            borderRadius: "8px",
+            fontSize: "14px",
+            color: "#333",
+          }}
+        >
+          <span style={{ maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {result.filename}
+          </span>
+          <a
+            href={result.url}
+            download={result.filename}
+            style={{
+              padding: "6px 14px",
+              background: "#000",
+              color: "#fff",
+              borderRadius: "6px",
+              textDecoration: "none",
+              fontSize: "13px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Download
+          </a>
+        </div>
+      )}
 
       {status === "error" && (
         <div style={{ color: "red", fontSize: "14px" }}>
