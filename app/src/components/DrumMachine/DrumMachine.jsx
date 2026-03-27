@@ -23,6 +23,11 @@ function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
   const trackEffects = useAppStore((state) => state.effects.trackEffects);
   const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
 
+  // Chord progression + volumes
+  const chords = useAppStore((state) => state.chords.data);
+  const drumVolume = useAppStore((state) => state.chords.drumVolume);
+  const chordVolume = useAppStore((state) => state.chords.chordVolume);
+
   // Scheduler instance
   const schedulerRef = useRef(null);
 
@@ -90,6 +95,21 @@ function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
       schedulerRef.current.setTracks(tracks);
     }
   }, [pattern, bpm, tracks]);
+
+  // Sync chord progression + volumes to scheduler
+  useEffect(() => {
+    if (schedulerRef.current) {
+      schedulerRef.current.setChords(chords);
+    }
+  }, [chords]);
+
+  useEffect(() => {
+    if (schedulerRef.current) schedulerRef.current.setDrumVolume(drumVolume);
+  }, [drumVolume]);
+
+  useEffect(() => {
+    if (schedulerRef.current) schedulerRef.current.setChordVolume(chordVolume);
+  }, [chordVolume]);
 
   // Update effects when they change
   useEffect(() => {

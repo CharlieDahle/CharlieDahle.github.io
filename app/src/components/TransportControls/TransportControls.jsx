@@ -24,6 +24,7 @@ function TransportControls({ isSpectator = false }) {
   const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
   const setSnapToGrid = useAppStore((state) => state.ui.setSnapToGrid);
 
+
   const handlePlay = () => {
     if (isSpectator) return;
     play(); // This now handles both local state and WebSocket automatically
@@ -137,6 +138,7 @@ function TransportControls({ isSpectator = false }) {
           />
           <span className="bpm-value">{bpm}</span>
         </div>
+
       </div>
     </div>
   );

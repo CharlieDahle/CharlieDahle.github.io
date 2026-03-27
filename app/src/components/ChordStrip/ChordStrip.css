@@ -1,0 +1,194 @@
+/* ChordStrip.css — matches PatternTimeline aesthetic */
+
+.chord-strip {
+  display: flex;
+  border-bottom: 1px solid var(--timeline-border);
+  background: var(--timeline-header-bg);
+  position: relative;
+}
+
+/* Sidebar — mirrors .track-sidebar dimensions */
+.chord-strip-sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--timeline-sidebar-bg);
+  border-right: 1px solid var(--timeline-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+}
+
+.chord-strip-label {
+  font-weight: 700;
+  font-size: 12px;
+  color: #6c757d;
+  letter-spacing: 0.5px;
+}
+
+/* Grid — measure-aligned cells */
+.chord-strip-grid {
+  display: flex;
+  flex: 1;
+  height: 40px;
+}
+
+.chord-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-right: 1px solid var(--timeline-border);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  user-select: none;
+}
+
+.chord-cell:last-child {
+  border-right: none;
+}
+
+.chord-cell:hover:not(.chord-cell--disabled) {
+  background: rgba(91, 192, 235, 0.06);
+}
+
+.chord-cell--disabled {
+  background: var(--disabled-bg);
+  cursor: default;
+}
+
+.chord-cell--filled {
+  background: rgba(91, 192, 235, 0.1);
+}
+
+.chord-cell--filled:hover {
+  background: rgba(91, 192, 235, 0.18);
+}
+
+.chord-cell-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #5bc0eb;
+  letter-spacing: 0.3px;
+}
+
+.chord-cell-placeholder {
+  font-size: 18px;
+  font-weight: 300;
+  color: #adb5bd;
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+.chord-cell:hover .chord-cell-placeholder {
+  color: #5bc0eb;
+}
+
+/* Chord Picker Popup */
+.chord-picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  background: white;
+  border: 1px solid var(--timeline-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chord-picker-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6c757d;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.chord-picker-roots,
+.chord-picker-qualities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chord-picker-btn {
+  background: transparent;
+  border: 1px solid var(--timeline-border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.chord-picker-btn:hover {
+  background: rgba(91, 192, 235, 0.1);
+  border-color: #5bc0eb;
+  color: #5bc0eb;
+}
+
+.chord-picker-btn--active {
+  background: #5bc0eb;
+  border-color: #5bc0eb;
+  color: white;
+}
+
+.chord-picker-btn--active:hover {
+  background: #4a9fd1;
+  border-color: #4a9fd1;
+  color: white;
+}
+
+.chord-picker-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  justify-content: flex-end;
+}
+
+.chord-picker-clear {
+  background: transparent;
+  border: 1px solid var(--timeline-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.chord-picker-clear:hover {
+  border-color: #dc3545;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.chord-picker-confirm {
+  background: rgba(91, 192, 235, 0.1);
+  color: #5bc0eb;
+  border: 2px solid #5bc0eb;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.chord-picker-confirm:hover {
+  background: rgba(91, 192, 235, 0.2);
+  transform: translateY(-1px);
+}

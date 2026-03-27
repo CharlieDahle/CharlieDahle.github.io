@@ -72,7 +72,7 @@ function Beats() {
 
   const joinBeat = useAppStore((state) => state.websocket.joinBeat);
   const checkRooms = useAppStore((state) => state.websocket.checkRooms);
-  const isConnected = useAppStore((state) => state.websocket.isConnected);
+  const isConnected = useAppStore((state) => state.websocket.isConnected); // used for recent-rooms dropdown only
   const beatId = useAppStore((state) => state.websocket.beatId);
 
   const saveButtonInfo = getSaveButtonInfo();
@@ -526,13 +526,6 @@ function Beats() {
               </div>
             )}
 
-            {/* Connection Status Warning */}
-            {!isConnected && (
-              <div className="error-banner">
-                <p>Not connected to server. Please wait for connection before loading beats.</p>
-              </div>
-            )}
-
             {/* Loading State */}
             {isLoading && (
               <div className="loading-state">
@@ -675,7 +668,7 @@ function Beats() {
                         <button
                           className={`load-beat-btn ${isCurrentlyLoaded ? "current-beat" : ""}`}
                           onClick={() => handleLoadBeat(beat)}
-                          disabled={!isConnected || isLoadingThisBeat}
+                          disabled={isLoadingThisBeat}
                         >
                           {isLoadingThisBeat ? (
                             <>
