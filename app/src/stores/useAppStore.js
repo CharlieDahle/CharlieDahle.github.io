@@ -42,6 +42,32 @@ const throttle = (func, limit) => {
 
 export const useAppStore = create((set, get) => ({
   // ============================================================================
+  // CHORDS SLICE
+  // ============================================================================
+  chords: {
+    data: [
+      { root: "D", quality: "maj" },
+      { root: "C", quality: "maj" },
+      { root: "G", quality: "maj" },
+      { root: "G", quality: "maj" },
+    ],
+    drumVolume: 80,
+    chordVolume: 80,
+    setChord: (index, chord) => set((state) => {
+      const next = [...state.chords.data];
+      next[index] = chord;
+      return { chords: { ...state.chords, data: next } };
+    }),
+    clearChord: (index) => set((state) => {
+      const next = [...state.chords.data];
+      next[index] = null;
+      return { chords: { ...state.chords, data: next } };
+    }),
+    setDrumVolume: (val) => set((state) => ({ chords: { ...state.chords, drumVolume: val } })),
+    setChordVolume: (val) => set((state) => ({ chords: { ...state.chords, chordVolume: val } })),
+  },
+
+  // ============================================================================
   // PATTERN SLICE
   // ============================================================================
   pattern: {
@@ -2549,7 +2575,7 @@ export const useAppStore = create((set, get) => ({
         `https://api.charliedahle.me/api/beats/${beatId}/name`,
         {
           method: "PATCH",
-          headers,
+          headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify({ name: newName.trim() }),
         },
       );

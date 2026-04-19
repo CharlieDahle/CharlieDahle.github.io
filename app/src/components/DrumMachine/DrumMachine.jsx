@@ -6,8 +6,7 @@ import DrumScheduler from "../DrumScheduler/DrumScheduler";
 import RoomHeader from "../RoomHeader/RoomHeader";
 import DebugPanel from "../DebugPanel/DebugPanel";
 
-// PHASE 4: Added isSpectator prop for disabling UI in spectator mode
-function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
+function DrumMachine({ remoteTransportCommand }) {
   // Get all state from the single store
   const pattern = useAppStore((state) => state.pattern.data);
   const tracks = useAppStore((state) => state.tracks.list);
@@ -22,6 +21,25 @@ function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
   // Get effects state
   const trackEffects = useAppStore((state) => state.effects.trackEffects);
   const getTrackEffects = useAppStore((state) => state.effects.getTrackEffects);
+
+  // Chord progression + volumes
+  const chords = useAppStore((state) => state.chords.data);
+  const drumVolume = useAppStore((state) => state.chords.drumVolume);
+  const chordVolume = useAppStore((state) => state.chords.chordVolume);
+
+  const [showChords, setShowChords] = useState(
+    () => localStorage.getItem("dm_chords_enabled") === "true"
+  );
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "dm_chords_enabled") {
+        setShowChords(e.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   // Scheduler instance
   const schedulerRef = useRef(null);
@@ -91,6 +109,21 @@ function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
     }
   }, [pattern, bpm, tracks]);
 
+  // Sync chord progression + volumes to scheduler (null out chords when feature is disabled)
+  useEffect(() => {
+    if (schedulerRef.current) {
+      schedulerRef.current.setChords(showChords ? chords : [null, null, null, null]);
+    }
+  }, [chords, showChords]);
+
+  useEffect(() => {
+    if (schedulerRef.current) schedulerRef.current.setDrumVolume(drumVolume);
+  }, [drumVolume]);
+
+  useEffect(() => {
+    if (schedulerRef.current) schedulerRef.current.setChordVolume(chordVolume);
+  }, [chordVolume]);
+
   // Update effects when they change
   useEffect(() => {
     if (schedulerRef.current) {
@@ -158,13 +191,11 @@ function DrumMachine({ remoteTransportCommand, isSpectator = false }) {
 
   return (
     <div className="drum-machine-layout">
-      {/* PHASE 4: Pass isSpectator to child components */}
       <RoomHeader
         debugMode={debugMode}
         setDebugMode={setDebugMode}
-        isSpectator={isSpectator}
       />
-      <PatternTimeline isSpectator={isSpectator} />
+      <PatternTimeline />
       {/* Debug panel appears as its own card below PatternTimeline */}
       <DebugPanel
         isOpen={debugMode}

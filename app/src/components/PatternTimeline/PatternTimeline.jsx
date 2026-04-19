@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { Drum, Sliders, Volume2, VolumeX } from "lucide-react";
 import { useAppStore } from "../../stores";
 import TransportControls from "../TransportControls/TransportControls";
+import ChordStrip from "../ChordStrip/ChordStrip";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
-function TrackLabel({ track, drumSounds, isSpectator = false }) {
+function TrackLabel({ track, drumSounds }) {
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
   const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
   const openVolumePopup = useAppStore((state) => state.ui.openVolumePopup);
@@ -144,7 +146,23 @@ function VolumePopup({ track, position, onClose, onVolumeChange }) {
   );
 }
 
-function PatternTimeline({ isSpectator = false }) {
+function PatternTimeline() {
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
+
+  const [showChords, setShowChords] = useState(
+    () => localStorage.getItem("dm_chords_enabled") === "true"
+  );
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "dm_chords_enabled") {
+        setShowChords(e.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   // Get all state from the single store
   const pattern = useAppStore((state) => state.pattern.data);
   const tracks = useAppStore((state) => state.tracks.list);
@@ -169,6 +187,8 @@ function PatternTimeline({ isSpectator = false }) {
   const volumePopupPosition = useAppStore((state) => state.ui.volumePopupPosition);
   const closeVolumePopup = useAppStore((state) => state.ui.closeVolumePopup);
   const updateTrackVolume = useAppStore((state) => state.tracks.updateTrackVolume);
+  const drumVolume = useAppStore((state) => state.chords.drumVolume);
+  const setDrumVolume = useAppStore((state) => state.chords.setDrumVolume);
 
   // Get all pattern actions
   const addNote = useAppStore((state) => state.pattern.addNote);
@@ -190,6 +210,8 @@ function PatternTimeline({ isSpectator = false }) {
 
   // Loop marker drag state
   const [draggedLoopMarker, setDraggedLoopMarker] = useState(null); // 'start' or 'end'
+  const [drumVolPopupOpen, setDrumVolPopupOpen] = useState(false);
+  const [drumVolPopupPos, setDrumVolPopupPos] = useState({ x: 0, y: 0 });
 
   // Ghost note state
   const [ghostNote, setGhostNote] = useState(null);
@@ -484,6 +506,18 @@ function PatternTimeline({ isSpectator = false }) {
     addTrack(trackData);
   };
 
+  // Close drum vol popup on outside click
+  useEffect(() => {
+    if (!drumVolPopupOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest(".volume-popup") && !e.target.closest(".sidebar-vol-btn")) {
+        setDrumVolPopupOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [drumVolPopupOpen]);
+
   // Add global mouse event listeners for dragging
   useEffect(() => {
     if (isDragging || draggedLoopMarker) {
@@ -510,20 +544,37 @@ function PatternTimeline({ isSpectator = false }) {
   return (
     <div className="floating-card pattern-timeline">
       {/* Transport Controls Bar - INSIDE the card */}
-      <TransportControls isSpectator={isSpectator} />
+      <TransportControls />
+
+      {/* Chord Strip - experimental, enabled via debug panel Settings tab */}
+      {showChords && <ChordStrip />}
 
       {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">
         {/* Track Labels Sidebar - Fixed width */}
         <div className="track-sidebar">
-          <div className="sidebar-header">TRACKS</div>
+          <div className="sidebar-header">
+            {!isSpectator && (
+              <button
+                className="sidebar-vol-btn"
+                title={`Drums volume: ${drumVolume}%`}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setDrumVolPopupPos({ x: rect.left + rect.width / 2, y: rect.top });
+                  setDrumVolPopupOpen((o) => !o);
+                }}
+              >
+                <Volume2 size={14} />
+              </button>
+            )}
+            TRACKS
+          </div>
 
           {tracks.map((track) => (
             <TrackLabel
               key={`label-${track.id}`}
               track={track}
               drumSounds={drumSounds}
-              isSpectator={isSpectator}
             />
           ))}
 
@@ -764,7 +815,7 @@ function PatternTimeline({ isSpectator = false }) {
         </div>
       </div>
       
-      {/* Volume Popup */}
+      {/* Track Volume Popup */}
       {volumePopupOpen && (
         <VolumePopup
           track={volumePopupTrack}
@@ -772,6 +823,24 @@ function PatternTimeline({ isSpectator = false }) {
           onClose={closeVolumePopup}
           onVolumeChange={updateTrackVolume}
         />
+      )}
+
+      {/* Drum Master Volume Popup */}
+      {drumVolPopupOpen && (
+        <div
+          className="volume-popup"
+          style={{ position: "fixed", left: `${drumVolPopupPos.x - 60}px`, top: `${drumVolPopupPos.y - 60}px`, zIndex: 1000 }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="volume-popup-content">
+            <div className="volume-label">Drums: {drumVolume}%</div>
+            <input
+              type="range" min="0" max="100" value={drumVolume}
+              onChange={(e) => setDrumVolume(parseInt(e.target.value))}
+              className="volume-slider"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

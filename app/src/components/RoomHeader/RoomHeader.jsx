@@ -1,5 +1,5 @@
 // src/components/RoomHeader/RoomHeader.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Save, FileText, Users, User } from "lucide-react";
 import { useAppStore } from "../../stores";
@@ -18,6 +18,7 @@ function RoomHeader({ debugMode, setDebugMode }) {
   );
   const leaveBeat = useAppStore((state) => state.websocket.leaveBeat);
   const isSpectator = useAppStore((state) => state.websocket.isSpectator);
+  const renameBeat = useAppStore((state) => state.beats.renameBeat);
 
   // Get auth state
   const { isAuthenticated, saveStateBeforeLogin } = useAppStore((state) => state.auth);
@@ -41,6 +42,38 @@ function RoomHeader({ debugMode, setDebugMode }) {
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const promoteGuestBeat = useAppStore((state) => state.beats.promoteGuestBeat);
+
+  const canEditName = isAuthenticated && !isSpectator && beatId;
+  const nameRef = useRef(null);
+
+  // Sync external beatName changes into the element when not being edited
+  useEffect(() => {
+    if (nameRef.current && document.activeElement !== nameRef.current) {
+      nameRef.current.textContent = beatName || "";
+    }
+  }, [beatName]);
+
+  const handleNameFocus = (e) => {
+    const range = document.createRange();
+    range.selectNodeContents(e.target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  const handleNameBlur = (e) => {
+    const newName = e.currentTarget.textContent.trim();
+    if (newName && newName !== beatName) {
+      renameBeat(newName);
+    } else {
+      e.currentTarget.textContent = beatName || "";
+    }
+  };
+
+  const handleNameKeyDown = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+    if (e.key === "Escape") { e.currentTarget.textContent = beatName || ""; e.currentTarget.blur(); }
+  };
 
   // Debug mode state - now managed by parent DrumMachine component
   const [clickCount, setClickCount] = useState(0);
@@ -219,7 +252,23 @@ function RoomHeader({ debugMode, setDebugMode }) {
             </div>
             <div className="room-info">
               <div className="room-code-line">
-                {beatName && <span className="beat-name-label">{beatName}</span>}
+                {beatName && (
+                  canEditName ? (
+                    <span
+                      ref={nameRef}
+                      className="beat-name-label beat-name-editable"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onFocus={handleNameFocus}
+                      onBlur={handleNameBlur}
+                      onKeyDown={handleNameKeyDown}
+                    >
+                      {beatName}
+                    </span>
+                  ) : (
+                    <span className="beat-name-label">{beatName}</span>
+                  )
+                )}
                 Beat ID: {beatId}
                 <div className="user-count-badge">
                   <Users size={16} />

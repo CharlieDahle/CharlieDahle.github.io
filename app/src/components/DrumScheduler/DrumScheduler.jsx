@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import { chordToNotes } from "../../utils/chordUtils";
 
 class DrumScheduler {
   constructor(bpm = 120, onTickUpdate = null, transportStore = null) {
@@ -26,9 +27,17 @@ class DrumScheduler {
 
     // Dynamic track to sound mapping
     this.trackSounds = {};
-    
+
     // Track volumes mapping
     this.trackVolumes = {};
+
+    // Chord progression
+    this.chords = [null, null, null, null];
+    this.chordSynth = null;
+
+    // Master volumes (0–1 linear)
+    this.drumVolume = 0.8;
+    this.chordVolume = 0.8;
 
     // RAF handle for cleanup
     this.schedulerRAF = null;
@@ -64,11 +73,49 @@ class DrumScheduler {
   async init() {
     try {
       await Tone.start();
-      console.log("DrumScheduler: Tone.js initialized");
+
+      if (!this.chordSynth) {
+        this.chordSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "triangle" },
+          envelope: { attack: 0.02, decay: 0.4, sustain: 0.3, release: 2.0 },
+        }).toDestination();
+        // Apply whatever volume was set before init() was called
+        this.chordSynth.volume.value = this.chordVolume > 0
+          ? Tone.gainToDb(this.chordVolume)
+          : -Infinity;
+      }
+
       return true;
     } catch (error) {
       console.error("DrumScheduler: Failed to initialize Tone.js", error);
       return false;
+    }
+  }
+
+  setChords(chords) {
+    this.chords = chords;
+  }
+
+  setDrumVolume(val) {
+    this.drumVolume = val / 100;
+  }
+
+  setChordVolume(val) {
+    this.chordVolume = val / 100;
+    if (this.chordSynth) {
+      this.chordSynth.volume.value = val > 0 ? Tone.gainToDb(val / 100) : -Infinity;
+    }
+  }
+
+  playChord(chord, when) {
+    if (!this.chordSynth || !chord) return;
+    const notes = chordToNotes(chord);
+    const secondsPerMeasure = (60.0 / this.bpm) * 4;
+    const duration = secondsPerMeasure * 0.85;
+    try {
+      this.chordSynth.triggerAttackRelease(notes, duration, when);
+    } catch (err) {
+      console.warn("ChordSynth error:", err);
     }
   }
 
@@ -690,20 +737,11 @@ class DrumScheduler {
       return;
     }
 
-    // Check if player is properly connected
-    console.log(`Playing ${soundFile} - Player state:`, {
-      loaded: player.loaded,
-      state: player.state,
-      connected: player.numberOfOutputs > 0,
-      velocity: velocity,
-      trackVolume: trackVolume,
-    });
-
     // Convert velocity (1-4) to gain (0.25 to 1.0)
     const velocityGain = velocity / 4;
-    
-    // Combine track volume and velocity
-    const finalGain = velocityGain * trackVolume;
+
+    // Combine track volume, velocity, and drum master volume
+    const finalGain = velocityGain * trackVolume * this.drumVolume;
     
     // Convert to decibels (with a minimum to avoid -Infinity)
     const volumeDb = finalGain > 0 ? Tone.gainToDb(finalGain) : -60;
@@ -711,10 +749,6 @@ class DrumScheduler {
     // Set volume and play
     player.volume.value = volumeDb;
     player.start(when);
-
-    console.log(
-      `Triggered sound ${soundFile} at ${when} with velocity ${velocity}, track volume ${trackVolume}, final volume ${volumeDb}dB`
-    );
   }
 
   // Update BPM
@@ -823,6 +857,15 @@ class DrumScheduler {
 
   // Schedule any notes that should play at this tick
   scheduleNotesAtTick(tick, when) {
+    // Trigger chord at the start of each measure
+    const { TICKS_PER_BEAT } = this.getTimingConstants();
+    const TICKS_PER_MEASURE = TICKS_PER_BEAT * 4;
+    if (tick % TICKS_PER_MEASURE === 0) {
+      const measureIndex = Math.floor(tick / TICKS_PER_MEASURE);
+      const chord = this.chords[measureIndex];
+      if (chord) this.playChord(chord, when);
+    }
+
     // Check each track in the pattern
     Object.keys(this.pattern).forEach((trackId) => {
       if (this.pattern[trackId]) {
@@ -837,9 +880,6 @@ class DrumScheduler {
           const trackVolume = this.trackVolumes[trackId] ?? 1.0;
           if (soundFile && this.tonePlayers[soundFile]) {
             this.playSound(soundFile, when, note.velocity, trackVolume);
-            console.log(
-              `Playing ${trackId} at tick ${tick} with velocity ${note.velocity}, track volume ${trackVolume}`
-            );
           } else {
             console.warn(`No sound available for track ${trackId}`);
           }
@@ -908,6 +948,11 @@ class DrumScheduler {
     });
     this.trackEffects = {};
     this.trackEffectStates = {};
+
+    if (this.chordSynth) {
+      this.chordSynth.dispose();
+      this.chordSynth = null;
+    }
 
     console.log("DrumScheduler: Destroyed");
   }
