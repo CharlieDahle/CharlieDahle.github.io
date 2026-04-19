@@ -2575,7 +2575,7 @@ export const useAppStore = create((set, get) => ({
         `https://api.charliedahle.me/api/beats/${beatId}/name`,
         {
           method: "PATCH",
-          headers,
+          headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify({ name: newName.trim() }),
         },
       );

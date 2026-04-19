@@ -2,45 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import * as Tone from "tone";
 import { Volume2 } from "lucide-react";
 import { useAppStore } from "../../stores";
+import { chordToNotes, ROOT_TO_SEMITONE, QUALITY_INTERVALS } from "../../utils/chordUtils";
 import "./ChordStrip.css";
 
-const ROOTS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-const QUALITIES = [
-  { id: "maj",  label: "maj"  },
-  { id: "min",  label: "min"  },
-  { id: "7",    label: "7"    },
-  { id: "maj7", label: "maj7" },
-  { id: "min7", label: "min7" },
-  { id: "dim",  label: "dim"  },
-  { id: "sus2", label: "sus2" },
-  { id: "sus4", label: "sus4" },
-];
-
-const ROOT_TO_SEMITONE = {
-  'C': 0, 'C#': 1, 'D': 2, 'Eb': 3, 'E': 4, 'F': 5,
-  'F#': 6, 'G': 7, 'Ab': 8, 'A': 9, 'Bb': 10, 'B': 11,
-};
-const QUALITY_INTERVALS = {
-  'maj':  [0, 4, 7],
-  'min':  [0, 3, 7],
-  '7':    [0, 4, 7, 10],
-  'maj7': [0, 4, 7, 11],
-  'min7': [0, 3, 7, 10],
-  'dim':  [0, 3, 6],
-  'sus2': [0, 2, 7],
-  'sus4': [0, 5, 7],
-};
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-function chordToNotes(chord) {
-  const root = ROOT_TO_SEMITONE[chord.root] ?? 0;
-  const intervals = QUALITY_INTERVALS[chord.quality] ?? [0, 4, 7];
-  return intervals.map((interval) => {
-    const semitone = root + interval;
-    const octave = 3 + Math.floor(semitone / 12);
-    return `${NOTE_NAMES[semitone % 12]}${octave}`;
-  });
-}
+const ROOTS = Object.keys(ROOT_TO_SEMITONE);
+const QUALITIES = Object.keys(QUALITY_INTERVALS).map((id) => ({ id, label: id }));
 
 function chordLabel(chord) {
   if (!chord) return null;
@@ -167,7 +133,8 @@ function ChordPicker({ chord, onSelect, onClear, onClose, volume }) {
   );
 }
 
-function ChordStrip({ isSpectator = false }) {
+function ChordStrip() {
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
   const measureCount = useAppStore((state) => state.transport.measureCount);
   const TICKS_PER_BEAT = useAppStore((state) => state.transport.TICKS_PER_BEAT);
   const chords = useAppStore((state) => state.chords.data);

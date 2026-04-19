@@ -12,6 +12,7 @@ import {
   Users,
   Activity,
   X,
+  Settings,
 } from "lucide-react";
 import "./DebugPanel.css";
 
@@ -20,6 +21,9 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [messageLog, setMessageLog] = useState([]);
   const [beatNameInput, setBeatNameInput] = useState("");
+  const [showChords, setShowChords] = useState(
+    () => localStorage.getItem("dm_chords_enabled") === "true"
+  );
 
   // Get all the data we want to monitor
   const patternData = useAppStore((state) => state.pattern.data);
@@ -64,6 +68,13 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
       }
     };
   }, [isOpen]);
+
+  const handleToggleChords = (e) => {
+    const enabled = e.target.checked;
+    localStorage.setItem("dm_chords_enabled", enabled ? "true" : "false");
+    setShowChords(enabled);
+    window.dispatchEvent(new StorageEvent("storage", { key: "dm_chords_enabled", newValue: enabled ? "true" : "false" }));
+  };
 
   if (!isOpen) return null;
 
@@ -240,6 +251,13 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
             >
               <Volume2 size={16} />
               Audio Files
+            </button>
+            <button
+              className={`debug-tab ${activeTab === "settings" ? "active" : ""}`}
+              onClick={() => setActiveTab("settings")}
+            >
+              <Settings size={16} />
+              Settings
             </button>
           </div>
 
@@ -682,6 +700,26 @@ function DebugPanel({ isOpen, onClose, toneEffectsData }) {
                     start loading sounds.
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === "settings" && (
+              <div>
+                <h3>Experimental Settings</h3>
+                <div className="stat-item" style={{ alignItems: "center", gap: "12px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", userSelect: "none" }}>
+                    <input
+                      type="checkbox"
+                      checked={showChords}
+                      onChange={handleToggleChords}
+                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                    />
+                    <span className="stat-label" style={{ margin: 0 }}>Show Chord Strip</span>
+                  </label>
+                </div>
+                <p style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
+                  Chords are local only — not synced to other users or saved to the server.
+                </p>
               </div>
             )}
 

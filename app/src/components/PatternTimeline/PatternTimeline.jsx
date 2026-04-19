@@ -6,7 +6,8 @@ import ChordStrip from "../ChordStrip/ChordStrip";
 import drumSounds from "../../assets/data/drum-sounds.json";
 import "./PatternTimeline.css";
 
-function TrackLabel({ track, drumSounds, isSpectator = false }) {
+function TrackLabel({ track, drumSounds }) {
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
   const openSoundModal = useAppStore((state) => state.ui.openSoundModal);
   const openEffectsModal = useAppStore((state) => state.ui.openEffectsModal);
   const openVolumePopup = useAppStore((state) => state.ui.openVolumePopup);
@@ -145,7 +146,23 @@ function VolumePopup({ track, position, onClose, onVolumeChange }) {
   );
 }
 
-function PatternTimeline({ isSpectator = false }) {
+function PatternTimeline() {
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
+
+  const [showChords, setShowChords] = useState(
+    () => localStorage.getItem("dm_chords_enabled") === "true"
+  );
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "dm_chords_enabled") {
+        setShowChords(e.newValue === "true");
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   // Get all state from the single store
   const pattern = useAppStore((state) => state.pattern.data);
   const tracks = useAppStore((state) => state.tracks.list);
@@ -527,10 +544,10 @@ function PatternTimeline({ isSpectator = false }) {
   return (
     <div className="floating-card pattern-timeline">
       {/* Transport Controls Bar - INSIDE the card */}
-      <TransportControls isSpectator={isSpectator} />
+      <TransportControls />
 
-      {/* Chord Strip */}
-      <ChordStrip isSpectator={isSpectator} />
+      {/* Chord Strip - experimental, enabled via debug panel Settings tab */}
+      {showChords && <ChordStrip />}
 
       {/* Grid Container - Now uses flexible layout */}
       <div className="timeline-grid-container">
@@ -558,7 +575,6 @@ function PatternTimeline({ isSpectator = false }) {
               key={`label-${track.id}`}
               track={track}
               drumSounds={drumSounds}
-              isSpectator={isSpectator}
             />
           ))}
 

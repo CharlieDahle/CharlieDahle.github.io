@@ -453,7 +453,6 @@ function DrumMachineApp() {
 
           <DrumMachine
             remoteTransportCommand={lastRemoteTransportCommand}
-            isSpectator={isSpectator}
           />
 
           {/* Global Sound Selector Modal */}

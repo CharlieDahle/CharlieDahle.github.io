@@ -3,7 +3,7 @@ import { Repeat2 } from "lucide-react";
 import { useAppStore } from "../../stores/useAppStore";
 import "./TransportControls.css";
 
-function TransportControls({ isSpectator = false }) {
+function TransportControls() {
   // Get transport state and actions
   const isPlaying = useAppStore((state) => state.transport.isPlaying);
   const bpm = useAppStore((state) => state.transport.bpm);
@@ -23,6 +23,7 @@ function TransportControls({ isSpectator = false }) {
   // Get UI state
   const snapToGrid = useAppStore((state) => state.ui.snapToGrid);
   const setSnapToGrid = useAppStore((state) => state.ui.setSnapToGrid);
+  const isSpectator = useAppStore((state) => state.websocket.isSpectator);
 
 
   const handlePlay = () => {
