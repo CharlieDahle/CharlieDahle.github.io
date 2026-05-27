@@ -21,6 +21,7 @@ import Login from "./pages/Login/Login.jsx";
 import Beats from "./pages/Beats/Beats.jsx";
 import Photos from "./pages/Photos/Photos.jsx";
 import Books from "./pages/Books/Books.jsx";
+import Play from "./pages/Play/Play.jsx";
 
 // App initialization component - handles auth only
 function AppInitializer({ children }) {
@@ -112,6 +113,15 @@ function AppRouter() {
             element={
               <AnimatedPage>
                 <Books />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/play"
+            element={
+              <AnimatedPage>
+                <Play />
               </AnimatedPage>
             }
           />
