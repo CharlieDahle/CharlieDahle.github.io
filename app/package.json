@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
     "bootstrap": "^5.3.6",
     "framer-motion": "^12.12.1",
     "lucide-react": "^0.513.0",
+    "matter-js": "^0.20.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.0",
