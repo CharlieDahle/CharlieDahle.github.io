@@ -20,8 +20,7 @@ const AboutMeModal = ({ isOpen, onClose }) => {
 
         <div className="aboutme-content">
           <p className="aboutme-text">
-            To put this as succinctly as possible: I love building software that enables the greatness
-            of humanity and that looks really cute. A lot of things interest me: working on DAWs, web
+            To put this as succinctly as possible: I love building software that looks cool and makes the world a better place. A lot of things interest me: working on DAWs, web
             design for artists, improving government functions through more easily navigable software,
             and educational tools. These are just a few.
           </p>
@@ -36,7 +35,7 @@ const AboutMeModal = ({ isOpen, onClose }) => {
             and I believe maintaining the balance helps my perspective on software stay grounded.
           </p>
           <p className="aboutme-text">
-            I'm driven, I'm curious, and I care deeply about the world. Yeah
+            I'm driven, I'm curious, and I care deeply about the world!
           </p>
         </div>
 

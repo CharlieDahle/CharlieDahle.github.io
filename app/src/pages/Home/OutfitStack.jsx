@@ -36,10 +36,10 @@ const OutfitStack = ({ onOpenGuestbook, onOpenAboutMe }) => {
         </div>
       </Link>
 
-      <Link to="https://open.spotify.com/user/charliedahle161">
+      <Link to="/music">
         <div className="outfit-item outfit-straw">
           <img src="/straw.png" alt="Strawberry" style={{ width: '100%', display: 'block' }} />
-          <span className="outfit-label">Spotify</span>
+          <span className="outfit-label">Music</span>
         </div>
       </Link>
 

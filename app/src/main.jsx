@@ -22,6 +22,7 @@ import Beats from "./pages/Beats/Beats.jsx";
 import Photos from "./pages/Photos/Photos.jsx";
 import Books from "./pages/Books/Books.jsx";
 import Play from "./pages/Play/Play.jsx";
+import Music from "./pages/Music/Music.jsx";
 
 // App initialization component - handles auth only
 function AppInitializer({ children }) {
@@ -122,6 +123,15 @@ function AppRouter() {
             element={
               <AnimatedPage>
                 <Play />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/music"
+            element={
+              <AnimatedPage>
+                <Music />
               </AnimatedPage>
             }
           />

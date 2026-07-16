@@ -4,3 +4,12 @@ TODO
 2. ALREADY DONE - SessionQueueModal already has Temporary/Collaborator/Co-Owner dropdown, server handles all three
 3. Add explanatory tooltips (question mark icon) - where exactly?
 4. Outstanding edit requests visible on /beats page + icon/badge for newly shared beats
+
+
+
+
+Guest user creates beat:
+- does not auto save, prompts them to log in to save work
+- if a signed in user joins, they become the owner of that beat
+- if a gues user joins the beat they can make edits with full permissions
+- regardless of what changes a guest makes to the beat, if it does not get claimed by an owner (either by an owner joining or the guest user singing in) then it shoudl eventaully be delted

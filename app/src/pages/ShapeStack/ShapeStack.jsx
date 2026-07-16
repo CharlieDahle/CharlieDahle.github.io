@@ -7,7 +7,7 @@ function ShapeStack({ onOpenAboutMe }) {
 
   // Define text for each blob
   const blobTexts = {
-    1: "Spotify",
+    1: "Music",
     2: "Books",
     3: "Github",
     4: "Drum Machine",
@@ -24,7 +24,7 @@ function ShapeStack({ onOpenAboutMe }) {
   return (
     <>
       <div className="shape-stack">
-        <Link to="https://open.spotify.com/user/charliedahle161">
+        <Link to="/music">
           <div
             className="blob-shape shape-1 blob-1"
             onMouseEnter={() => setHoveredBlob(1)}
@@ -66,7 +66,7 @@ function ShapeStack({ onOpenAboutMe }) {
           onMouseLeave={() => setHoveredBlob(null)}
           onClick={onOpenAboutMe}
         ></div>
-        <div className="center-text">
+<div className="center-text">
           {currentText}
         </div>
       </div>
