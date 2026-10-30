@@ -1,5 +1,5 @@
 // src/main.jsx - Enhanced with WebSocket initialization
-import { StrictMode, useEffect } from "react";
+import { StrictMode, Suspense, lazy, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -23,6 +23,8 @@ import Photos from "./pages/Photos/Photos.jsx";
 import Books from "./pages/Books/Books.jsx";
 import Play from "./pages/Play/Play.jsx";
 import Music from "./pages/Music/Music.jsx";
+// Loaded only when /budget is opened, so its chart and PDF libraries stay out of the main bundle.
+const Budget = lazy(() => import("./pages/Budget/Budget.jsx"));
 
 // App initialization component - handles auth only
 function AppInitializer({ children }) {
@@ -132,6 +134,17 @@ function AppRouter() {
             element={
               <AnimatedPage>
                 <Music />
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/budget"
+            element={
+              <AnimatedPage>
+                <Suspense fallback={null}>
+                  <Budget />
+                </Suspense>
               </AnimatedPage>
             }
           />
