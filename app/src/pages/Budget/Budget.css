@@ -4,9 +4,9 @@
   --quiet: #86868b;
   --rule: #e5e5ea;
   --focus: #5bc0eb;
-  --accent: #0a7bb5;
-  --accent-hover: #08669a;
-  --accent-soft: rgba(10, 123, 181, 0.1);
+  --accent: #0a84ff;
+  --accent-hover: #0071e3;
+  --accent-soft: rgba(10, 132, 255, 0.1);
   --danger: #d6402f;
 
   min-height: 100vh;
@@ -506,23 +506,6 @@ button.bg-name {
 
 /* ── ⋯ menu ── */
 .bg-more { position: relative; display: inline-flex; }
-.bg-more-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--accent) !important;
-  cursor: pointer;
-}
-.bg-more-btn:hover,
-.bg-more-btn[aria-expanded="true"] {
-  background: var(--accent-soft);
-}
 .bg-menu {
   position: absolute;
   top: calc(100% + 4px);

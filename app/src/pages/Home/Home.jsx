@@ -6,6 +6,7 @@ import GuestbookModal from '../../components/GuestbookModal/GuestbookModal.jsx'
 import AboutMeModal from '../../components/AboutMeModal/AboutMeModal.jsx'
 import { Layers, Shirt } from 'lucide-react'
 import StarTrail from '../../components/StarTrail/StarTrail.jsx'
+import HiddenNav from '../../components/HiddenNav/HiddenNav.jsx'
 
 function Home() {
   const [view, setView] = useState('shapes')
@@ -14,7 +15,9 @@ function Home() {
 
   return (
     <div className={`home-container ${view === 'outfit' ? 'home-outfit-bg' : ''}`}>
-      <div className="site-title">charliedahle.me</div>
+      <div className="site-title">
+        <HiddenNav>charliedahle.me</HiddenNav>
+      </div>
 
       {/* Shape stack view */}
       <div className={`view-wrapper ${view === 'shapes' ? 'view-active' : 'view-hidden'}`}>

@@ -2,6 +2,7 @@
   color: #333;
   font-size: 18px;
   font-weight: bold;
+  position: relative; /* sits above the full-screen view layers so it can be clicked */
   z-index: 8;
   margin-left: 1%;
 }

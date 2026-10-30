@@ -528,9 +528,9 @@ function IncomeInput({ income, onSave }) {
 
 // ── Ledger (recurring or this month's expenses) ──────────────────────────────
 
-// Which label groups are collapsed, remembered in this browser.
-function useCollapsed(storageKey) {
-  const [collapsed, setCollapsed] = useState(() => {
+// Which label groups you have opened (all start collapsed), remembered in this browser.
+function useExpanded(storageKey) {
+  const [expanded, setExpanded] = useState(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem(storageKey)) || []);
     } catch {
@@ -539,7 +539,7 @@ function useCollapsed(storageKey) {
   });
 
   const toggle = (key) =>
-    setCollapsed((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -551,14 +551,14 @@ function useCollapsed(storageKey) {
       return next;
     });
 
-  return [collapsed, toggle];
+  return [expanded, toggle];
 }
 
 function Ledger({ title, kind, items, labels, month, api, placeholder }) {
   const [editing, setEditing] = useState(null);
   const withDate = kind === "expenses";
   const total = items.reduce((s, i) => s + share(i), 0);
-  const [collapsed, toggle] = useCollapsed(`budget-collapsed-${kind}`);
+  const [expanded, toggle] = useExpanded(`budget-expanded-${kind}`);
 
   // One group per label that has items, then unlabeled items as General.
   const groups = [...labels, { color: null, name: "General" }]
@@ -576,7 +576,7 @@ function Ledger({ title, kind, items, labels, month, api, placeholder }) {
 
       <ul className="bg-rows">
         {groups.map((g) => {
-          const open = !collapsed.has(g.key);
+          const open = expanded.has(g.key);
           return (
             <li key={g.key} className="bg-group">
               <button
@@ -830,13 +830,12 @@ function MoreMenu({ items }) {
     >
       <button
         type="button"
-        className="bg-more-btn"
-        aria-label="More options"
+        className="bg-link"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        ⋯
+        More
       </button>
       {open && (
         <div className="bg-menu" role="menu">
