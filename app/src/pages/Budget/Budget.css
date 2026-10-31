@@ -25,14 +25,6 @@
   color: inherit;
 }
 
-/* Label colors */
-.c-red { background: #e5484d; }
-.c-blue { background: #3e7be0; }
-.c-green { background: #2f9e6b; }
-.c-orange { background: #f0901e; }
-.c-pink { background: #e45c9c; }
-.c-general { background: #8e6bd8; }
-
 .bg-dot {
   flex: none;
   display: inline-block;
@@ -300,47 +292,96 @@
   gap: 10px;
 }
 
-/* ── Labels ── */
-.bg-labels {
+/* ── Categories ── */
+.bg-categories { margin-top: 56px; }
+
+.bg-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bg-category-grid > li {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  margin-top: 56px;
-  padding-top: 16px;
-  border-top: 1px solid var(--rule);
+  gap: 8px;
+  min-width: 0;
+  height: 44px;
+  border-bottom: 1px solid var(--rule);
 }
-.bg-labels h2 {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0;
-}
-.bg-labels p {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: 13px;
-  color: var(--quiet);
-}
-.bg-label-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-}
-.bg-label-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-}
-.bg-label-item input {
+
+.bg-category-name {
+  flex: 1;
+  min-width: 0;
   padding: 2px 0;
   border: none;
   border-bottom: 1px solid transparent;
   background: none;
   outline: none;
+  text-overflow: ellipsis;
 }
-.bg-label-item input:hover { border-bottom-color: var(--rule); }
-.bg-label-item input:focus { border-bottom-color: var(--focus); }
+input.bg-category-name:hover { border-bottom-color: var(--rule); }
+input.bg-category-name:focus { border-bottom-color: var(--focus); }
+span.bg-category-name { overflow: hidden; white-space: nowrap; }
+
+.bg-category-delete { flex: none; font-size: 13px; visibility: hidden; }
+.bg-category:hover .bg-category-delete,
+.bg-category-delete:focus-visible { visibility: visible; }
+
+.bg-category-grid form { flex: 1; }
+
+/* Category color: the dot opens a small grid of colors. */
+.bg-color { position: relative; display: inline-flex; flex: none; }
+.bg-color-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: -6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.bg-color-btn:hover { background: var(--accent-soft); }
+.bg-color-btn .bg-dot { width: 10px; height: 10px; }
+
+.bg-swatches {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -10px;
+  z-index: 10;
+  display: grid;
+  /* One color family per column, light to dark going down. */
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, 20px);
+  grid-auto-columns: 20px;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(29, 29, 31, 0.1);
+}
+.bg-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.bg-swatch:hover:not(:disabled) { transform: scale(1.12); }
+.bg-swatch:disabled { opacity: 0.2; cursor: default; }
+.bg-swatch.is-current { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+  .bg-swatch:hover:not(:disabled) { transform: none; }
+}
+.bg-category-notice { margin: 12px 0 4px; }
 
 /* ── Buttons & messages ── */
 .bg-link {
@@ -683,3 +724,129 @@ button.bg-name {
   border-bottom: 1px solid transparent;
 }
 .bg-autosize > input { width: 100%; }
+
+.bg-spacer { flex: 1; }
+.bg-input.is-guessed { border-color: #b9d6fb; }
+
+/* ── Sorting pile ── */
+.bg-sort-hint { margin: 16px 0 0; font-size: 13px; text-align: center; }
+
+.bg-desk {
+  position: relative;
+  height: 460px;
+}
+
+/* The pile sits in the middle; categories are placed around it (--x, --y). */
+.bg-card-slot {
+  position: absolute;
+  inset: 0;
+  width: 260px;
+  height: 150px;
+  margin: auto;
+}
+
+.bg-card {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 20px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(29, 29, 31, 0.08);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.bg-card.is-under {
+  z-index: 1;
+  box-shadow: none;
+  transform: translate(3px, 4px) rotate(1.5deg);
+  cursor: default;
+}
+.bg-card.is-under-2 { z-index: 0; transform: translate(-3px, 8px) rotate(-1.5deg); }
+
+.bg-card-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 600;
+}
+.bg-card-meta { font-size: 13px; }
+.bg-card-amount {
+  margin-top: 6px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bg-sort-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.bg-target {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  background: #fff;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.bg-target:hover:not(:disabled),
+.bg-target.is-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.bg-target:disabled { opacity: 0.4; cursor: default; }
+.bg-target.is-new { border-style: dashed; color: var(--accent); }
+.bg-target.is-naming { padding: 0; border: none; background: none; }
+.bg-target.is-naming .bg-input { width: 160px; height: 36px; border-radius: 18px; padding: 0 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .bg-target { transition: none; }
+}
+
+.bg-sort-foot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.bg-sort-foot .bg-link:disabled { opacity: 0.4; cursor: default; }
+
+/* Narrow screens: the pile on top, categories in rows below it. */
+@media (max-width: 720px) {
+  .bg-desk {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    height: auto;
+    padding-bottom: 20px;
+  }
+  .bg-card-slot {
+    position: relative;
+    flex-basis: 100%;
+    max-width: 260px;
+    margin: 20px auto 28px;
+  }
+  .bg-target { position: static; transform: none; }
+}

@@ -206,11 +206,12 @@ function describe(t) {
   }
 
   if (/^Non-Chase ATM Fee/.test(raw)) return { kind: "expense", name: "ATM fee" };
-  if (/^Non-Chase ATM Withdraw/.test(raw)) return { kind: "expense", name: "ATM withdrawal" };
+  // Payments to people (share: false) never count toward the shared merchant list.
+  if (/^Non-Chase ATM Withdraw/.test(raw)) return { kind: "expense", name: "ATM withdrawal", share: false };
   if (/^Monthly Service Fee/.test(raw)) return { kind: "expense", name: "Monthly service fee" };
-  if ((m = raw.match(/^Zelle Payment To (.+?) \S+$/))) return { kind: "expense", name: `Zelle to ${m[1]}` };
-  if (/^Venmo Payment/.test(raw)) return { kind: "expense", name: "Venmo payment" };
-  if ((m = raw.match(/^(?:\d{2}\/\d{2} )?Online Payment \d+ To (.+)$/))) return { kind: "expense", name: m[1] };
+  if ((m = raw.match(/^Zelle Payment To (.+?) \S+$/))) return { kind: "expense", name: `Zelle to ${m[1]}`, share: false };
+  if (/^Venmo Payment/.test(raw)) return { kind: "expense", name: "Venmo payment", share: false };
+  if ((m = raw.match(/^(?:\d{2}\/\d{2} )?Online Payment \d+ To (.+)$/))) return { kind: "expense", name: m[1], share: false };
   if (/^Dept Education Student Ln/.test(raw)) return { kind: "expense", name: "Student loan" };
 
   const merchant = raw.replace(/^(Recurring )?Card Purchase( With Pin)?\s*/, "").replace(/^\d{2}\/\d{2}\s+/, "");
@@ -250,10 +251,11 @@ export async function toBudgetItems(statement) {
     const n = (seen.get(key) || 0) + 1;
     seen.set(key, n);
 
-    const { kind, name } = describe(t);
+    const { kind, name, share = true } = describe(t);
     items.push({
       kind,
       name,
+      share,
       merchant: name.toLowerCase(),
       date: kind === "money" ? t.posted : spentOn(t),
       amount: Math.abs(t.amount),
@@ -274,7 +276,7 @@ export async function toBudgetItems(statement) {
       purchase.amount = Math.round((purchase.amount + fee.amount) * 100) / 100;
       purchase.fingerprints.push(...fee.fingerprints);
     } else {
-      expenses.push({ ...fee, kind: "expense", name: `Foreign transaction fee (${fee.name})` });
+      expenses.push({ ...fee, kind: "expense", name: `Foreign transaction fee (${fee.name})`, share: false });
     }
   }
 

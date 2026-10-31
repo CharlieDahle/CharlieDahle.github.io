@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../stores";
 import { Cell, Pie, PieChart } from "recharts";
 import ImportStatement from "./ImportStatement";
+import { colorOf, FAMILIES, GENERAL_COLOR } from "./palette";
 import "./Budget.css";
 
 const API = `${import.meta.env.VITE_API_URL || "https://api.charliedahle.me"}/api/budget`;
-const BUDGET_USERNAME = "charlie";
-const COLORS = ["red", "blue", "green", "orange", "pink"];
+// Who can use the budget; each person has their own. The server checks this too.
+const BUDGET_USERS = ["charlie", "anna"];
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -53,7 +54,7 @@ function Budget() {
 
   if (!isAuthInitialized) return <div className="bg-page" />;
 
-  if (!token || user?.username !== BUDGET_USERNAME) {
+  if (!token || !BUDGET_USERS.includes(user?.username)) {
     return <SignIn signedInAs={token ? user?.username : null} onSwitch={logout} />;
   }
 
@@ -76,7 +77,7 @@ function SignIn({ signedInAs, onSwitch }) {
     setError(null);
     try {
       const u = await login(username.trim(), password);
-      if (u.username !== BUDGET_USERNAME) {
+      if (!BUDGET_USERS.includes(u.username)) {
         logout();
         setError("This account can't open the budget.");
       }
@@ -143,6 +144,7 @@ function BudgetApp({ token, onSignOut }) {
   const [importing, setImporting] = useState(false);
   const [reloads, setReloads] = useState(0);
   const [lastImport, setLastImport] = useState(null);
+  const [deletedCategory, setDeletedCategory] = useState(null); // what the last delete held, for Undo
 
   const request = useCallback(
     async (path, method = "GET", body) => {
@@ -192,10 +194,38 @@ function BudgetApp({ token, onSignOut }) {
         const r = await request("/income", "PUT", { amount });
         setData((d) => ({ ...d, income: r.income }));
       }),
-    renameLabel: (color, name) =>
+    addCategory: (name) =>
       mutate(async () => {
-        const r = await request(`/labels/${color}`, "PUT", { name });
-        setData((d) => ({ ...d, labels: d.labels.map((l) => (l.color === color ? r : l)) }));
+        const r = await request("/categories", "POST", { name });
+        setData((d) => ({ ...d, categories: [...d.categories, r] }));
+      }),
+    renameCategory: (id, name) =>
+      mutate(async () => {
+        const r = await request(`/categories/${id}`, "PUT", { name });
+        setData((d) => ({ ...d, categories: d.categories.map((c) => (c.id === id ? r : c)) }));
+      }),
+    recolorCategory: (id, color) =>
+      mutate(async () => {
+        const r = await request(`/categories/${id}`, "PUT", { color });
+        setData((d) => ({ ...d, categories: d.categories.map((c) => (c.id === id ? r : c)) }));
+      }),
+    deleteCategory: (id) =>
+      mutate(async () => {
+        setDeletedCategory(await request(`/categories/${id}`, "DELETE"));
+        // Its expenses become General.
+        const clear = (list) => list.map((x) => (x.category_id === id ? { ...x, category_id: null } : x));
+        setData((d) => ({
+          ...d,
+          categories: d.categories.filter((c) => c.id !== id),
+          recurring: clear(d.recurring),
+          expenses: clear(d.expenses),
+        }));
+      }),
+    undoDeleteCategory: () =>
+      mutate(async () => {
+        await request("/categories/restore", "POST", deletedCategory);
+        setDeletedCategory(null);
+        setReloads((n) => n + 1);
       }),
     save: (kind, item) =>
       mutate(async () => {
@@ -304,7 +334,7 @@ function BudgetApp({ token, onSignOut }) {
                 kind="recurring"
                 month={data.month}
                 items={data.recurring}
-                labels={data.labels}
+                categories={data.categories}
                 api={api}
                 placeholder="Add a monthly expense"
               />
@@ -312,7 +342,7 @@ function BudgetApp({ token, onSignOut }) {
                 title={`Spent in ${monthName(data.month, { month: "long" })}`}
                 kind="expenses"
                 items={data.expenses}
-                labels={data.labels}
+                categories={data.categories}
                 month={data.month}
                 api={api}
                 placeholder="Add an expense"
@@ -321,7 +351,12 @@ function BudgetApp({ token, onSignOut }) {
 
             <MoneyList items={data.money} month={data.month} onDelete={api.removeMoney} />
 
-            <Labels labels={data.labels} onRename={api.renameLabel} />
+            <Categories
+              categories={data.categories}
+              deleted={deletedCategory?.category}
+              onDismiss={() => setDeletedCategory(null)}
+              api={api}
+            />
           </>
         )}
       </div>
@@ -329,8 +364,9 @@ function BudgetApp({ token, onSignOut }) {
       {importing && data && (
         <ImportStatement
           recurring={data.recurring}
-          labels={data.labels}
+          categories={data.categories}
           request={request}
+          onCategoryAdded={(c) => setData((d) => ({ ...d, categories: [...d.categories, c] }))}
           onClose={() => setImporting(false)}
           onImported={(result) => {
             setImporting(false);
@@ -382,16 +418,16 @@ function MoneyList({ items, month, onDelete }) {
 
 function Equation({ data, onIncome }) {
   const terms = useMemo(() => {
-    const totals = Object.fromEntries(COLORS.map((c) => [c, 0]));
+    const totals = new Map();
     let general = 0;
     for (const item of [...data.recurring, ...data.expenses]) {
-      if (item.color) totals[item.color] += share(item);
+      if (item.category_id) totals.set(item.category_id, (totals.get(item.category_id) || 0) + share(item));
       else general += share(item);
     }
-    const list = data.labels
-      .filter((l) => totals[l.color] > 0)
-      .map((l) => ({ key: l.color, color: l.color, name: l.name, amount: totals[l.color] }));
-    if (general > 0) list.push({ key: "general", color: "general", name: "General spending", amount: general });
+    const list = data.categories
+      .filter((c) => totals.get(c.id) > 0)
+      .map((c) => ({ key: c.id, color: colorOf(c), name: c.name, amount: totals.get(c.id) }));
+    if (general > 0) list.push({ key: "general", color: GENERAL_COLOR, name: "General spending", amount: general });
     return list;
   }, [data]);
 
@@ -399,7 +435,7 @@ function Equation({ data, onIncome }) {
   const left = data.income - spent;
 
   const slices = [...terms];
-  if (left > 0) slices.push({ key: "left", color: "left", name: "Balance", amount: left });
+  if (left > 0) slices.push({ key: "left", color: BALANCE_COLOR, name: "Balance", amount: left });
 
   return (
     <section className="bg-summary" aria-label="Where your income goes">
@@ -412,7 +448,7 @@ function Equation({ data, onIncome }) {
           <div className="bg-receipt-row" key={t.key}>
             <span className="bg-receipt-name">
               <span className="bg-minus">−</span>
-              <span className={`bg-dot c-${t.color}`} />
+              <span className="bg-dot" style={{ background: t.color }} />
               {t.name}
             </span>
             <span className="bg-amount">{money.format(t.amount)}</span>
@@ -429,15 +465,7 @@ function Equation({ data, onIncome }) {
   );
 }
 
-const SLICE_COLORS = {
-  red: "#e5484d",
-  blue: "#3e7be0",
-  green: "#2f9e6b",
-  orange: "#f0901e",
-  pink: "#e45c9c",
-  general: "#8e6bd8",
-  left: "#e5e5ea",
-};
+const BALANCE_COLOR = "#e5e5ea";
 
 // Pie with a small key showing each slice's share.
 function SpendingPie({ slices }) {
@@ -463,7 +491,7 @@ function SpendingPie({ slices }) {
           isAnimationActive={false}
         >
           {slices.map((s) => (
-            <Cell key={s.key} fill={SLICE_COLORS[s.color]} />
+            <Cell key={s.key} fill={s.color} />
           ))}
         </Pie>
       </PieChart>
@@ -471,7 +499,7 @@ function SpendingPie({ slices }) {
       <ul className="bg-key">
         {slices.map((s) => (
           <li key={s.key}>
-            <span className="bg-key-dot" style={{ background: SLICE_COLORS[s.color] }} />
+            <span className="bg-key-dot" style={{ background: s.color }} />
             <span className="bg-key-name">{s.name}</span>
             <span className="bg-key-pct">{pct(s.amount)}</span>
           </li>
@@ -528,7 +556,7 @@ function IncomeInput({ income, onSave }) {
 
 // ── Ledger (recurring or this month's expenses) ──────────────────────────────
 
-// Which label groups you have opened (all start collapsed), remembered in this browser.
+// Which category groups you have opened (all start collapsed), remembered in this browser.
 function useExpanded(storageKey) {
   const [expanded, setExpanded] = useState(() => {
     try {
@@ -554,15 +582,20 @@ function useExpanded(storageKey) {
   return [expanded, toggle];
 }
 
-function Ledger({ title, kind, items, labels, month, api, placeholder }) {
+function Ledger({ title, kind, items, categories, month, api, placeholder }) {
   const [editing, setEditing] = useState(null);
   const withDate = kind === "expenses";
   const total = items.reduce((s, i) => s + share(i), 0);
   const [expanded, toggle] = useExpanded(`budget-expanded-${kind}`);
 
-  // One group per label that has items, then unlabeled items as General.
-  const groups = [...labels, { color: null, name: "General" }]
-    .map((l) => ({ ...l, key: l.color || "general", items: items.filter((i) => i.color === l.color) }))
+  // One group per category that has items, then the rest as General.
+  const groups = [...categories, { id: null, name: "General" }]
+    .map((c) => ({
+      name: c.name,
+      color: colorOf(c.id && c),
+      key: c.id ? `c${c.id}` : "general",
+      items: items.filter((i) => (i.category_id ?? null) === c.id),
+    }))
     .filter((g) => g.items.length > 0);
 
   useEffect(() => setEditing(null), [month]);
@@ -588,7 +621,7 @@ function Ledger({ title, kind, items, labels, month, api, placeholder }) {
                   <span className={`bg-chevron ${open ? "is-open" : ""}`} aria-hidden="true">
                     ›
                   </span>
-                  <span className={`bg-dot c-${g.key}`} />
+                  <span className="bg-dot" style={{ background: g.color }} />
                   {g.name}
                   <span className="bg-group-count">{g.items.length}</span>
                 </span>
@@ -602,7 +635,7 @@ function Ledger({ title, kind, items, labels, month, api, placeholder }) {
                       <li key={item.id} className="bg-row-editing">
                         <ItemEditor
                           initial={item}
-                          labels={labels}
+                          categories={categories}
                           withDate={withDate}
                           submitText="Save"
                           onSubmit={async (v) => (await api.save(kind, v)) && setEditing(null)}
@@ -650,8 +683,8 @@ function Ledger({ title, kind, items, labels, month, api, placeholder }) {
         <li className="bg-row-new">
           <ItemEditor
             key={`new-${month}`}
-            initial={{ name: "", amount: "", color: null, ...(withDate && { spent_on: defaultDate(month) }) }}
-            labels={labels}
+            initial={{ name: "", amount: "", category_id: null, ...(withDate && { spent_on: defaultDate(month) }) }}
+            categories={categories}
             withDate={withDate}
             placeholder={placeholder}
             submitText="Add"
@@ -664,7 +697,7 @@ function Ledger({ title, kind, items, labels, month, api, placeholder }) {
   );
 }
 
-function ItemEditor({ initial, labels, withDate, placeholder, submitText, resetAfterSubmit, onSubmit, onCancel, onDelete }) {
+function ItemEditor({ initial, categories, withDate, placeholder, submitText, resetAfterSubmit, onSubmit, onCancel, onDelete }) {
   const blank = useRef({
     ...initial,
     amount: String(initial.amount),
@@ -705,8 +738,8 @@ function ItemEditor({ initial, labels, withDate, placeholder, submitText, resetA
     });
     setBusy(false);
     if (ok && resetAfterSubmit) {
-      // Keep the date and label so several similar entries go in quickly.
-      setForm((f) => ({ ...blank.current, color: f.color, spent_on: f.spent_on }));
+      // Keep the date and category so several similar entries go in quickly.
+      setForm((f) => ({ ...blank.current, category_id: f.category_id, spent_on: f.spent_on }));
       nameRef.current?.focus();
     }
   };
@@ -738,14 +771,14 @@ function ItemEditor({ initial, labels, withDate, placeholder, submitText, resetA
       />
       <select
         className="bg-input"
-        value={form.color || ""}
-        onChange={(e) => setForm((f) => ({ ...f, color: e.target.value || null }))}
-        aria-label="Label"
+        value={form.category_id ?? ""}
+        onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value ? Number(e.target.value) : null }))}
+        aria-label="Category"
       >
         <option value="">General</option>
-        {labels.map((l) => (
-          <option key={l.color} value={l.color}>
-            {l.name}
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
           </option>
         ))}
       </select>
@@ -858,47 +891,158 @@ function MoreMenu({ items }) {
   );
 }
 
-// ── Labels ────────────────────────────────────────────────────────────────────
+// ── Categories ────────────────────────────────────────────────────────────────
 
-function Labels({ labels, onRename }) {
+function Categories({ categories, deleted, onDismiss, api }) {
   return (
-    <section className="bg-labels">
-      <h2>Labels</h2>
-      <div className="bg-label-list">
-        {labels.map((l) => (
-          <LabelName key={l.color} label={l} onRename={onRename} />
+    <section className="bg-categories">
+      <header className="bg-ledger-head">
+        <h2>Categories</h2>
+      </header>
+      {deleted && (
+        <div className="bg-notice bg-category-notice">
+          <span>Deleted {deleted.name}. Its expenses moved to General.</span>
+          <button className="bg-link" onClick={api.undoDeleteCategory}>
+            Undo
+          </button>
+          <button className="bg-link" aria-label="Dismiss" onClick={onDismiss}>
+            ×
+          </button>
+        </div>
+      )}
+      <ul className="bg-category-grid">
+        {categories.map((c) => (
+          <CategoryItem key={c.id} category={c} categories={categories} api={api} />
         ))}
-      </div>
+        <li>
+          <NewCategory onAdd={api.addCategory} />
+        </li>
+      </ul>
     </section>
   );
 }
 
-function LabelName({ label, onRename }) {
-  const [name, setName] = useState(label.name);
-  useEffect(() => setName(label.name), [label.name]);
+function CategoryItem({ category, categories, api }) {
+  const [name, setName] = useState(category.name);
+  useEffect(() => setName(category.name), [category.name]);
 
   const commit = () => {
     const n = name.trim();
-    if (!n) return setName(label.name);
-    if (n !== label.name) onRename(label.color, n);
+    if (!n) return setName(category.name);
+    if (n !== category.name) api.renameCategory(category.id, n);
   };
 
   return (
-    <label className="bg-label-item">
-      <span className={`bg-dot c-${label.color}`} />
-      {/* The hidden copy of the text sets the width, so the box fits the name exactly. */}
-      <span className="bg-autosize" data-value={name || " "}>
+    <li className="bg-category">
+      <ColorPicker
+        category={category}
+        categories={categories}
+        onPick={(color) => api.recolorCategory(category.id, color)}
+      />
+      {/* Built-in names are fixed: the shared merchant list relies on what they mean. */}
+      {category.builtin ? (
+        <span className="bg-category-name">{category.name}</span>
+      ) : (
         <input
+          className="bg-category-name"
           value={name}
           maxLength={40}
-          size={1}
-          aria-label={`Rename ${label.color} label`}
+          aria-label={`Rename ${category.name}`}
           onChange={(e) => setName(e.target.value)}
           onBlur={commit}
-          onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") {
+              setName(category.name);
+              requestAnimationFrame(() => e.target.blur());
+            }
+          }}
         />
-      </span>
-    </label>
+      )}
+      {/* Built-in and original label categories stay; ones you added can be deleted (with Undo). */}
+      {!category.builtin && !category.label_color && (
+        <button className="bg-link is-danger bg-category-delete" onClick={() => api.deleteCategory(category.id)}>
+          Delete
+        </button>
+      )}
+    </li>
+  );
+}
+
+// The category's dot; click it to pick from a set of colors. Each color can
+// belong to only one category, so ones already in use can't be picked.
+function ColorPicker({ category, categories, onPick }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <span className="bg-color" ref={ref} onKeyDown={(e) => e.key === "Escape" && setOpen(false)}>
+      <button
+        type="button"
+        className="bg-color-btn"
+        aria-label={`Change the color of ${category.name}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="bg-dot" style={{ background: colorOf(category) }} />
+      </button>
+      {open && (
+        <div className="bg-swatches" role="menu">
+          {FAMILIES.flat().map(([key, hex]) => {
+            const owner = categories.find((c) => c.color === key && c.id !== category.id);
+            return (
+              <button
+                type="button"
+                key={key}
+                role="menuitemradio"
+                aria-checked={key === category.color}
+                aria-label={owner ? `${key}, used by ${owner.name}` : key}
+                title={owner ? `Used by ${owner.name}` : undefined}
+                disabled={!!owner}
+                className={`bg-swatch ${key === category.color ? "is-current" : ""}`}
+                style={{ background: hex }}
+                onClick={() => {
+                  if (key !== category.color) onPick(key);
+                  setOpen(false);
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+    </span>
+  );
+}
+
+function NewCategory({ onAdd }) {
+  const [name, setName] = useState("");
+
+  const add = async (e) => {
+    e.preventDefault();
+    const n = name.trim();
+    if (n && (await onAdd(n))) setName("");
+  };
+
+  return (
+    <form onSubmit={add}>
+      <input
+        className="bg-input"
+        value={name}
+        maxLength={40}
+        placeholder="Add a category"
+        aria-label="Add a category"
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && setName("")}
+      />
+    </form>
   );
 }
 

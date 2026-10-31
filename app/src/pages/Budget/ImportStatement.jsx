@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { readPdf, parseStatement, toBudgetItems } from "./chaseStatement";
+import SortStack from "./SortStack";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const cents = (n) => Math.round(n * 100);
@@ -42,8 +43,23 @@ function findRecurring(charge, rule, recurring) {
   return byName.length === 1 ? byName[0].id : null;
 }
 
-export default function ImportStatement({ recurring, labels, request, onImported, onUndone, onClose }) {
-  const [phase, setPhase] = useState("pick"); // pick → reading → review → saving
+// Uncategorized charges, one pile entry per merchant, biggest first.
+function pileOf(rows, isRecurring) {
+  const groups = new Map();
+  for (const r of rows) {
+    if (!r.include || r.category_id || isRecurring(r)) continue;
+    const g = groups.get(r.merchant) || { merchant: r.merchant, name: r.name, count: 0, total: 0, first: r.date, last: r.date };
+    g.count += 1;
+    g.total = Math.round((g.total + r.amount) * 100) / 100;
+    if (r.date < g.first) g.first = r.date;
+    if (r.date > g.last) g.last = r.date;
+    groups.set(r.merchant, g);
+  }
+  return [...groups.values()].sort((a, b) => b.total - a.total);
+}
+
+export default function ImportStatement({ recurring, categories, request, onCategoryAdded, onImported, onUndone, onClose }) {
+  const [phase, setPhase] = useState("pick"); // pick → reading → sort → review → saving
   const [error, setError] = useState(null);
   const [statement, setStatement] = useState(null);
   const [rows, setRows] = useState([]); // expenses and recurring charges
@@ -51,6 +67,8 @@ export default function ImportStatement({ recurring, labels, request, onImported
   const [skipped, setSkipped] = useState(0);
   const [past, setPast] = useState([]);
   const [confirming, setConfirming] = useState(null);
+  const [pile, setPile] = useState([]); // charges to sort by hand
+  const [sorted, setSorted] = useState([]); // for each sorted pile entry, the rows it changed
 
   useEffect(() => {
     request("/imports")
@@ -84,32 +102,36 @@ export default function ImportStatement({ recurring, labels, request, onImported
       const st = parseStatement(await readPdf(file));
       const items = await toBudgetItems(st);
       const all = [...items.expenses, ...items.money];
-      const preview = await request("/import/preview", "POST", { fingerprints: all.flatMap((i) => i.fingerprints) });
+      const merchants = [...new Set(items.expenses.filter((e) => e.share).map((e) => e.merchant))];
+      const preview = await request("/import/preview", "POST", { fingerprints: all.flatMap((i) => i.fingerprints), merchants });
 
       const done = new Set(preview.imported);
       const isDone = (i) => i.fingerprints.every((f) => done.has(f));
       const rules = new Map(preview.rules.map((r) => [r.merchant, r]));
 
+      // Your own past choice wins; otherwise the shared list's guess; otherwise it goes in the pile.
+      const newRows = items.expenses
+        .filter((e) => !isDone(e))
+        .map((e, i) => {
+          const rule = rules.get(e.merchant);
+          const guess = e.share ? preview.suggestions[e.merchant] : undefined;
+          return {
+            ...e,
+            key: `e${i}`,
+            include: true,
+            name: rule?.name || e.name,
+            category_id: rule?.category_id || guess || null,
+            guessed: !rule?.category_id && !!guess,
+            recurringId: findRecurring(e, rule, recurring),
+            resolve: "keep",
+          };
+        });
+
       setSkipped(all.filter(isDone).length);
       setStatement(st);
-      setRows(
-        items.expenses
-          .filter((e) => !isDone(e))
-          .map((e, i) => {
-            const rule = rules.get(e.merchant);
-            return {
-              ...e,
-              key: `e${i}`,
-              include: true,
-              name: rule?.name || e.name,
-              color: rule?.color || null,
-              recurringId: findRecurring(e, rule, recurring),
-              resolve: "keep",
-            };
-          }),
-      );
+      setRows(newRows);
       setDeposits(items.money.filter((m) => !isDone(m)).map((m, i) => ({ ...m, key: `m${i}`, include: true })));
-      setPhase("review");
+      startSorting(newRows);
     } catch (e) {
       console.error(e);
       setError(e.message || "Couldn't read that file.");
@@ -123,7 +145,43 @@ export default function ImportStatement({ recurring, labels, request, onImported
 
   const charges = rows.filter((r) => recurringFor(r));
   const expenses = rows.filter((r) => !recurringFor(r));
-  const unlabeled = expenses.filter((r) => r.include && !r.color).length;
+  const uncategorized = expenses.filter((r) => r.include && !r.category_id).length;
+  const guessed = expenses.filter((r) => r.include && r.guessed).length;
+
+  // Opens the pile if anything needs sorting, otherwise goes straight to review.
+  function startSorting(from) {
+    const next = pileOf(from, (r) => recurring.some((x) => x.id === r.recurringId));
+    setPile(next);
+    setSorted([]);
+    setPhase(next.length ? "sort" : "review");
+  }
+
+  const sortOne = (group, categoryId) => {
+    const keys = categoryId
+      ? rows.filter((r) => r.merchant === group.merchant && !r.category_id && !recurringFor(r)).map((r) => r.key)
+      : [];
+    if (keys.length) setRows((rs) => rs.map((r) => (keys.includes(r.key) ? { ...r, category_id: categoryId } : r)));
+    setSorted((s) => [...s, keys]);
+    if (sorted.length + 1 >= pile.length) setTimeout(() => setPhase("review"), 250);
+  };
+
+  const unsortOne = () => {
+    const keys = sorted[sorted.length - 1] || [];
+    setRows((rs) => rs.map((r) => (keys.includes(r.key) ? { ...r, category_id: null } : r)));
+    setSorted((s) => s.slice(0, -1));
+  };
+
+  const createCategory = async (name) => {
+    setError(null);
+    try {
+      const category = await request("/categories", "POST", { name });
+      onCategoryAdded(category);
+      return category;
+    } catch (e) {
+      setError(e.message);
+      return null;
+    }
+  };
 
   // Everything the import will save, built from the choices on screen.
   const plan = () => {
@@ -139,23 +197,30 @@ export default function ImportStatement({ recurring, labels, request, onImported
 
     for (const row of rows) {
       const rec = recurringFor(row);
-      const expense = { name: row.name.trim(), amount: row.amount, color: row.color, spent_on: row.date };
+      const expense = { name: row.name.trim(), amount: row.amount, category_id: row.category_id, spent_on: row.date };
       if (rec) {
         const diff = cents(row.amount) - cents(rec.amount);
         if (diff !== 0 && row.resolve === "update") out.recurringUpdates.push({ id: rec.id, amount: row.amount });
         if (diff > 0 && row.resolve === "extra") {
-          out.expenses.push({ ...expense, name: `${rec.name} (extra)`, amount: diff / 100, color: rec.color });
+          out.expenses.push({ ...expense, name: `${rec.name} (extra)`, amount: diff / 100, category_id: rec.category_id });
         }
         if (row.resolve === "separate") out.expenses.push(expense);
         out.rules.push({
           merchant: row.merchant,
           name: expense.name,
-          color: row.color,
+          category_id: row.category_id,
           recurring_id: row.resolve === "separate" ? null : rec.id,
+          share: row.share,
         });
       } else if (row.include) {
         out.expenses.push(expense);
-        out.rules.push({ merchant: row.merchant, name: expense.name, color: row.color, recurring_id: null });
+        out.rules.push({
+          merchant: row.merchant,
+          name: expense.name,
+          category_id: row.category_id,
+          recurring_id: null,
+          share: row.share,
+        });
       }
     }
     for (const d of deposits) {
@@ -236,6 +301,21 @@ export default function ImportStatement({ recurring, labels, request, onImported
           </div>
         )}
 
+        {phase === "sort" && (
+          <div className="bg-modal-body bg-sort">
+            <SortStack
+              groups={pile}
+              position={sorted.length}
+              categories={categories}
+              onSort={sortOne}
+              onUndo={unsortOne}
+              onDone={() => setPhase("review")}
+              onCreate={createCategory}
+            />
+            {error && <p className="bg-error">{error}</p>}
+          </div>
+        )}
+
         {(phase === "review" || phase === "saving") && (
           <>
             <div className="bg-modal-body">
@@ -298,7 +378,15 @@ export default function ImportStatement({ recurring, labels, request, onImported
               <section className="bg-import-section">
                 <h3>
                   Expenses
-                  {unlabeled > 0 && <span className="bg-quiet bg-h3-note">{unlabeled} without a label</span>}
+                  {guessed > 0 && <span className="bg-quiet bg-h3-note">{guessed} sorted automatically</span>}
+                  {uncategorized > 0 && (
+                    <span className="bg-quiet bg-h3-note">
+                      {uncategorized} in General.{" "}
+                      <button className="bg-link" onClick={() => startSorting(rows)}>
+                        Sort them
+                      </button>
+                    </span>
+                  )}
                 </h3>
                 {expenses.length === 0 && <p className="bg-quiet">No new expenses.</p>}
                 {expenses.map((row) => (
@@ -317,19 +405,20 @@ export default function ImportStatement({ recurring, labels, request, onImported
                       onChange={(e) => update(row.key, { name: e.target.value })}
                     />
                     <select
-                      className={`bg-input ${row.color ? "" : "is-unlabeled"}`}
-                      value={row.color || ""}
-                      aria-label="Label"
+                      className={`bg-input ${row.category_id ? "" : "is-unlabeled"} ${row.guessed ? "is-guessed" : ""}`}
+                      value={row.category_id ?? ""}
+                      aria-label="Category"
+                      title={row.guessed ? "Sorted automatically" : undefined}
                       onChange={(e) => {
                         const v = e.target.value;
                         if (v.startsWith("r:")) update(row.key, { recurringId: Number(v.slice(2)) });
-                        else update(row.key, { color: v || null });
+                        else update(row.key, { category_id: v ? Number(v) : null, guessed: false });
                       }}
                     >
                       <option value="">General</option>
-                      {labels.map((l) => (
-                        <option key={l.color} value={l.color}>
-                          {l.name}
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
                         </option>
                       ))}
                       {recurring.length > 0 && (
