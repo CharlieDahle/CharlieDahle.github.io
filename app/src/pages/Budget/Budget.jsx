@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "../../stores";
 import { Cell, Pie, PieChart } from "recharts";
 import ImportStatement from "./ImportStatement";
+import SignIn from "./SignIn";
 import { colorOf, FAMILIES, GENERAL_COLOR } from "./palette";
 import "./Budget.css";
 
 const API = `${import.meta.env.VITE_API_URL || "https://api.charliedahle.me"}/api/budget`;
 // Who can use the budget; each person has their own. The server checks this too.
-const BUDGET_USERS = ["charlie", "anna"];
+const BUDGET_USERS = ["charlie"];
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -55,84 +56,10 @@ function Budget() {
   if (!isAuthInitialized) return <div className="bg-page" />;
 
   if (!token || !BUDGET_USERS.includes(user?.username)) {
-    return <SignIn signedInAs={token ? user?.username : null} onSwitch={logout} />;
+    return <SignIn title="Budget" allowed={BUDGET_USERS} signedInAs={token ? user?.username : null} onSwitch={logout} />;
   }
 
   return <BudgetApp token={token} onSignOut={logout} />;
-}
-
-// ── Sign in ───────────────────────────────────────────────────────────────────
-
-function SignIn({ signedInAs, onSwitch }) {
-  const login = useAppStore((s) => s.auth.login);
-  const logout = useAppStore((s) => s.auth.logout);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const u = await login(username.trim(), password);
-      if (!BUDGET_USERS.includes(u.username)) {
-        logout();
-        setError("This account can't open the budget.");
-      }
-    } catch (err) {
-      setError(err.message === "Invalid credentials" ? "Wrong username or password." : err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="bg-page bg-signin">
-      <a href="https://charliedahle.me" className="bg-back">
-        ← charliedahle.me
-      </a>
-      <form className="bg-signin-form" onSubmit={submit}>
-        <h1 className="bg-title">Budget</h1>
-
-        {signedInAs && (
-          <p className="bg-note">
-            Signed in as {signedInAs}, which can't open the budget.{" "}
-            <button type="button" className="bg-link" onClick={onSwitch}>
-              Sign out
-            </button>
-          </p>
-        )}
-
-        <label className="bg-field">
-          <span>Username</span>
-          <input
-            autoComplete="username"
-            autoCapitalize="none"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </label>
-        <label className="bg-field">
-          <span>Password</span>
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-
-        {error && <p className="bg-error">{error}</p>}
-
-        <button className="bg-btn" disabled={busy || !username || !password}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-    </div>
-  );
 }
 
 // ── Budget ────────────────────────────────────────────────────────────────────

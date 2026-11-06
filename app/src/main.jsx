@@ -23,8 +23,27 @@ import Photos from "./pages/Photos/Photos.jsx";
 import Books from "./pages/Books/Books.jsx";
 import Play from "./pages/Play/Play.jsx";
 import Music from "./pages/Music/Music.jsx";
-// Loaded only when /budget is opened, so its chart and PDF libraries stay out of the main bundle.
+import { startVisit, trackView } from "./utils/visitTracker.js";
+// Loaded only when opened, so their chart and PDF libraries stay out of the main bundle.
 const Budget = lazy(() => import("./pages/Budget/Budget.jsx"));
+const Visits = lazy(() => import("./pages/Visits/Visits.jsx"));
+
+// Logs each visit and every page change (see utils/visitTracker.js).
+function VisitTracker() {
+  const { pathname } = useLocation();
+  const token = useAppStore((state) => state.auth.token);
+  const isAuthInitialized = useAppStore((state) => state.auth.isAuthInitialized);
+
+  useEffect(() => {
+    if (isAuthInitialized) startVisit(token);
+  }, [token, isAuthInitialized]);
+
+  useEffect(() => {
+    trackView(pathname);
+  }, [pathname]);
+
+  return null;
+}
 
 // App initialization component - handles auth only
 function AppInitializer({ children }) {
@@ -60,6 +79,7 @@ function AppRouter() {
 
   return (
     <div style={{ position: "relative", minHeight: "100vh" }}>
+      <VisitTracker />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route
@@ -144,6 +164,17 @@ function AppRouter() {
               <AnimatedPage>
                 <Suspense fallback={null}>
                   <Budget />
+                </Suspense>
+              </AnimatedPage>
+            }
+          />
+
+          <Route
+            path="/visits"
+            element={
+              <AnimatedPage>
+                <Suspense fallback={null}>
+                  <Visits />
                 </Suspense>
               </AnimatedPage>
             }

@@ -12,6 +12,7 @@ const PAGES = [
   { to: "/beats", label: "Beats" },
   { to: "/play", label: "Play" },
   { to: "/budget", label: "Budget" },
+  { to: "/visits", label: "Visits" },
   { to: "/login", label: "Login" },
 ];
 

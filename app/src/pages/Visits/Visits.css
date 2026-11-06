@@ -1,0 +1,172 @@
+/* Visits page. Built on the budget page's styles (Budget.css): same colors,
+   type, rows and links. */
+
+.vs-heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.vs-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.vs-periods {
+  display: flex;
+  gap: 4px;
+}
+.vs-period {
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+.vs-period:hover { background: var(--accent-soft); }
+.vs-period.is-current {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.vs-mine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--quiet);
+  cursor: pointer;
+}
+
+/* ── Totals ── */
+.vs-totals {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin: 0 0 40px;
+}
+.vs-totals dt {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--quiet);
+}
+.vs-totals dd {
+  margin: 2px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.vs-section { margin-top: 40px; }
+
+/* ── Chart ── */
+.vs-chart { margin-top: 12px; }
+.vs-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.vs-tip strong { font-size: 15px; }
+.vs-tip span { color: var(--quiet); }
+
+/* ── Top lists ── */
+.vs-lists {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  margin-top: 40px;
+}
+.vs-top-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.vs-truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vs-empty { margin: 12px 0 0; }
+
+/* ── Visits ── */
+.vs-visit {
+  display: grid;
+  grid-template-columns: 12px 120px 1fr 160px 150px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.vs-visit:hover { background: var(--accent-soft); }
+
+.vs-when { font-variant-numeric: tabular-nums; }
+
+.vs-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.vs-who .bg-quiet { font-size: 13px; }
+
+.vs-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  padding: 4px 0 20px 24px;
+}
+
+.vs-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.vs-timeline li {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  padding: 3px 0;
+}
+.vs-timeline strong { font-weight: 600; }
+.vs-offset { font-variant-numeric: tabular-nums; font-size: 13px; }
+
+.vs-facts {
+  margin: 0;
+  font-size: 13px;
+}
+.vs-facts > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  padding: 3px 0;
+}
+.vs-facts dt { color: var(--quiet); font-weight: 400; }
+.vs-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+.vs-more { margin-top: 16px; }
+
+@media (max-width: 720px) {
+  .vs-wrap { padding: 16px 16px 60px; }
+  .vs-totals { grid-template-columns: repeat(2, 1fr); }
+  .vs-lists { grid-template-columns: 1fr; gap: 32px; }
+  .vs-visit { grid-template-columns: 12px 1fr auto; }
+  .vs-when { grid-column: 2 / -1; font-size: 13px; color: var(--quiet); }
+  .vs-who { grid-column: 2 / 3; }
+  .vs-from { display: none; }
+  .vs-detail { grid-template-columns: 1fr; gap: 20px; padding-left: 0; }
+}

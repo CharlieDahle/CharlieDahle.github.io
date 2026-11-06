@@ -5,6 +5,7 @@ const API_BASE = "https://api.charliedahle.me";
 function Books() {
   const [status, setStatus] = useState("idle"); // idle | loading | error | done
   const [result, setResult] = useState(null); // { url, filename }
+  const [limitMessage, setLimitMessage] = useState(null); // shown instead of the usual error when the hourly limit is hit
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -16,6 +17,7 @@ function Books() {
     }
 
     setStatus("loading");
+    setLimitMessage(null);
 
     try {
       const formData = new FormData();
@@ -26,6 +28,10 @@ function Books() {
         body: formData,
       });
 
+      if (res.status === 429) {
+        const body = await res.json().catch(() => null);
+        setLimitMessage(body?.error || "Too many conversions this hour. Try again later.");
+      }
       if (!res.ok) throw new Error("Conversion failed");
 
       const blob = await res.blob();
@@ -111,7 +117,7 @@ function Books() {
 
       {status === "error" && (
         <div style={{ color: "red", fontSize: "14px" }}>
-          Something went wrong. Try again.
+          {limitMessage || "Something went wrong. Try again."}
         </div>
       )}
     </div>
