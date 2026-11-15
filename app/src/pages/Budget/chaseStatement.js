@@ -66,11 +66,12 @@ export function parseStatement(pages) {
     let inside = false;
     let current = null;
     for (const row of toRows(page)) {
-      if (row.text.includes("*start*transaction detail")) {
+      // Chase writes these markers both with and without the space.
+      if (/\*start\*transaction ?detail/.test(row.text)) {
         inside = true;
         continue;
       }
-      if (row.text.includes("*end*transaction detail")) {
+      if (/\*end\*transaction ?detail/.test(row.text)) {
         inside = false;
         current = null;
         continue;
@@ -192,8 +193,10 @@ function describe(t) {
   if (/^Foreign Exch Rt ADJ Fee/.test(raw)) {
     return { kind: "fxfee", name: cleanMerchant(raw.replace(/^Foreign Exch Rt ADJ Fee (\d{2}\/\d{2} )?/, "")) };
   }
-  if ((m = raw.match(/^(?:\d{2}\/\d{2} )?Online Transfer (To|From) Chk (\.\.\.\d+)/))) {
-    return { kind: "money", name: `Transfer ${m[1].toLowerCase()} checking ${m[2]}` };
+  // "Online Transfer To Chk ...1234", "Online Transfer To Sav ...2051", "Transfer From Chk Xxxxx1058"
+  if ((m = raw.match(/^(?:\d{2}\/\d{2} )?(?:Online )?Transfer (To|From) (Chk|Sav) \S*?(\d{4})\b/))) {
+    const account = m[2] === "Sav" ? "savings" : "checking";
+    return { kind: "money", name: `Transfer ${m[1].toLowerCase()} ${account} ...${m[3]}` };
   }
   if (t.amount > 0) {
     if (/^Remote Online Deposit/.test(raw)) return { kind: "money", name: "Mobile deposit" };
