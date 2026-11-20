@@ -133,6 +133,13 @@
 }
 .bg-receipt-total .is-negative { color: var(--danger); }
 
+.bg-paycheck {
+  padding: 2px 0 2px 18px;
+  font-size: 13px;
+  color: var(--quiet);
+}
+.bg-paycheck.is-received .bg-paid { color: var(--ink); }
+
 .bg-income > input {
   border: none;
   border-bottom: 1px solid var(--rule);

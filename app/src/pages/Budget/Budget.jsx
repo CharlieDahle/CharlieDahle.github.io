@@ -121,6 +121,14 @@ function BudgetApp({ token, onSignOut }) {
         const r = await request("/income", "PUT", { amount });
         setData((d) => ({ ...d, income: r.income }));
       }),
+    setPaycheckReceived: (date, received) =>
+      mutate(async () => {
+        await request(`/paychecks/${date}`, "PUT", { received });
+        setData((d) => ({
+          ...d,
+          paychecks: d.paychecks.map((p) => (p.date === date ? { ...p, received } : p)),
+        }));
+      }),
     addCategory: (name) =>
       mutate(async () => {
         const r = await request("/categories", "POST", { name });
@@ -253,7 +261,7 @@ function BudgetApp({ token, onSignOut }) {
 
         {data && (
           <>
-            <Equation data={data} onIncome={api.setIncome} />
+            <Equation data={data} onIncome={api.setIncome} onReceived={api.setPaycheckReceived} />
 
             <div className="bg-columns">
               <Ledger
@@ -343,7 +351,7 @@ function MoneyList({ items, month, onDelete }) {
 
 // ── Summary: a receipt of where the income goes, with a pie chart ────────────
 
-function Equation({ data, onIncome }) {
+function Equation({ data, onIncome, onReceived }) {
   const terms = useMemo(() => {
     const totals = new Map();
     let general = 0;
@@ -369,8 +377,23 @@ function Equation({ data, onIncome }) {
       <div className="bg-receipt">
         <div className="bg-receipt-row">
           <span>Income</span>
-          <IncomeInput income={data.income} onSave={onIncome} />
+          {/* Months with paychecks add them up; any other month takes a typed amount. */}
+          {data.paychecks?.length ? (
+            <span className="bg-amount">{money.format(data.income)}</span>
+          ) : (
+            <IncomeInput income={data.income} onSave={onIncome} />
+          )}
         </div>
+        {data.paychecks?.map((p) => (
+          <div className={`bg-receipt-row bg-paycheck ${p.received ? "is-received" : ""}`} key={p.date}>
+            <label className="bg-paid">
+              <input type="checkbox" checked={p.received} onChange={() => onReceived(p.date, !p.received)} />
+              Paycheck, {shortDate(p.date)}
+              {!p.received && <span className="bg-quiet"> (not received yet)</span>}
+            </label>
+            <span className="bg-amount">{money.format(p.amount)}</span>
+          </div>
+        ))}
         {terms.map((t) => (
           <div className="bg-receipt-row" key={t.key}>
             <span className="bg-receipt-name">
